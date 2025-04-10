@@ -9,7 +9,6 @@ class LoginPage extends StatelessWidget {
     final passwordController = TextEditingController();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -19,6 +18,13 @@ class LoginPage extends StatelessWidget {
               Image.asset(
                 'assets/logo_check_van.png',
                 height: 120,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Entre na sua conta',
+                overflow: TextOverflow.fade,
+                maxLines: 1,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               const SizedBox(height: 24),
               TextField(
@@ -49,22 +55,21 @@ class LoginPage extends StatelessWidget {
                     // backgroundColor: const Color(0xFFFFC532),
                     backgroundColor: const Color(0xFF101C2C),
                     foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
                   ),
                   onPressed: () {
-                    // TODO: Implementar login
+                    Navigator.pushNamed(context, '/home');
                   },
                   child: const Text('Entrar'),
                 ),
               ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/signup');
-                },
-                child: const Text('Criar conta'),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/signup');
+                  },
+                  child: const Text('Criar conta'),
+                )
               )
             ],
           ),
