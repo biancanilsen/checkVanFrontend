@@ -13,7 +13,7 @@ class GuardianService {
     final token = await UserSession.getToken();
 
     final response = await http.put(
-      Uri.parse(Endpoints.updateGuardian),
+      Uri.parse(Endpoints.updateUser), // remover
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

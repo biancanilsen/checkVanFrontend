@@ -1,93 +1,14 @@
-// import 'package:flutter/material.dart';
-//
-// class LoginPage extends StatelessWidget {
-//   const LoginPage({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final emailController = TextEditingController();
-//     final passwordController = TextEditingController();
-//
-//     return Scaffold(
-//       body: Center(
-//         child: SingleChildScrollView(
-//           padding: const EdgeInsets.all(24),
-//           child: Column(
-//             mainAxisAlignment: MainAxisAlignment.center,
-//             children: [
-//               Image.asset(
-//                 'assets/logo_check_van.png',
-//                 height: 120,
-//               ),
-//               const SizedBox(height: 24),
-//               Text(
-//                 'Entre na sua conta',
-//                 overflow: TextOverflow.fade,
-//                 maxLines: 1,
-//                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-//               ),
-//               const SizedBox(height: 24),
-//               TextField(
-//                 controller: emailController,
-//                 decoration: const InputDecoration(
-//                   labelText: 'Email',
-//                   border: OutlineInputBorder(
-//                     borderRadius: BorderRadius.all(Radius.circular(16)),
-//                   ),
-//                 ),
-//               ),
-//               const SizedBox(height: 16),
-//               TextField(
-//                 controller: passwordController,
-//                 obscureText: true,
-//                 decoration: const InputDecoration(
-//                   labelText: 'Senha',
-//                   border: OutlineInputBorder(
-//                     borderRadius: BorderRadius.all(Radius.circular(16)),
-//                   ),
-//                 ),
-//               ),
-//               const SizedBox(height: 24),
-//               SizedBox(
-//                 width: double.infinity,
-//                 child: ElevatedButton(
-//                   style: ElevatedButton.styleFrom(
-//                     // backgroundColor: const Color(0xFFFFC532),
-//                     backgroundColor: const Color(0xFF101C2C),
-//                     foregroundColor: Colors.white,
-//                   ),
-//                   onPressed: () {
-//                     Navigator.pushNamed(context, '/home');
-//                   },
-//                   child: const Text('Entrar'),
-//                 ),
-//               ),
-//               SizedBox(
-//                 width: double.infinity,
-//                 child: TextButton(
-//                   onPressed: () {
-//                     Navigator.pushNamed(context, '/signup');
-//                   },
-//                   child: const Text('Criar conta'),
-//                 )
-//               )
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../provider/login_provider.dart';
+import '../../provider/forgot_password_provider.dart';
+import '../../provider/login_provider.dart';
+import '../widgets/forgot_password_modal.dart';
 
 class LoginPage extends StatelessWidget {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  LoginPage({super.key});
+  LoginPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -100,18 +21,15 @@ class LoginPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/logo_check_van.png',
-                height: 120,
-              ),
+              Image.asset('assets/logo_check_van.png', height: 120),
               const SizedBox(height: 24),
-              Text(
+              const Text(
                 'Entre na sua conta',
-                overflow: TextOverflow.fade,
-                maxLines: 1,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               const SizedBox(height: 24),
+
+              // Email
               TextField(
                 controller: emailController,
                 decoration: const InputDecoration(
@@ -122,6 +40,8 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+
+              // Senha
               TextField(
                 controller: passwordController,
                 obscureText: true,
@@ -132,8 +52,37 @@ class LoginPage extends StatelessWidget {
                   ),
                 ),
               ),
+
+              // "Esqueci a senha" link
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => ChangeNotifierProvider(
+                        create: (_) => ForgotPasswordProvider(),
+                        child: const ForgotPasswordModal(),
+                      ),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    alignment: Alignment.centerLeft,
+                  ),
+                  child: Text(
+                    'Esqueci a senha',
+                    style: TextStyle(
+                      color: Color(0xFF0000EE),
+                    ),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 24),
-              const SizedBox(height: 24),
+
+              // Botão Entrar / Loading
               provider.isLoading
                   ? const CircularProgressIndicator()
                   : ElevatedButton(
@@ -142,11 +91,9 @@ class LoginPage extends StatelessWidget {
                     emailController.text,
                     passwordController.text,
                   );
-
                   if (success && context.mounted) {
                     Navigator.pushReplacementNamed(context, '/home');
                   } else {
-                    // ajustar essa mensagem de erro
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(provider.error ?? 'Erro inesperado')),
                     );
@@ -154,18 +101,19 @@ class LoginPage extends StatelessWidget {
                 },
                 child: const Text('Entrar'),
               ),
-              // SizedBox(
+
+              const SizedBox(height: 16),
+
+              // Criar conta
               provider.isLoading
-                  ? const SizedBox(height: 16)
+                  ? const SizedBox.shrink()
                   : SizedBox(
                 width: double.infinity,
                 child: TextButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/signup');
-                  },
+                  onPressed: () => Navigator.pushNamed(context, '/signup'),
                   child: const Text('Criar conta'),
-                )
-              )
+                ),
+              ),
             ],
           ),
         ),
@@ -173,4 +121,3 @@ class LoginPage extends StatelessWidget {
     );
   }
 }
-

@@ -6,6 +6,7 @@ class AppColors {
   static const Color azulClaro = Color(0xFF2EBBF2);  // realce
   static const Color cinza = Color(0xFF7B8591);      // texto secundário
   static const Color verdeSucesso = Color(0xFF27AE60); // feedback positivo
+  static const Color cinzaClaro = Color(0xFFEEEEEE);
 }
 
 class AppTheme {
@@ -22,7 +23,7 @@ class AppTheme {
         onError: Colors.white,
         background: Colors.white,
         onBackground: AppColors.azulEscuro,
-        surface: AppColors.azulClaro,
+        surface: AppColors.cinzaClaro,
         onSurface: AppColors.azulEscuro,
       ),
       scaffoldBackgroundColor: Colors.white,
