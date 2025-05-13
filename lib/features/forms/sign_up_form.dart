@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../provider/login_provider.dart';
 import '../../provider/sign_up_provider.dart';
 import '../pages/home_page.dart';
 
@@ -105,7 +106,7 @@ class _SignUpFormState extends State<SignUpForm> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Campo obrigatório';
-                  if (value.length < 6) return 'Senha muito curta';
+                  if (value.length < 3) return 'Senha muito curta';
                   return null;
                 },
               ),
@@ -192,32 +193,45 @@ class _SignUpFormState extends State<SignUpForm> {
                     ),
                   ),
                   onPressed: () async {
-                    if (!_formKey.currentState!.validate()) return;
-                    final success = await provider.signUp(
-                      name: _nameController.text,
-                      phone: _phoneController.text,
-                      email: _emailController.text,
-                      password: _passwordController.text,
-                      birthDate: _birthDateController.text,
-                      driverLicense: _isDriver ? _cnhController.text : null,
-                    );
-                    if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Cadastro realizado com sucesso!')),
-                      );
-                      _formKey.currentState!.reset();
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => const HomePage(initialIndex: 2),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(provider.error ?? 'Erro no cadastro')),
-                      );
-                    }
+                  if (!_formKey.currentState!.validate()) return;
+
+                  // 1) tenta cadastrar
+                  final signUpSuccess = await context.read<SignUpProvider>().signUp(
+                  name: _nameController.text,
+                  phone: _phoneController.text,
+                  email: _emailController.text,
+                  password: _passwordController.text,
+                  birthDate: _birthDateController.text,
+                  driverLicense: _isDriver ? _cnhController.text : null,
+                  );
+
+                  if (!signUpSuccess) {
+                  // mostra erro de cadastro
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(context.read<SignUpProvider>().error!)));
+                  return;
+                  }
+
+                  // 2) se cadastrou, tenta logar
+                  final loginProvider = context.read<LoginProvider>();
+                  final loginSuccess = await loginProvider.login(
+                  _emailController.text,
+                  _passwordController.text,
+                  );
+
+                  if (!loginSuccess) {
+                  // mostra erro de login (raríssimo, mas pode acontecer)
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(loginProvider.error!)));
+                  return;
+                  }
+
+                  // 3) tudo ok, navega pra Home
+                  Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 2)),
+                  );
                   },
-                  child: const Text('Cadastrar'),
+                child: const Text('Cadastrar'),
                 ),
               ),
             ],
