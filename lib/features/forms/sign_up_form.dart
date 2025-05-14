@@ -93,6 +93,8 @@ class _SignUpFormState extends State<SignUpForm> {
                 },
               ),
 
+              const SizedBox(height: 2),
+
               // Senha
               TextFormField(
                 controller: _passwordController,
@@ -225,7 +227,9 @@ class _SignUpFormState extends State<SignUpForm> {
                       .showSnackBar(SnackBar(content: Text(loginProvider.error!)));
                   return;
                   }
-
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Conta criada com sucesso')),
+                  );
                   // 3) tudo ok, navega pra Home
                   Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 2)),
