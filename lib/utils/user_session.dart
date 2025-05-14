@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../model/driver_model.dart';
 import '../model/user_model.dart';
 
 class UserSession {

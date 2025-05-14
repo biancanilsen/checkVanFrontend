@@ -24,19 +24,26 @@ class _ForgotPasswordModalState extends State<ForgotPasswordModal> {
     final provider = context.watch<ForgotPasswordProvider>();
 
     return AlertDialog(
-      title: const Text('Email'),
-      content: TextField(
-        controller: _emailController,
-        decoration: const InputDecoration(
-          labelText: 'Email',
-          border: OutlineInputBorder(),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+      title: Text(
+        'Email',
+        style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600
+        ),
+      ),
+      content: SizedBox(
+        width: 300,  // largura fixa
+        child: TextField(
+          controller: _emailController,
+          maxLines: 1,
+          decoration: const InputDecoration(
+            labelText: 'Email',
+            border: OutlineInputBorder(),
+          ),
         ),
       ),
       actions: [
-        // TextButton(
-        //   onPressed: () => Navigator.of(context).pop(),
-        //   child: const Text('Cancelar'),
-        // ),
         ElevatedButton(
           onPressed: provider.isLoading
               ? null

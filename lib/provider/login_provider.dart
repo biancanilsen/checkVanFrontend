@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../model/driver_model.dart';
 import '../model/user_model.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
