@@ -20,6 +20,9 @@ class _MyProfileFormState extends State<MyProfileForm> {
   final _birthDateController = TextEditingController();
   final _confirmSenhaController = TextEditingController();
   bool _senhasIguais = true;
+  bool _obscureSenha = true;
+  bool _obscureConfirmSenha = true;
+
 
   late int _userId;
   String? _userRole;
@@ -107,6 +110,9 @@ class _MyProfileFormState extends State<MyProfileForm> {
         const SnackBar(content: Text('Perfil atualizado!')),
       );
 
+      _senhaController.clear();
+      _confirmSenhaController.clear();
+
       await Future.delayed(const Duration(milliseconds: 1000));
 
       final tabController = DefaultTabController.of(context);
@@ -146,28 +152,24 @@ class _MyProfileFormState extends State<MyProfileForm> {
               const SizedBox(height: 16),
               _buildDateField(),
               const SizedBox(height: 16),
-              // Senha não obrigatória
-              // TextFormField(
-              //   controller: _senhaController,
-              //   obscureText: true,
-              //   keyboardType: TextInputType.visiblePassword,
-              //   decoration: const InputDecoration(
-              //     labelText: 'Senha',
-              //     hintText: '******',
-              //     border: OutlineInputBorder(
-              //       borderRadius: BorderRadius.all(Radius.circular(16)),
-              //     ),
-              //   ),
-              // ),
-              // Senha
+              /// Senha
               TextFormField(
                 controller: _senhaController,
-                obscureText: true,
-                decoration: const InputDecoration(
+                obscureText: _obscureSenha,
+                decoration: InputDecoration(
                   labelText: 'Senha',
-                  hintText: '******',
-                  border: OutlineInputBorder(
+                  border: const OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(16)),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureSenha ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureSenha = !_obscureSenha;
+                      });
+                    },
                   ),
                 ),
                 onChanged: (_) => _validatePasswords(),
@@ -175,20 +177,30 @@ class _MyProfileFormState extends State<MyProfileForm> {
 
               const SizedBox(height: 16),
 
-// Confirmar Senha
+              // Confirmar Senha
               TextFormField(
                 controller: _confirmSenhaController,
-                obscureText: true,
+                obscureText: _obscureConfirmSenha,
                 decoration: InputDecoration(
                   labelText: 'Confirmar Senha',
-                  hintText: '******',
                   border: const OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(16)),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureConfirmSenha ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureConfirmSenha = !_obscureConfirmSenha;
+                      });
+                    },
                   ),
                   errorText: _senhasIguais ? null : 'As senhas não coincidem',
                 ),
                 onChanged: (_) => _validatePasswords(),
               ),
+
 
               const SizedBox(height: 16),
               if (_userRole == 'driver') ...[
