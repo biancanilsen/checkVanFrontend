@@ -18,6 +18,8 @@ class _MyProfileFormState extends State<MyProfileForm> {
   final _senhaController = TextEditingController();
   final _licenseController = TextEditingController();
   final _birthDateController = TextEditingController();
+  final _confirmSenhaController = TextEditingController();
+  bool _senhasIguais = true;
 
   late int _userId;
   String? _userRole;
@@ -54,12 +56,20 @@ class _MyProfileFormState extends State<MyProfileForm> {
     }
   }
 
+  void _validatePasswords() {
+    final iguais = _senhaController.text == _confirmSenhaController.text;
+    setState(() {
+      _senhasIguais = iguais;
+    });
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _senhaController.dispose();
+    _confirmSenhaController.dispose();
     _licenseController.dispose();
     _birthDateController.dispose();
     super.dispose();
@@ -137,10 +147,22 @@ class _MyProfileFormState extends State<MyProfileForm> {
               _buildDateField(),
               const SizedBox(height: 16),
               // Senha não obrigatória
+              // TextFormField(
+              //   controller: _senhaController,
+              //   obscureText: true,
+              //   keyboardType: TextInputType.visiblePassword,
+              //   decoration: const InputDecoration(
+              //     labelText: 'Senha',
+              //     hintText: '******',
+              //     border: OutlineInputBorder(
+              //       borderRadius: BorderRadius.all(Radius.circular(16)),
+              //     ),
+              //   ),
+              // ),
+              // Senha
               TextFormField(
                 controller: _senhaController,
                 obscureText: true,
-                keyboardType: TextInputType.visiblePassword,
                 decoration: const InputDecoration(
                   labelText: 'Senha',
                   hintText: '******',
@@ -148,7 +170,26 @@ class _MyProfileFormState extends State<MyProfileForm> {
                     borderRadius: BorderRadius.all(Radius.circular(16)),
                   ),
                 ),
+                onChanged: (_) => _validatePasswords(),
               ),
+
+              const SizedBox(height: 16),
+
+// Confirmar Senha
+              TextFormField(
+                controller: _confirmSenhaController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Confirmar Senha',
+                  hintText: '******',
+                  border: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(16)),
+                  ),
+                  errorText: _senhasIguais ? null : 'As senhas não coincidem',
+                ),
+                onChanged: (_) => _validatePasswords(),
+              ),
+
               const SizedBox(height: 16),
               if (_userRole == 'driver') ...[
                 _buildField(_licenseController, 'CNH'),
@@ -160,7 +201,7 @@ class _MyProfileFormState extends State<MyProfileForm> {
                   : SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _submitForm,
+                  onPressed: _senhasIguais ? _submitForm : null,
                   child: const Text('Atualizar perfil'),
                 ),
               ),

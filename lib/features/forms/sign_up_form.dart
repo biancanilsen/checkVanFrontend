@@ -124,22 +124,23 @@ class _SignUpFormState extends State<SignUpForm> {
                     borderRadius: BorderRadius.all(Radius.circular(16)),
                   ),
                 ),
-                validator: (value) => value == null || value.isEmpty ? 'Campo obrigatório' : null,
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Campo obrigatório' : null,
                 onTap: () async {
-                  // TODO: ver como deixar em pt-BR
                   final picked = await showDatePicker(
                     context: context,
                     initialDate: _birthDate ?? DateTime.now(),
                     firstDate: DateTime(1900),
                     lastDate: DateTime.now(),
+                    locale: const Locale('pt', 'BR'),
                   );
                   if (picked != null) {
                     setState(() {
                       _birthDate = picked;
-                      final y = picked.year;
-                      final m = picked.month.toString().padLeft(2, '0');
                       final d = picked.day.toString().padLeft(2, '0');
-                      _birthDateController.text = '$y-$m-$d';
+                      final m = picked.month.toString().padLeft(2, '0');
+                      final y = picked.year;
+                      _birthDateController.text = '$d/$m/$y';
                     });
                   }
                 },
@@ -203,8 +204,10 @@ class _SignUpFormState extends State<SignUpForm> {
                   phone: _phoneController.text,
                   email: _emailController.text,
                   password: _passwordController.text,
-                  birthDate: _birthDateController.text,
-                  driverLicense: _isDriver ? _cnhController.text : null,
+                    birthDate: _birthDate != null
+                        ? '${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2, '0')}-${_birthDate!.day.toString().padLeft(2, '0')}'
+                        : '',
+                    driverLicense: _isDriver ? _cnhController.text : null,
                   );
 
                   if (!signUpSuccess) {
