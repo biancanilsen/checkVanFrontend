@@ -51,9 +51,15 @@ class _HomeGuardianView extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  HomeMenuButton(icon: Icons.school, label: 'Alunos'),
-                  HomeMenuButton(icon: Icons.receipt_long, label: 'Boletos'),
-                  HomeMenuButton(icon: Icons.alt_route, label: 'Rotas'),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/students');
+                    },
+                    child: const HomeMenuButton(icon: Icons.school, label: 'Alunos'),
+                  ),
+
+                  HomeMenuButton(icon: Icons.receipt_long, label: 'Meus boletos'),
+                  HomeMenuButton(icon: Icons.check, label: 'Presença'),
                 ],
               ),
             ),

@@ -235,7 +235,7 @@ class _SignUpFormState extends State<SignUpForm> {
                   );
                   // 3) tudo ok, navega pra Home
                   Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const HomePage(initialIndex: 2)),
+                  MaterialPageRoute(builder: (_) => const HomePage()),
                   );
                   },
                 child: const Text('Cadastrar'),

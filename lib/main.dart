@@ -7,7 +7,9 @@ import 'core/theme.dart';
 import 'features/forms/my_profile_form.dart';
 import 'features/pages/home_page.dart';
 import 'features/pages/login_page.dart';
+import 'features/pages/my_profile.dart';
 import 'features/pages/signup_page.dart';
+import 'features/pages/students_page.dart';
 
 void main() {
   runApp(
@@ -43,9 +45,10 @@ class MyApp extends StatelessWidget {
         '/home': (_) => const HomePage(),
         '/my_profile': (context) => const Scaffold(
           body: SafeArea(
-            child: MyProfileForm(),
+            child: MyProfile(),
           ),
         ),
+        '/students': (context) => const StudentsPage(),
 
       },
     );
