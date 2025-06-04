@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'package:provider/provider.dart';
 import 'core/theme.dart';
+import 'features/forms/my_profile_form.dart';
 import 'features/pages/home_page.dart';
 import 'features/pages/login_page.dart';
 import 'features/pages/signup_page.dart';
@@ -39,7 +40,13 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (_) => LoginPage(),
         '/signup': (_) => const SignUpPage(),
-        '/home': (_) => const HomePage()
+        '/home': (_) => const HomePage(),
+        '/my_profile': (context) => const Scaffold(
+          body: SafeArea(
+            child: MyProfileForm(),
+          ),
+        ),
+
       },
     );
   }

@@ -23,10 +23,6 @@ class UserService {
       if (birthDate != null) 'birth_date': birthDate.toIso8601String(),
     };
 
-    print('🔼 Enviando dados para /user/update:');
-    print('Token: Bearer $token');
-    print('Body: ${jsonEncode(body)}');
-
     final response = await http.put(
       Uri.parse(Endpoints.updateUser),
       headers: {
@@ -35,8 +31,6 @@ class UserService {
       },
       body: jsonEncode(body),
     );
-
-    print('🔽 Resposta [${response.statusCode}]: ${response.body}');
 
     return response.statusCode == 200;
   }
