@@ -49,10 +49,10 @@ class _MyProfileFormState extends State<MyProfileForm> {
         _emailController.text = user.email ?? '';
         _licenseController.text = user.driverLicense ?? '';
         if (_birthDate != null) {
-          final y = _birthDate!.year;
-          final m = _birthDate!.month.toString().padLeft(2, '0');
           final d = _birthDate!.day.toString().padLeft(2, '0');
-          _birthDateController.text = '$y-$m-$d';
+          final m = _birthDate!.month.toString().padLeft(2, '0');
+          final y = _birthDate!.year;
+          _birthDateController.text = '$d/$m/$y';
         }
         _isLoaded = true;
       });
@@ -240,7 +240,7 @@ class _MyProfileFormState extends State<MyProfileForm> {
           // TODO: ver como deixar em pt-BR
           context: context,
           initialDate: _birthDate != null ? _birthDate! : DateTime.now(),
-          firstDate: DateTime.now(),
+          firstDate: DateTime(1900),
           lastDate: DateTime.now(),
           builder: (context, child) {
             return Theme(
@@ -254,10 +254,10 @@ class _MyProfileFormState extends State<MyProfileForm> {
         if (picked != null) {
           setState(() {
             _birthDate = picked;
-            final y = picked.year;
-            final m = picked.month.toString().padLeft(2, '0');
             final d = picked.day.toString().padLeft(2, '0');
-            _birthDateController.text = '$y-$m-$d';
+            final m = picked.month.toString().padLeft(2, '0');
+            final y = picked.year;
+            _birthDateController.text = '$d/$m/$y';
           });
         }
       },
