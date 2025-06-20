@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
             child: MyProfile(),
           ),
         ),
-        '/students': (context) => const StudentsPage(),
+        '/students': (context) => const StudentPage(),
 
       },
     );
