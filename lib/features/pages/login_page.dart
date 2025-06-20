@@ -53,7 +53,6 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
 
-              // "Esqueci a senha" link
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerLeft,

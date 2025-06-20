@@ -5,20 +5,20 @@ import '../../utils/user_session.dart';
 import '../forms/home_form.dart';
 import '../widgets/home_header.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeDriver extends StatelessWidget {
+  const HomeDriver({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => HomeProvider(),
-      child: const _HomeScreenView(),
+      child: const _HomeDriverView(),
     );
   }
 }
 
-class _HomeScreenView extends StatelessWidget {
-  const _HomeScreenView();
+class _HomeDriverView extends StatelessWidget {
+  const _HomeDriverView();
 
   void _logout(BuildContext context) async {
     await UserSession.signOutUser();
@@ -50,7 +50,12 @@ class _HomeScreenView extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  HomeMenuButton(icon: Icons.school, label: 'Alunos'),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/students');
+                    },
+                    child: HomeMenuButton(icon: Icons.school, label: 'Alunos'),
+                  ),
                   HomeMenuButton(icon: Icons.receipt_long, label: 'Boletos'),
                   HomeMenuButton(icon: Icons.alt_route, label: 'Rotas'),
                 ],

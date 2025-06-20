@@ -3,7 +3,7 @@ import 'package:check_van_frontend/model/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../network/endpoints.dart';
-import '../utils/user_session.dart';  // se for armazenar token, remover se não usar
+import '../utils/user_session.dart';
 
 class SignUpProvider extends ChangeNotifier {
   bool isLoading = false;
