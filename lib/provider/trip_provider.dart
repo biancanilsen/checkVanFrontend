@@ -14,8 +14,6 @@ class TripProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // lib/provider/trip_provider.dart
-
   Future<void> getTrips() async {
     _isLoading = true;
     _error = null;
@@ -30,10 +28,8 @@ class TripProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        // CORREÇÃO: AGORA APENAS UMA DECODIFICAÇÃO É NECESSÁRIA
         final data = jsonDecode(response.body);
 
-        // O resto da sua lógica robusta para ler os dados continua igual
         List<dynamic> tripListJson = [];
         if (data is Map && data.containsKey('trips')) {
           tripListJson = data['trips'];
@@ -70,7 +66,6 @@ class TripProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // Converte TimeOfDay para String "HH:mm"
       final departure = '${departureTime.hour.toString().padLeft(2, '0')}:${departureTime.minute.toString().padLeft(2, '0')}';
       final arrival = '${arrivalTime.hour.toString().padLeft(2, '0')}:${arrivalTime.minute.toString().padLeft(2, '0')}';
 
@@ -91,7 +86,7 @@ class TripProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
-        await getTrips(); // Recarrega a lista após o sucesso
+        await getTrips();
         return true;
       } else {
         final data = jsonDecode(response.body);

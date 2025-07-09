@@ -46,7 +46,6 @@ class _SignUpFormState extends State<SignUpForm> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Nome
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
@@ -59,7 +58,6 @@ class _SignUpFormState extends State<SignUpForm> {
                 validator: (value) => value == null || value.isEmpty ? 'Campo obrigatório' : null,
               ),
 
-              // Telefone
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
@@ -73,7 +71,6 @@ class _SignUpFormState extends State<SignUpForm> {
                 validator: (value) => value == null || value.isEmpty ? 'Campo obrigatório' : null,
               ),
 
-              // Email
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -95,7 +92,6 @@ class _SignUpFormState extends State<SignUpForm> {
 
               const SizedBox(height: 2),
 
-              // Senha
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
@@ -113,7 +109,6 @@ class _SignUpFormState extends State<SignUpForm> {
                 },
               ),
 
-              // Data de Nascimento com DatePicker
               TextFormField(
                 controller: _birthDateController,
                 readOnly: true,
@@ -146,7 +141,6 @@ class _SignUpFormState extends State<SignUpForm> {
                 },
               ),
 
-              // CNH (visível apenas para motorista)
               Row(
                 children: [
                   Switch(
@@ -181,7 +175,6 @@ class _SignUpFormState extends State<SignUpForm> {
 
               const SizedBox(height: 24),
 
-              // Botão Cadastrar / Loading
               provider.isLoading
                   ? const CircularProgressIndicator()
                   : SizedBox(
@@ -198,7 +191,6 @@ class _SignUpFormState extends State<SignUpForm> {
                   onPressed: () async {
                   if (!_formKey.currentState!.validate()) return;
 
-                  // 1) tenta cadastrar
                   final signUpSuccess = await context.read<SignUpProvider>().signUp(
                   name: _nameController.text,
                   phone: _phoneController.text,
@@ -211,13 +203,11 @@ class _SignUpFormState extends State<SignUpForm> {
                   );
 
                   if (!signUpSuccess) {
-                  // mostra erro de cadastro
                   ScaffoldMessenger.of(context)
                       .showSnackBar(SnackBar(content: Text(context.read<SignUpProvider>().error!)));
                   return;
                   }
 
-                  // 2) se cadastrou, tenta logar
                   final loginProvider = context.read<LoginProvider>();
                   final loginSuccess = await loginProvider.login(
                   _emailController.text,
@@ -225,7 +215,6 @@ class _SignUpFormState extends State<SignUpForm> {
                   );
 
                   if (!loginSuccess) {
-                  // mostra erro de login (raríssimo, mas pode acontecer)
                   ScaffoldMessenger.of(context)
                       .showSnackBar(SnackBar(content: Text(loginProvider.error!)));
                   return;
@@ -233,7 +222,6 @@ class _SignUpFormState extends State<SignUpForm> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Conta criada com sucesso')),
                   );
-                  // 3) tudo ok, navega pra Home
                   Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (_) => const HomePage()),
                   );

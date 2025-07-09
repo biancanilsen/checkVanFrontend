@@ -37,19 +37,16 @@ class _StudentFormState extends State<StudentForm> {
   }
 
   void _addStudent() {
-    // 1. Valida o formulário
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    // 2. Chama o provider
     Provider.of<StudentProvider>(context, listen: false).addStudent(
       _nameController.text,
       _birthDate!,
       _selectedGender!,
     );
 
-    // 3. Limpa os campos após o envio
     _formKey.currentState?.reset();
     _nameController.clear();
     _birthDateController.clear();
@@ -76,7 +73,6 @@ class _StudentFormState extends State<StudentForm> {
           const Text('Adicionar aluno', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
 
-          // Campo Nome
           TextFormField(
             controller: _nameController,
             decoration: const InputDecoration(labelText: 'Nome completo'),
@@ -91,7 +87,6 @@ class _StudentFormState extends State<StudentForm> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Campo Data de Nascimento
               Expanded(
                 child: TextFormField(
                   controller: _birthDateController,
@@ -108,7 +103,6 @@ class _StudentFormState extends State<StudentForm> {
               ),
               const SizedBox(width: 12),
 
-              // Campo Gênero
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: _selectedGender,

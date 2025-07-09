@@ -49,7 +49,6 @@ class _TripFormState extends State<TripForm> {
         endingPoint: _endPointController.text,
       ).then((success) {
         if (success) {
-          // Limpa o formulário
           _formKey.currentState!.reset();
           _startPointController.clear();
           _endPointController.clear();
@@ -120,7 +119,6 @@ class _TripFormState extends State<TripForm> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              // Se estiver carregando, onPressed é null (desabilitado), senão, usa _submitForm
               onPressed: tripProvider.isLoading ? null : _submitForm,
               child: tripProvider.isLoading
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))

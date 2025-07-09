@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-/// Modelo de usuário retornado pelo backend
 class UserModel {
   final int id;
   final String name;
@@ -20,7 +19,6 @@ class UserModel {
     required this.birthDate,
   });
 
-  /// Constrói [UserModel] a partir de um [Map] JSON
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'] as int,
@@ -33,7 +31,6 @@ class UserModel {
     );
   }
 
-  /// Converte instância para JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -46,7 +43,6 @@ class UserModel {
     };
   }
 
-  /// Serializa para string JSON
   String toJsonString() => jsonEncode(toJson());
 
   @override

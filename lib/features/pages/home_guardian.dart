@@ -45,7 +45,6 @@ class _HomeGuardianView extends StatelessWidget {
           children: [
             HomeHeader(onLogout: () => _logout(context)),
 
-            // Menu
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
               child: Row(
@@ -64,7 +63,6 @@ class _HomeGuardianView extends StatelessWidget {
               ),
             ),
 
-            // Próxima Rota
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Align(
@@ -74,7 +72,6 @@ class _HomeGuardianView extends StatelessWidget {
             ),
             HomeRouteCard(),
 
-            // Boletos
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(

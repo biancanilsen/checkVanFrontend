@@ -39,7 +39,6 @@ class StudentProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // 3. Usar a URL do endpoint escolhido na chamada HTTP
       final response = await http.get(
         Uri.parse(endpointUrl),
         headers: {

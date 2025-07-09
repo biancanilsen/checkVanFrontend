@@ -103,7 +103,6 @@ class StudentTable extends StatelessWidget {
                             title: const Text('Editar Aluno'),
                             content: SizedBox(
                               width: MediaQuery.of(context).size.width * 0.9,
-                              // height: 320,
                               child: EditStudentForm(student: s),
                             ),
                             actions: [],

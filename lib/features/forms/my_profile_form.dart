@@ -152,7 +152,6 @@ class _MyProfileFormState extends State<MyProfileForm> {
               const SizedBox(height: 16),
               _buildDateField(),
               const SizedBox(height: 16),
-              /// Senha
               TextFormField(
                 controller: _senhaController,
                 obscureText: _obscureSenha,
@@ -177,7 +176,6 @@ class _MyProfileFormState extends State<MyProfileForm> {
 
               const SizedBox(height: 16),
 
-              // Confirmar Senha
               TextFormField(
                 controller: _confirmSenhaController,
                 obscureText: _obscureConfirmSenha,

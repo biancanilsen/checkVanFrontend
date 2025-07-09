@@ -29,7 +29,6 @@ class LoginPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Email
               TextField(
                 controller: emailController,
                 decoration: const InputDecoration(
@@ -41,7 +40,6 @@ class LoginPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Senha
               TextField(
                 controller: passwordController,
                 obscureText: true,
@@ -81,7 +79,6 @@ class LoginPage extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Botão Entrar / Loading
               provider.isLoading
                   ? const CircularProgressIndicator()
                   : ElevatedButton(
@@ -103,7 +100,6 @@ class LoginPage extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Criar conta
               provider.isLoading
                   ? const SizedBox.shrink()
                   : SizedBox(

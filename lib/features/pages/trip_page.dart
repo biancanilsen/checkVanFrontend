@@ -14,7 +14,6 @@ class _TripPageState extends State<TripPage> {
   @override
   void initState() {
     super.initState();
-    // Usa um callback pós-frame para garantir que o provider seja acessado após a construção inicial.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<TripProvider>(context, listen: false).getTrips();
     });
@@ -32,8 +31,6 @@ class _TripPageState extends State<TripPage> {
           children: [
             const TripForm(),
             const SizedBox(height: 24),
-            const Text("Viagens Cadastradas", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const Divider(),
             Expanded(
               child: Consumer<TripProvider>(
                 builder: (context, provider, child) {
@@ -44,36 +41,34 @@ class _TripPageState extends State<TripPage> {
                     return Center(child: Text(provider.error!));
                   }
                   if (provider.trips.isEmpty) {
-                    return const Center(child: Text('Nenhuma viagem cadastrada.'));
+                    return const Center(child: Text('Carregando...'));
                   }
 
-                  // A Lista de Viagens
                   return ListView.builder(
                     itemCount: provider.trips.length,
                     itemBuilder: (context, index) {
                       final trip = provider.trips[index];
-                      // Usando ExpansionTile para o efeito "Acordeão"
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         child: ExpansionTile(
                           title: Text('${trip.startingPoint} -> ${trip.endingPoint}'),
-                          subtitle: Text('Saída: ${trip.departureTime}'),
+                          subtitle: Text('Saída: ${trip.departureTime} | Chegada ${trip.arrivalTime}'),
                           children: <Widget>[
-                            ListTile(
-                              title: const Text('Ponto de Partida'),
-                              subtitle: Text(trip.startingPoint),
-                              leading: const Icon(Icons.trip_origin),
-                            ),
-                            ListTile(
-                              title: const Text('Ponto de Chegada'),
-                              subtitle: Text(trip.endingPoint),
-                              leading: const Icon(Icons.location_on),
-                            ),
-                            ListTile(
-                              title: const Text('Horário de Chegada'),
-                              subtitle: Text(trip.arrivalTime),
-                              leading: const Icon(Icons.timer_outlined),
-                            ),
+                            // ListTile(
+                        // title: const Text('Ponto de Partida'),
+                        // subtitle: Text(trip.startingPoint),
+                          // leading: const Icon(Icons.trip_origin),
+                            //),
+                        //ListTile(
+                        //   title: const Text('Ponto de Chegada'),
+                        //  subtitle: Text(trip.endingPoint),
+                          //  leading: const Icon(Icons.location_on),
+                            // ),
+                        // ListTile(
+                        // title: const Text('Horário de Chegada'),
+                        // subtitle: Text(trip.arrivalTime),
+                          // leading: const Icon(Icons.timer_outlined),
+                            // ),
                             // Você pode adicionar botões de editar/deletar aqui
                             ButtonBar(
                               children: [

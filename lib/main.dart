@@ -18,7 +18,6 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        // 2. ADICIONE OS PROVIDERS À LISTA
         ChangeNotifierProvider(create: (_) => LoginProvider()),
         ChangeNotifierProvider(create: (_) => StudentProvider()),
         ChangeNotifierProvider(create: (_) => TripProvider()),
