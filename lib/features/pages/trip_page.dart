@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/trip_provider.dart';
 import '../forms/trip_form.dart';
+import '../widgets/trip_expansion_tile.dart';
 
 class TripPage extends StatefulWidget {
   const TripPage({super.key});
@@ -48,37 +49,7 @@ class _TripPageState extends State<TripPage> {
                     itemCount: provider.trips.length,
                     itemBuilder: (context, index) {
                       final trip = provider.trips[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        child: ExpansionTile(
-                          title: Text('${trip.startingPoint} -> ${trip.endingPoint}'),
-                          subtitle: Text('Saída: ${trip.departureTime} | Chegada ${trip.arrivalTime}'),
-                          children: <Widget>[
-                            // ListTile(
-                        // title: const Text('Ponto de Partida'),
-                        // subtitle: Text(trip.startingPoint),
-                          // leading: const Icon(Icons.trip_origin),
-                            //),
-                        //ListTile(
-                        //   title: const Text('Ponto de Chegada'),
-                        //  subtitle: Text(trip.endingPoint),
-                          //  leading: const Icon(Icons.location_on),
-                            // ),
-                        // ListTile(
-                        // title: const Text('Horário de Chegada'),
-                        // subtitle: Text(trip.arrivalTime),
-                          // leading: const Icon(Icons.timer_outlined),
-                            // ),
-                            // Você pode adicionar botões de editar/deletar aqui
-                            ButtonBar(
-                              children: [
-                                TextButton(onPressed: () {}, child: const Text('EDITAR')),
-                                TextButton(onPressed: () {}, child: const Text('DELETAR')),
-                              ],
-                            )
-                          ],
-                        ),
-                      );
+                      return TripExpansionTile(trip: trip);
                     },
                   );
                 },

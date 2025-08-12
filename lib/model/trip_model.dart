@@ -1,9 +1,13 @@
+import 'package:check_van_frontend/model/team_model.dart';
+
 class Trip {
   final int id;
   final String departureTime;
   final String arrivalTime;
   final String startingPoint;
   final String endingPoint;
+  List<Team>? teams;
+
 
   Trip({
     required this.id,
@@ -11,6 +15,7 @@ class Trip {
     required this.arrivalTime,
     required this.startingPoint,
     required this.endingPoint,
+    this.teams,
   });
 
   factory Trip.fromJson(Map<String, dynamic> json) {
