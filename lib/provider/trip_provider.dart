@@ -160,4 +160,84 @@ class TripProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // ... dentro da classe TripProvider ...
+
+  Future<void> updateTrip({
+    required int id,
+    required TimeOfDay departureTime,
+    required TimeOfDay arrivalTime,
+    required String startingPoint,
+    required String endingPoint,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      final departure = '${departureTime.hour.toString().padLeft(2, '0')}:${departureTime.minute.toString().padLeft(2, '0')}';
+      final arrival = '${arrivalTime.hour.toString().padLeft(2, '0')}:${arrivalTime.minute.toString().padLeft(2, '0')}';
+
+      final body = {
+        'id': id,
+        'departure_time': departure,
+        'arrival_time': arrival,
+        'starting_point': startingPoint,
+        'ending_point': endingPoint,
+      };
+
+      final response = await http.put(
+        Uri.parse(Endpoints.updateTrip),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        await getTrips(); // Recarrega a lista
+      } else {
+        final data = jsonDecode(response.body);
+        _error = data['message'] ?? 'Erro ao atualizar viagem.';
+        notifyListeners(); // Notifica o erro
+      }
+    } catch (e) {
+      _error = 'Erro de conexão: ${e.toString()}';
+      notifyListeners();
+    }
+    // o getTrips() já define isLoading=false e notifica
+  }
+
+  Future<void> deleteTrip(int tripId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      final response = await http.delete(
+        Uri.parse(Endpoints.deleteTrip),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'id': tripId}),
+      );
+
+      if (response.statusCode == 200) {
+        await getTrips(); // Recarrega a lista
+      } else {
+        final data = jsonDecode(response.body);
+        _error = data['message'] ?? 'Erro ao deletar viagem.';
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Erro de conexão: ${e.toString()}';
+      notifyListeners();
+    }
+  }
 }

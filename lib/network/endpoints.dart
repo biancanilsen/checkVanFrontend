@@ -20,6 +20,8 @@ class Endpoints {
   // trip
   static const String tripRegistration = '$baseUrl/trip/registration';
   static const String getAllTrips = '$baseUrl/trip/getAll';
+  static const String updateTrip = '$baseUrl/trip/update';
+  static const String deleteTrip = '$baseUrl/trip/delete';
 
   //team
   static const String getTeamsByTripId = '$baseUrl/trip/getBytripId';

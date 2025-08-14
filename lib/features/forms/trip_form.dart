@@ -49,16 +49,14 @@ class _TripFormState extends State<TripForm> {
         endingPoint: _endPointController.text,
       ).then((success) {
         if (success) {
-          _formKey.currentState!.reset();
-          _startPointController.clear();
-          _endPointController.clear();
-          setState(() {
-            _departureTime = null;
-            _arrivalTime = null;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Viagem adicionada com sucesso!')),
-          );
+          // Ação de sucesso: fecha o Bottom Sheet
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+          // Opcional: mostrar a mensagem de sucesso na tela anterior
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   const SnackBar(content: Text('Viagem adicionada com sucesso!')),
+          // );
         }
       });
     }
@@ -73,59 +71,67 @@ class _TripFormState extends State<TripForm> {
   Widget build(BuildContext context) {
     final tripProvider = context.watch<TripProvider>();
 
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          //const Text('Cadastrar Nova Viagem', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _startPointController,
-            decoration: const InputDecoration(labelText: 'Ponto de Partida'),
-            validator: (value) => value!.isEmpty ? 'Campo obrigatório' : null,
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _endPointController,
-            decoration: const InputDecoration(labelText: 'Ponto de Chegada'),
-            validator: (value) => value!.isEmpty ? 'Campo obrigatório' : null,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () => _pickTime(context, isDeparture: true),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Horário de Saída'),
-                    child: Text(_formatTime(_departureTime)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: InkWell(
-                  onTap: () => _pickTime(context, isDeparture: false),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Horário de Chegada'),
-                    child: Text(_formatTime(_arrivalTime)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: tripProvider.isLoading ? null : _submitForm,
-              child: tripProvider.isLoading
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Adicionar'),
+    // Envolvemos o formulário com SingleChildScrollView
+    return SingleChildScrollView(
+      // Adicionamos um padding que "empurra" o formulário para cima do teclado
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // Ocupa o mínimo de espaço vertical
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // O conteúdo do seu formulário permanece o mesmo
+            const Text('Cadastrar Nova Viagem', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _startPointController,
+              decoration: const InputDecoration(labelText: 'Ponto de Partida'),
+              validator: (value) => value!.isEmpty ? 'Campo obrigatório' : null,
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _endPointController,
+              decoration: const InputDecoration(labelText: 'Ponto de Chegada'),
+              validator: (value) => value!.isEmpty ? 'Campo obrigatório' : null,
+            ),
+            const SizedBox(height: 12),
+            // ... (Row com os campos de horário)
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _pickTime(context, isDeparture: true),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(labelText: 'Horário de Saída'),
+                      child: Text(_formatTime(_departureTime)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _pickTime(context, isDeparture: false),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(labelText: 'Horário de Chegada'),
+                      child: Text(_formatTime(_arrivalTime)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: tripProvider.isLoading ? null : _submitForm,
+                child: tripProvider.isLoading
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Adicionar'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
