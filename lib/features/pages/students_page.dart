@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../provider/school_provider.dart';
 import '../../provider/student_provider.dart';
 import '../forms/edit_student_form.dart';
 import '../forms/student_form.dart';
@@ -13,49 +14,58 @@ class StudentPage extends StatefulWidget {
 }
 
 class _StudentPageState extends State<StudentPage> {
-  final StudentProvider _studentProvider = StudentProvider();
+  // 1. REMOVA a instância local do provider daqui.
+  // final StudentProvider _studentProvider = StudentProvider(); // <-- DELETAR ESTA LINHA
 
   @override
   void initState() {
     super.initState();
-    _studentProvider.getStudents();
+    // Esta parte já está correta, pois busca os dados no provider global.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<StudentProvider>(context, listen: false).getStudents();
+      Provider.of<SchoolProvider>(context, listen: false).getSchools();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _studentProvider,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Gestão de Alunos'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
+    // 2. REMOVA o `ChangeNotifierProvider.value`. Ele não é mais necessário.
+    //    O `Consumer` e a `StudentTable` encontrarão o provider global automaticamente.
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Gestão de Alunos'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              const StudentForm(),
-              const SizedBox(height: 24),
-              Expanded(
-                child: Consumer<StudentProvider>(
-                  builder: (context, provider, child) {
-                    if (provider.isLoading && provider.students.isEmpty) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const StudentForm(),
+            const SizedBox(height: 24),
+            Expanded(
+              child: Consumer<StudentProvider>(
+                builder: (context, provider, child) {
+                  if (provider.isLoading && provider.students.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                    if (provider.error != null) {
-                      return Center(child: Text(provider.error!));
-                    }
+                  if (provider.error != null) {
+                    return Center(child: Text('Erro: ${provider.error!}'));
+                  }
 
-                    return const StudentTable();
-                  },
-                ),
+                  if (provider.students.isEmpty) {
+                    return const Center(child: Text('Nenhum aluno cadastrado.'));
+                  }
+
+                  // A StudentTable agora vai funcionar corretamente
+                  return const StudentTable();
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

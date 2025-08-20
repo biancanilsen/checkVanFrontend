@@ -73,7 +73,7 @@ class StudentProvider extends ChangeNotifier {
   }
 
 
-  Future<void> addStudent(String nome, DateTime dataNascimento, String gender) async {
+  Future<void> addStudent(String nome, DateTime dataNascimento, String gender, int schoolId, String address) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -86,10 +86,12 @@ class StudentProvider extends ChangeNotifier {
         'name': nome,
         'birth_date': DateFormat('yyyy-MM-dd').format(dataNascimento),
         'gender': gender,
+        'school_id': schoolId,
+        'address': address, // Adiciona o endereço ao corpo da requisição
       };
 
       final response = await http.post(
-        Uri.parse(Endpoints.registration),
+        Uri.parse(Endpoints.registration), // Verifique se o endpoint está correto
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
@@ -98,14 +100,17 @@ class StudentProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
-        await getStudents();
+        await getStudents(); // Atualiza a lista de alunos na tela
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao adicionar aluno.';
-        await getStudents();
+        notifyListeners();
       }
     } catch (e) {
-      _error = 'Erro de conexão ao adicionar: ${e.toString()}';
+      _error = 'Erro de conexão: ${e.toString()}';
+      notifyListeners();
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }

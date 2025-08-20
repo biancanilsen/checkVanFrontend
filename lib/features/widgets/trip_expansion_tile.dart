@@ -14,123 +14,148 @@ class TripExpansionTile extends StatefulWidget {
 
 class _TripExpansionTileState extends State<TripExpansionTile> {
   bool _hasFetched = false;
+  // 1. Variável para controlar o estado de expansão
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
-    // Usamos um Provider.of aqui para ter acesso ao provider nos botões
     final provider = Provider.of<TripProvider>(context, listen: false);
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       clipBehavior: Clip.antiAlias,
-      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
       elevation: 2,
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          collapsedBackgroundColor: Colors.grey.shade200,
-          backgroundColor: Colors.grey.shade100,
-          title: Column(
-            // Alinha o conteúdo de ambas as linhas à esquerda
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Linha para o Ponto de Partida
-              Row(
-                children: [
-                  const Icon(Icons.trip_origin, color: Colors.blueAccent, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded( // Usamos Expanded para que o texto ocupe o espaço restante
-                    child: Text(
-                      widget.trip.startingPoint,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6), // Espaçamento vertical entre as duas linhas
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              collapsedBackgroundColor: Colors.grey.shade50,
+              backgroundColor: Colors.grey.shade100,
 
-              // Linha para o Ponto de Chegada
-              Row(
+              // --- CÓDIGO DO TÍTULO QUE ESTAVA FALTANDO ---
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.location_on, color: Colors.redAccent, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      widget.trip.endingPoint,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          subtitle: Text('Saída: ${widget.trip.departureTime}'),
-
-          // --- MUDANÇA PRINCIPAL AQUI ---
-          // Adicionamos os botões na área sempre visível do Tile
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min, // Para a Row ocupar o mínimo de espaço
-            children: [
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blueGrey),
-                tooltip: 'Editar Viagem',
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                    builder: (_) => ChangeNotifierProvider.value(
-                      value: provider,
-                      child: EditTripForm(trip: widget.trip),
-                    ),
-                  );
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.redAccent),
-                tooltip: 'Deletar Viagem',
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (dialogContext) => AlertDialog(
-                      title: const Text('Confirmar Exclusão'),
-                      content: Text('Deseja realmente deletar a viagem de ${widget.trip.startingPoint} para ${widget.trip.endingPoint}?'),
-                      actions: [
-                        TextButton(child: const Text('Cancelar'), onPressed: () => Navigator.of(dialogContext).pop()),
-                        TextButton(
-                          style: TextButton.styleFrom(foregroundColor: Colors.red),
-                          child: const Text('Deletar'),
-                          onPressed: () {
-                            provider.deleteTrip(widget.trip.id);
-                            Navigator.of(dialogContext).pop();
-                          },
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.redAccent, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.trip.startingPoint,
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  );
-                },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.redAccent, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.trip.schoolName ?? 'Destino não informado',
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+
+              // --- CÓDIGO DO SUBTÍTULO ---
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text('Saída: ${widget.trip.departureTime}'),
+              ),
+
+              // --- CÓDIGO DOS BOTÕES QUE ESTAVA FALTANDO ---
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                    tooltip: 'Editar Viagem',
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                        builder: (_) => ChangeNotifierProvider.value(
+                          value: provider,
+                          child: EditTripForm(trip: widget.trip),
+                        ),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.redAccent),
+                    tooltip: 'Deletar Viagem',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (dialogContext) => AlertDialog(
+                          title: const Text('Confirmar Exclusão'),
+                          content: Text('Deseja realmente deletar a viagem de ${widget.trip.startingPoint} para ${widget.trip.schoolName ?? "destino"}?'),
+                          actions: [
+                            TextButton(child: const Text('Cancelar'), onPressed: () => Navigator.of(dialogContext).pop()),
+                            TextButton(
+                              style: TextButton.styleFrom(foregroundColor: Colors.red),
+                              child: const Text('Deletar'),
+                              onPressed: () {
+                                provider.deleteTrip(widget.trip.id);
+                                Navigator.of(dialogContext).pop();
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+
+              onExpansionChanged: (isExpanding) {
+                setState(() { _isExpanded = isExpanding; });
+                if (isExpanding && !_hasFetched) {
+                  setState(() { _hasFetched = true; });
+                  provider.getTeamsForTrip(widget.trip.id);
+                }
+              },
+              children: <Widget>[
+                _buildTeamDetails(),
+              ],
+            ),
           ),
 
-          onExpansionChanged: (isExpanding) {
-            if (isExpanding && !_hasFetched) {
-              setState(() { _hasFetched = true; });
-              provider.getTeamsForTrip(widget.trip.id);
-            }
-          },
-          // O conteúdo expansível agora é apenas para os detalhes das turmas/alunos
-          children: <Widget>[
-            _buildTeamDetails(),
-          ],
-        ),
+          // O ícone animado continua aqui
+          Positioned(
+            bottom: 6,
+            child: IgnorePointer(
+              child: AnimatedRotation(
+                turns: _isExpanded ? 0.5 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Colors.grey.shade600,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // Este método agora foca apenas em exibir as turmas e alunos
+  /// Constrói o conteúdo que aparece ao expandir o card
   Widget _buildTeamDetails() {
     return Consumer<TripProvider>(
       builder: (context, provider, child) {
@@ -138,9 +163,10 @@ class _TripExpansionTileState extends State<TripExpansionTile> {
         final teams = tripFromProvider.teams;
 
         if (provider.isLoadingTeams(widget.trip.id)) {
-          return const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Center(child: CircularProgressIndicator()),
+          return Container(
+            height: 100, // <-- Define uma altura fixa para a área de loading. Ajuste se necessário.
+            alignment: Alignment.center, // Centraliza o spinner dentro desta área de 100px.
+            child: const CircularProgressIndicator(),
           );
         }
 
@@ -151,6 +177,7 @@ class _TripExpansionTileState extends State<TripExpansionTile> {
             color: Colors.grey.shade100,
             alignment: Alignment.center,
             padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 8.0),
             child: const Text('Nenhuma turma encontrada para esta viagem.'),
           );
         }

@@ -1,4 +1,5 @@
 import 'package:check_van_frontend/provider/login_provider.dart';
+import 'package:check_van_frontend/provider/school_provider.dart';
 import 'package:check_van_frontend/provider/student_provider.dart';
 import 'package:check_van_frontend/provider/trip_provider.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => LoginProvider()),
         ChangeNotifierProvider(create: (_) => StudentProvider()),
         ChangeNotifierProvider(create: (_) => TripProvider()),
+        ChangeNotifierProvider(create: (_) => SchoolProvider()),
       ],
       child: const MyApp(),
     ),

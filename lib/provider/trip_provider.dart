@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
 import '../model/student_model.dart';
 import '../model/team_model.dart';
 import '../model/trip_model.dart';
@@ -12,15 +13,20 @@ class TripProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  // Mapa para controlar o estado de loading de cada acordeão individualmente
+  final Map<int, bool> _isLoadingTeams = {};
+
+  // Getters públicos para acessar o estado
   List<Trip> get trips => _trips;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  final Map<int, bool> _isLoadingTeams = {};
   bool isLoadingTeams(int tripId) => _isLoadingTeams[tripId] ?? false;
 
+  /// Busca a lista principal de viagens.
   Future<void> getTrips() async {
     _isLoading = true;
     _error = null;
+    notifyListeners();
 
     try {
       final token = await UserSession.getToken();
@@ -57,6 +63,7 @@ class TripProvider extends ChangeNotifier {
     }
   }
 
+  /// Busca as turmas e seus respectivos alunos para uma viagem específica (carregamento sob demanda).
   Future<void> getTeamsForTrip(int tripId) async {
     _isLoadingTeams[tripId] = true;
     notifyListeners();
@@ -65,7 +72,6 @@ class TripProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // 1. Busca a lista de turmas da viagem
       final teamsResponse = await http.get(
         Uri.parse('${Endpoints.getTeamsByTripId}/$tripId'),
         headers: {'Authorization': 'Bearer $token'},
@@ -78,7 +84,6 @@ class TripProvider extends ChangeNotifier {
           .map((json) => Team.fromJson(json))
           .toList();
 
-      // 2. Para cada turma, cria uma "promessa" de buscar seus alunos
       final studentFetchFutures = teams.map((team) async {
         final studentsResponse = await http.get(
           Uri.parse('${Endpoints.getStudentsByTeamId}/${team.id}'),
@@ -89,16 +94,13 @@ class TripProvider extends ChangeNotifier {
           final studentList = (studentsData['students'] as List)
               .map((json) => Student.fromJson(json))
               .toList();
-          // Anexa a lista de alunos ao seu objeto de turma
           team.students = studentList;
         }
         return team;
       }).toList();
 
-      // 3. Usa Future.wait para executar todas as buscas de alunos em paralelo
       final teamsWithStudents = await Future.wait(studentFetchFutures);
 
-      // 4. Atualiza o estado principal
       final tripIndex = _trips.indexWhere((trip) => trip.id == tripId);
       if (tripIndex != -1) {
         _trips[tripIndex].teams = teamsWithStudents;
@@ -112,11 +114,12 @@ class TripProvider extends ChangeNotifier {
     }
   }
 
+  /// Adiciona uma nova viagem.
   Future<bool> addTrip({
     required TimeOfDay departureTime,
     required TimeOfDay arrivalTime,
     required String startingPoint,
-    required String endingPoint,
+    required int schoolId,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -125,14 +128,15 @@ class TripProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final departure = '${departureTime.hour.toString().padLeft(2, '0')}:${departureTime.minute.toString().padLeft(2, '0')}';
-      final arrival = '${arrivalTime.hour.toString().padLeft(2, '0')}:${arrivalTime.minute.toString().padLeft(2, '0')}';
+      final now = DateTime.now();
+      final departureDateTime = DateTime(now.year, now.month, now.day, departureTime.hour, departureTime.minute).toIso8601String();
+      final arrivalDateTime = DateTime(now.year, now.month, now.day, arrivalTime.hour, arrivalTime.minute).toIso8601String();
 
       final body = {
-        'departure_time': departure,
-        'arrival_time': arrival,
+        'departure_time': departureDateTime,
+        'arrival_time': arrivalDateTime,
         'starting_point': startingPoint,
-        'ending_point': endingPoint,
+        'school_id': schoolId,
       };
 
       final response = await http.post(
@@ -150,10 +154,12 @@ class TripProvider extends ChangeNotifier {
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao adicionar viagem.';
+        notifyListeners();
         return false;
       }
     } catch (e) {
       _error = 'Erro de conexão: ${e.toString()}';
+      notifyListeners();
       return false;
     } finally {
       _isLoading = false;
@@ -161,14 +167,12 @@ class TripProvider extends ChangeNotifier {
     }
   }
 
-  // ... dentro da classe TripProvider ...
-
   Future<void> updateTrip({
     required int id,
     required TimeOfDay departureTime,
     required TimeOfDay arrivalTime,
     required String startingPoint,
-    required String endingPoint,
+    required int schoolId,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -177,15 +181,19 @@ class TripProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final departure = '${departureTime.hour.toString().padLeft(2, '0')}:${departureTime.minute.toString().padLeft(2, '0')}';
-      final arrival = '${arrivalTime.hour.toString().padLeft(2, '0')}:${arrivalTime.minute.toString().padLeft(2, '0')}';
+      // --- CORREÇÃO AQUI ---
+      // As variáveis 'departureDateTime' e 'arrivalDateTime' precisam ser
+      // criadas antes de serem usadas no 'body'.
+      final now = DateTime.now();
+      final departureDateTime = DateTime(now.year, now.month, now.day, departureTime.hour, departureTime.minute).toIso8601String();
+      final arrivalDateTime = DateTime(now.year, now.month, now.day, arrivalTime.hour, arrivalTime.minute).toIso8601String();
 
       final body = {
         'id': id,
-        'departure_time': departure,
-        'arrival_time': arrival,
+        'departure_time': departureDateTime, // Agora a variável existe
+        'arrival_time': arrivalDateTime,     // Agora a variável existe
         'starting_point': startingPoint,
-        'ending_point': endingPoint,
+        'school_id': schoolId,
       };
 
       final response = await http.put(
@@ -198,19 +206,19 @@ class TripProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        await getTrips(); // Recarrega a lista
+        await getTrips();
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao atualizar viagem.';
-        notifyListeners(); // Notifica o erro
+        notifyListeners();
       }
     } catch (e) {
       _error = 'Erro de conexão: ${e.toString()}';
       notifyListeners();
     }
-    // o getTrips() já define isLoading=false e notifica
   }
 
+  /// Deleta uma viagem.
   Future<void> deleteTrip(int tripId) async {
     _isLoading = true;
     notifyListeners();
@@ -229,7 +237,7 @@ class TripProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        await getTrips(); // Recarrega a lista
+        await getTrips();
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao deletar viagem.';
