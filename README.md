@@ -14,7 +14,7 @@ O Check Van é o aplicativo completo que conecta pais e motoristas para simplifi
     -   **Gerenciamento de Estado**: Provider
     -   **Comunicação API**: Pacote `http`
 -   **Backend**: Node.js com Express.js
--   **Banco de Dados**: PostgreSQL (ou similar) com Prisma ORM
+-   **Banco de Dados**: PostgreSQL com Prisma ORM
 -   **Autenticação**: Baseada em Token (JWT)
 
 ## Funcionalidades Implementadas
