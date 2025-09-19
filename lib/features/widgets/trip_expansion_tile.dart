@@ -97,18 +97,18 @@ class _TripExpansionTileState extends State<TripExpansionTile> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete, color: Colors.redAccent),
-                    tooltip: 'Deletar Viagem',
+                    tooltip: 'Excluir Viagem',
                     onPressed: () {
                       showDialog(
                         context: context,
                         builder: (dialogContext) => AlertDialog(
                           title: const Text('Confirmar Exclusão'),
-                          content: Text('Deseja realmente deletar a viagem de ${widget.trip.startingPoint} para ${widget.trip.schoolName ?? "destino"}?'),
+                          content: Text('Deseja realmente excluir a viagem de ${widget.trip.startingPoint} para ${widget.trip.schoolName ?? "destino"}?'),
                           actions: [
                             TextButton(child: const Text('Cancelar'), onPressed: () => Navigator.of(dialogContext).pop()),
                             TextButton(
                               style: TextButton.styleFrom(foregroundColor: Colors.red),
-                              child: const Text('Deletar'),
+                              child: const Text('Excluir'),
                               onPressed: () {
                                 provider.deleteTrip(widget.trip.id);
                                 Navigator.of(dialogContext).pop();

@@ -80,7 +80,7 @@ class _TripPageState extends State<TripPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddTripSheet,
         child: const Icon(Icons.add),
-        tooltip: 'Cadastrar Nova Viagem',
+        tooltip: 'Cadastrar nova viagem',
       ),
     );
   }

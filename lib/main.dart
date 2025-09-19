@@ -1,13 +1,14 @@
+import 'package:check_van_frontend/provider/geocoding_provider.dart';
 import 'package:check_van_frontend/provider/login_provider.dart';
 import 'package:check_van_frontend/provider/school_provider.dart';
 import 'package:check_van_frontend/provider/student_provider.dart';
+import 'package:check_van_frontend/provider/team_provider.dart';
 import 'package:check_van_frontend/provider/trip_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'package:provider/provider.dart';
 import 'core/theme.dart';
-import 'features/forms/my_profile_form.dart';
 import 'features/pages/home_page.dart';
 import 'features/pages/login_page.dart';
 import 'features/pages/my_profile.dart';
@@ -23,6 +24,8 @@ void main() {
         ChangeNotifierProvider(create: (_) => StudentProvider()),
         ChangeNotifierProvider(create: (_) => TripProvider()),
         ChangeNotifierProvider(create: (_) => SchoolProvider()),
+        ChangeNotifierProvider(create: (_) => TeamProvider()),
+        ChangeNotifierProvider(create: (_) => GeocodingProvider()),
       ],
       child: const MyApp(),
     ),

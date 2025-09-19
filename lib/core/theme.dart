@@ -32,11 +32,42 @@ class AppTheme {
         foregroundColor: Colors.white,
       ),
       inputDecorationTheme: InputDecorationTheme(
-        contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+        // Preenchimento interno do campo
+        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+
+        // Define que os campos terão uma cor de fundo
+        filled: true,
+        fillColor: Colors.grey.shade50, // Um cinza bem claro para o fundo
+
+        // Estilo da borda padrão (quando o campo está inativo)
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.0),
         ),
-        errorStyle: const TextStyle(height: 0),
+
+        // Estilo da borda quando o campo está focado (sendo digitado)
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.azulEscuro, width: 2.0),
+        ),
+
+        // Estilo da borda quando há um erro de validação
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1.0),
+        ),
+
+        // Estilo da borda quando um campo com erro está focado
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2.0),
+        ),
+
+        // Estilo do texto do label (ex: "Nome completo")
+        labelStyle: const TextStyle(color: AppColors.cinza),
+
+        // Estilo do label quando ele "flutua" para cima
+        floatingLabelStyle: const TextStyle(color: AppColors.azulEscuro),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

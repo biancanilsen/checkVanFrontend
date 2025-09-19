@@ -84,7 +84,7 @@ class _TripFormState extends State<TripForm> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Cadastrar Nova Viagem', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Cadastrar nova viagem', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
 
             TextFormField(

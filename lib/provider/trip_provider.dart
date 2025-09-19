@@ -72,29 +72,43 @@ class TripProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
+      // --- BUSCA DE TURMAS ---
       final teamsResponse = await http.get(
         Uri.parse('${Endpoints.getTeamsByTripId}/$tripId'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
-      if (teamsResponse.statusCode != 200) throw Exception('Falha ao buscar turmas');
+      if (teamsResponse.statusCode != 200) {
+        throw Exception('Falha ao buscar turmas (Cód: ${teamsResponse.statusCode})');
+      }
 
       final teamsData = jsonDecode(teamsResponse.body);
-      final List<Team> teams = (teamsData['teams'] as List)
+
+      // CORREÇÃO 1: Trata o caso de a chave 'teams' não existir no JSON
+      final List<dynamic> teamListJson = teamsData['teams'] ?? [];
+
+      final List<Team> teams = teamListJson
           .map((json) => Team.fromJson(json))
           .toList();
 
+      // --- BUSCA DE ALUNOS ---
       final studentFetchFutures = teams.map((team) async {
         final studentsResponse = await http.get(
           Uri.parse('${Endpoints.getStudentsByTeamId}/${team.id}'),
           headers: {'Authorization': 'Bearer $token'},
         );
+
         if (studentsResponse.statusCode == 200) {
           final studentsData = jsonDecode(studentsResponse.body);
-          final studentList = (studentsData['students'] as List)
+
+          // CORREÇÃO 2: Trata o caso de a chave 'students' não existir no JSON
+          final List<dynamic> studentListJson = studentsData['students'] ?? [];
+
+          final studentList = studentListJson
               .map((json) => Student.fromJson(json))
               .toList();
-          team.students = studentList;
+
+          return team.copyWith(students: studentList);
         }
         return team;
       }).toList();
@@ -107,7 +121,8 @@ class TripProvider extends ChangeNotifier {
       }
 
     } catch (e) {
-      print('Erro ao buscar turmas e alunos: $e');
+      _error = 'Erro ao buscar detalhes da viagem: ${e.toString()}';
+      print(_error);
     } finally {
       _isLoadingTeams[tripId] = false;
       notifyListeners();
@@ -240,7 +255,7 @@ class TripProvider extends ChangeNotifier {
         await getTrips();
       } else {
         final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Erro ao deletar viagem.';
+        _error = data['message'] ?? 'Erro ao excluir viagem.';
         notifyListeners();
       }
     } catch (e) {

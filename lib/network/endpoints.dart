@@ -1,5 +1,5 @@
 class Endpoints {
-  static const String baseUrl = 'http://192.168.0.114:3200';
+  static const String baseUrl = 'http://192.168.0.206:3200';
 
   // user
   static const String login = '$baseUrl/user/login';
@@ -25,7 +25,18 @@ class Endpoints {
 
   //team
   static const String getTeamsByTripId = '$baseUrl/trip/getBytripId';
+  static const String getAllTeamsByDriver = '$baseUrl/team/getAllByDriver';
+  static const String teamRegistration = '$baseUrl/team/registration';
+  static const String deleteTeam = '$baseUrl/team/delete';
+  static const String updateTeam = '$baseUrl/team/update';
+
+  // student_team
+  static const String assignStudentToTeam = '$baseUrl/studentTeam/assign';
+  static const String unassignStudentFromTeam = '$baseUrl/studentTeam/unassign';
 
   //schoool
   static const String listSchools = '$baseUrl/school/list';
+
+  // geocoding
+  static const String autocompleteAddress = '$baseUrl/geocoding/autocomplete';
 }

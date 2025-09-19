@@ -73,7 +73,7 @@ class StudentProvider extends ChangeNotifier {
   }
 
 
-  Future<void> addStudent(String nome, DateTime dataNascimento, String gender, int schoolId, String address) async {
+  Future<void> addStudent(String nome, DateTime dataNascimento, String gender, int schoolId, String address, double? latitude, double? longitude) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -87,7 +87,9 @@ class StudentProvider extends ChangeNotifier {
         'birth_date': DateFormat('yyyy-MM-dd').format(dataNascimento),
         'gender': gender,
         'school_id': schoolId,
-        'address': address, // Adiciona o endereço ao corpo da requisição
+        'address': address,
+        'latitude': latitude,
+        'longitude': longitude,
       };
 
       final response = await http.post(
@@ -115,7 +117,15 @@ class StudentProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateStudent(int id, String name, DateTime birthDate, String gender) async {
+  // lib/provider/student_provider.dart
+  Future<void> updateStudent(
+      int id,
+      String name,
+      DateTime birthDate,
+      String gender,
+      int schoolId,
+      String address,
+      ) async {
     _isLoading = true;
     notifyListeners();
 
@@ -124,14 +134,16 @@ class StudentProvider extends ChangeNotifier {
       if (token == null) throw Exception('Usuário não autenticado.');
 
       final body = {
-        'id': id,
         'name': name,
         'birth_date': DateFormat('yyyy-MM-dd').format(birthDate),
         'gender': gender,
+        'school_id': schoolId,
+        'address': address,
       };
 
+      // O ID é passado na URL
       final response = await http.put(
-        Uri.parse(Endpoints.updateStudent),
+        Uri.parse('${Endpoints.updateStudent}/$id'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
@@ -140,14 +152,17 @@ class StudentProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        await getStudents();
+        await getStudents(); // Recarrega a lista
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao atualizar aluno.';
-        await getStudents();
+        notifyListeners(); // Mostra o erro na UI
       }
     } catch (e) {
       _error = 'Erro de conexão ao atualizar: ${e.toString()}';
+      notifyListeners();
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
@@ -177,12 +192,35 @@ class StudentProvider extends ChangeNotifier {
         await getStudents();
       } else {
         final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Erro ao deletar aluno.';
+        _error = data['message'] ?? 'Erro ao excluir aluno.';
         await getStudents();
       }
     } catch (e) {
-      _error = 'Erro de conexão ao deletar: ${e.toString()}';
+      _error = 'Erro de conexão ao excluir: ${e.toString()}';
       notifyListeners();
+    }
+  }
+
+  /// Busca e retorna a lista de todos os alunos (para o Autocomplete).
+  Future<List<Student>> getAllStudentsForDriver() async {
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      final response = await http.get(
+        Uri.parse(Endpoints.getAllStudents),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> studentListJson = data['students'];
+        return studentListJson.map((json) => Student.fromJson(json)).toList();
+      } else {
+        return [];
+      }
+    } catch (e) {
+      return [];
     }
   }
 }
