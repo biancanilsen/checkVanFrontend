@@ -9,6 +9,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'package:provider/provider.dart';
 import 'core/theme.dart';
+import 'features/pages/add_student_page.dart';
 import 'features/pages/home_page.dart';
 import 'features/pages/login_page.dart';
 import 'features/pages/my_profile.dart';
@@ -61,7 +62,7 @@ class MyApp extends StatelessWidget {
         ),
         '/students': (context) => const StudentPage(),
         '/trips': (context) => const TripPage(),
-
+        '/add-student': (context) => const AddStudentPage(),
       },
     );
   }
