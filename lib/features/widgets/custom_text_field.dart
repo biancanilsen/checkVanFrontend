@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../core/theme.dart'; // Importe sua paleta de cores
+import 'package:flutter/services.dart'; // Importe para usar TextInputFormatter
+import '../../core/theme.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final String hint;
   final bool isRequired;
-  final IconData? suffixIcon;
-  final VoidCallback? onTap;
   final TextInputType? keyboardType;
   final FormFieldValidator<String>? validator;
+  final VoidCallback? onTap;
+  final IconData? suffixIcon;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextField({
     super.key,
@@ -17,10 +19,11 @@ class CustomTextField extends StatelessWidget {
     required this.label,
     required this.hint,
     this.isRequired = false,
-    this.suffixIcon,
-    this.onTap,
     this.keyboardType,
     this.validator,
+    this.onTap,
+    this.suffixIcon,
+    this.inputFormatters,
   });
 
   @override
@@ -40,7 +43,7 @@ class CustomTextField extends StatelessWidget {
                 const TextSpan(
                   text: ' *',
                   style: TextStyle(
-                    color: AppPalette.red500, // Cor vermelha para o asterisco
+                    color: AppPalette.red500,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -48,13 +51,13 @@ class CustomTextField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-
         TextFormField(
           controller: controller,
           readOnly: onTap != null,
           onTap: onTap,
           keyboardType: keyboardType,
           validator: validator,
+          inputFormatters: inputFormatters, // Propriedade passada para o TextFormField
           decoration: InputDecoration(
             hintText: hint,
             suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: AppPalette.neutral600) : null,
@@ -64,3 +67,4 @@ class CustomTextField extends StatelessWidget {
     );
   }
 }
+

@@ -58,9 +58,9 @@ class _HomeDriverView extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pushNamed(context, '/trips');
+                      Navigator.pushNamed(context, '/van');
                     },
-                    child: HomeMenuButton(icon: Icons.map, label: 'Viagens'),
+                    child: HomeMenuButton(icon: Icons.map, label: 'Van/Escola'),
                   ),
                   HomeMenuButton(icon: Icons.alt_route, label: 'Rotas'),
                 ],
@@ -76,28 +76,28 @@ class _HomeDriverView extends StatelessWidget {
             ),
             HomeRouteCard(),
 
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Boletos em aberto', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  Text('Ver tudo', style: TextStyle(color: Colors.blue)),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: provider.boletos.length,
-                itemBuilder: (_, index) {
-                  final item = provider.boletos[index];
-                  return Card(
-                    child: ListTile(title: Text(item)),
-                  );
-                },
-              ),
-            ),
+            // const Padding(
+            //   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //     children: [
+            //       Text('Boletos em aberto', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            //       Text('Ver tudo', style: TextStyle(color: Colors.blue)),
+            //     ],
+            //   ),
+            // ),
+            // Expanded(
+            //   child: ListView.builder(
+            //     padding: const EdgeInsets.symmetric(horizontal: 16),
+            //     itemCount: provider.boletos.length,
+            //     itemBuilder: (_, index) {
+            //       final item = provider.boletos[index];
+            //       return Card(
+            //         child: ListTile(title: Text(item)),
+            //       );
+            //     },
+            //   ),
+            // ),
           ],
         ),
       ),

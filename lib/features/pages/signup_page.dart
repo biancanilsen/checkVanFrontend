@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/theme.dart'; // Importe seu tema para usar as cores
 import '../../provider/sign_up_provider.dart';
 import '../forms/sign_up_form.dart';
 
@@ -12,21 +13,15 @@ class SignUpPage extends StatelessWidget {
     return ChangeNotifierProvider<SignUpProvider>(
       create: (_) => SignUpProvider(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Cadastro')),
-        body: Center(
+        // backgroundColor: AppPalette.neutral100,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          foregroundColor: AppPalette.primary900,
+        ),
+        body: const Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/logo_check_van.png',
-                  height: 120,
-                ),
-                const SizedBox(height: 24),
-                const SignUpForm(),
-              ],
-            ),
+            child: SignUpForm(),
           ),
         ),
       ),

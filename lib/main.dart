@@ -1,3 +1,4 @@
+import 'package:check_van_frontend/features/pages/VanPage.dart';
 import 'package:check_van_frontend/provider/geocoding_provider.dart';
 import 'package:check_van_frontend/provider/login_provider.dart';
 import 'package:check_van_frontend/provider/school_provider.dart';
@@ -63,6 +64,7 @@ class MyApp extends StatelessWidget {
         '/students': (context) => const StudentPage(),
         '/trips': (context) => const TripPage(),
         '/add-student': (context) => const AddStudentPage(),
+        '/van': (context) => const VanPage(),
       },
     );
   }
