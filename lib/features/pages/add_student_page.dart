@@ -102,7 +102,10 @@ class _AddStudentPageState extends State<AddStudentPage> {
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _selectedGender,
-                  hint: const Text('Selecione'),
+                  hint: Text(
+                    'Selecione',
+                    style: Theme.of(context).inputDecorationTheme.hintStyle,
+                  ),
                   decoration: const InputDecoration(),
                   borderRadius: BorderRadius.circular(24.0),
                   items: const [
