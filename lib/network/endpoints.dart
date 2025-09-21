@@ -8,13 +8,13 @@ class Endpoints {
   static const String updateUser = '$baseUrl/user/update';
   static const String forgotPassword = '$baseUrl/user/recoverPassword';
   static const String createStudent = '$baseUrl/user/recoverPassword';
-  static const String getStudents = '$baseUrl/user/getStudents';
 
   // student
   static const String registration = '$baseUrl/student/registration';
   static const String updateStudent = '$baseUrl/student/update';
   static const String deleteStudent = '$baseUrl/student/delete';
-  static const String getAllStudents = '$baseUrl/student/getAllStudents';
+  static const String getAllStudents = '$baseUrl/student/getAll';
+  static const String getStudents = '$baseUrl/student/getStudents';
   static const String getStudentsByTeamId = '$baseUrl/student/getByTeamId';
 
   // trip
@@ -39,4 +39,10 @@ class Endpoints {
 
   // geocoding
   static const String autocompleteAddress = '$baseUrl/geocoding/autocomplete';
+
+  // Van
+  static const String createVan = '$baseUrl/van/create';
+
+  // School
+  static const String createSchool = '$baseUrl/school/create';
 }

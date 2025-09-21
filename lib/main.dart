@@ -1,10 +1,11 @@
-import 'package:check_van_frontend/features/pages/VanPage.dart';
+import 'package:check_van_frontend/features/pages/van_page.dart';
 import 'package:check_van_frontend/provider/geocoding_provider.dart';
 import 'package:check_van_frontend/provider/login_provider.dart';
 import 'package:check_van_frontend/provider/school_provider.dart';
 import 'package:check_van_frontend/provider/student_provider.dart';
 import 'package:check_van_frontend/provider/team_provider.dart';
 import 'package:check_van_frontend/provider/trip_provider.dart';
+import 'package:check_van_frontend/provider/van_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -14,6 +15,7 @@ import 'features/pages/add_student_page.dart';
 import 'features/pages/home_page.dart';
 import 'features/pages/login_page.dart';
 import 'features/pages/my_profile.dart';
+import 'features/pages/school_page.dart';
 import 'features/pages/signup_page.dart';
 import 'features/pages/students_page.dart';
 import 'features/pages/trip_page.dart';
@@ -28,6 +30,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => SchoolProvider()),
         ChangeNotifierProvider(create: (_) => TeamProvider()),
         ChangeNotifierProvider(create: (_) => GeocodingProvider()),
+        ChangeNotifierProvider(create: (_) => VanProvider()),
       ],
       child: const MyApp(),
     ),
@@ -65,6 +68,7 @@ class MyApp extends StatelessWidget {
         '/trips': (context) => const TripPage(),
         '/add-student': (context) => const AddStudentPage(),
         '/van': (context) => const VanPage(),
+        '/add-school': (context) => const SchoolPage(),
       },
     );
   }

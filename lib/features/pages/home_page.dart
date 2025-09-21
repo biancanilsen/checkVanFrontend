@@ -21,11 +21,11 @@ class HomePage extends StatelessWidget {
           );
         } else {
           final user = snapshot.data!;
-          final role = user.role?.toUpperCase();
+          final role = user.role;
 
-          if (role == 'DRIVER') {
+          if (role == 'driver') {
             return const HomeDriver();
-          } else if (role == 'GUARDIAN') {
+          } else if (role == 'guardian') {
             return const HomeGuardian();
           } else {
             return const Scaffold(

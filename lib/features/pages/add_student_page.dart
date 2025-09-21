@@ -134,7 +134,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                 backgroundColor: AppPalette.primary900,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
               ),
               child: const Text('Cadastrar aluno'),
             ),

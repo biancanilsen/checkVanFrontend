@@ -23,14 +23,14 @@ class StudentProvider extends ChangeNotifier {
 
     try {
       final user = await UserSession.getUser();
-      final role = user?.role?.toUpperCase();
+      final role = user?.role;
 
       if (user == null || role == null) {
         throw Exception('Não foi possível identificar o tipo de usuário.');
       }
 
       String endpointUrl;
-      if (role == 'DRIVER') {
+      if (role == 'driver') {
         endpointUrl = Endpoints.getAllStudents;
       } else {
         endpointUrl = Endpoints.getStudents;

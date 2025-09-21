@@ -17,6 +17,7 @@ class AppPalette {
   static const Color neutral900 = Color(0xFF212121);
 
   static const Color red500 = Color(0xFFD32F2F);
+  static const Color green500 = Color(0xFF037D2C);
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
@@ -104,6 +105,15 @@ class AppTheme {
           backgroundColor: MaterialStateProperty.all(Colors.white),
           elevation: MaterialStateProperty.all(4.0),
         ),
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        elevation: 4.0, // Adiciona uma sombra
+        contentTextStyle: const TextStyle(color: AppPalette.white, fontFamily: 'Poppins'),
       ),
 
       textTheme: textTheme.copyWith(

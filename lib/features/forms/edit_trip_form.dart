@@ -24,7 +24,7 @@ class _EditTripFormState extends State<EditTripForm> {
     super.initState();
     // Garante que a lista de escolas esteja disponível
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<SchoolProvider>(context, listen: false).getSchools();
+      // Provider.of<SchoolProvider>(context, listen: false).getSchools();
     });
 
     _startPointController = TextEditingController(text: widget.trip.startingPoint);

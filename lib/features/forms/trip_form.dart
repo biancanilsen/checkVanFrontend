@@ -27,7 +27,7 @@ class _TripFormState extends State<TripForm> {
     super.initState();
     // Garante que a lista de escolas seja carregada
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<SchoolProvider>(context, listen: false).getSchools();
+      // Provider.of<SchoolProvider>(context, listen: false).getSchools();
     });
   }
 

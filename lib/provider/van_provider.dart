@@ -1,28 +1,24 @@
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../model/school_model.dart';
+import '../model/van_model.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 
-class SchoolProvider extends ChangeNotifier {
-  List<School> _schools = [];
+class VanProvider extends ChangeNotifier {
+  List<Van> _vans = [];
   bool _isLoading = false;
   String? _error;
 
-  List<School> get schools => _schools;
+  List<Van> get vans => _vans;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Cria uma nova escola.
-  Future<bool> createSchool({
-    required String name,
-    required String address,
-    String? morningLimit,
-    String? morningDeparture,
-    String? afternoonLimit,
-    String? afternoonDeparture,
+  Future<bool> createVan({
+    required String nickname,
+    required String plate,
+    required int capacity,
   }) async {
     _isLoading = true;
     _error = null;
@@ -33,16 +29,13 @@ class SchoolProvider extends ChangeNotifier {
       if (token == null) throw Exception('Usuário não autenticado.');
 
       final body = {
-        'name': name,
-        'address': address,
-        'morning_limit': morningLimit,
-        'morning_departure': morningDeparture,
-        'afternoon_limit': afternoonLimit,
-        'afternoon_departure': afternoonDeparture,
+        'nickname': nickname,
+        'plate': plate,
+        'capacity': capacity,
       };
 
       final response = await http.post(
-        Uri.parse(Endpoints.createSchool),
+        Uri.parse(Endpoints.createVan),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
@@ -51,12 +44,12 @@ class SchoolProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
-        // Opcional: Atualizar a lista de escolas após o cadastro
-        // await getSchools();
+        // Opcional: Adicionar a nova van à lista local ou recarregar todas as vans.
+        // await getVans();
         return true;
       } else {
         final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Erro ao criar escola.';
+        _error = data['message'] ?? 'Erro ao cadastrar van.';
         notifyListeners();
         return false;
       }
@@ -69,6 +62,5 @@ class SchoolProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-// (Opcional) Você pode adicionar um método getSchools() aqui, se necessário.
 }
+
