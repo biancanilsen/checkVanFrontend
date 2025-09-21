@@ -37,6 +37,7 @@ dependencies:
   shared_preferences: ^2.2.2
   provider: ^6.1.1
   google_fonts: ^4.0.4
+  flutter_svg: ^2.0.10+1
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -64,6 +65,9 @@ flutter:
   assets:
     - assets/logo_check_van.png
     - assets/rota_gps.png
+    - assets/retratoCrianca.webp
+    - assets/icons/check.svg
+    - assets/icons/cross.svg
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

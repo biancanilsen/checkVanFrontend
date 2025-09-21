@@ -74,7 +74,6 @@ class _VanPageState extends State<VanPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Escuta o provider para reagir a mudanças (ex: estado de loading)
     final vanProvider = context.watch<VanProvider>();
 
     return Scaffold(

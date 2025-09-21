@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppPalette {
   static const Color primary900 = Color(0xFF101C2C);
+  static const Color primary800 = Color(0xFF03467D);
   static const Color primary100 = Color(0xFFD2E0EC);
   static const Color secondary500 = Color(0xFFFFC532);
 
@@ -14,9 +15,12 @@ class AppPalette {
   static const Color neutral400 = Color(0xFFAEB9BB);
   static const Color neutral500 = Color(0xFFA1A1AA);
   static const Color neutral600 = Color(0xFF7B8591);
+  static const Color neutral700 = Color(0xFF515151);
+  static const Color neutral800 = Color(0xFF313131);
   static const Color neutral900 = Color(0xFF212121);
 
   static const Color red500 = Color(0xFFD32F2F);
+  static const Color red700 = Color(0xFFBF360C);
   static const Color green500 = Color(0xFF037D2C);
 
   static const Color white = Color(0xFFFFFFFF);
