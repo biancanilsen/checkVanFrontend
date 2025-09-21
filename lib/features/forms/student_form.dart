@@ -104,10 +104,13 @@ class _StudentFormState extends State<StudentForm> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
-                controller: _streetController,
-                decoration: const InputDecoration(labelText: 'Logradouro'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'O logradouro é obrigatório' : null,
+              Expanded(
+                flex: 3,
+                child: TextFormField(
+                  controller: _streetController,
+                  decoration: const InputDecoration(labelText: 'Logradouro'),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'O logradouro é obrigatório' : null,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
