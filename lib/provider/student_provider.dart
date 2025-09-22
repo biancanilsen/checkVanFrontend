@@ -72,8 +72,15 @@ class StudentProvider extends ChangeNotifier {
     }
   }
 
-
-  Future<void> addStudent(String nome, DateTime dataNascimento, String gender, int schoolId, String address, double? latitude, double? longitude) async {
+  Future<bool> addStudent({
+    required String name,
+    required DateTime birthDate,
+    required String gender,
+    required int schoolId,
+    required String address,
+    required String shiftGoing,
+    required String shiftReturn,
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -83,17 +90,17 @@ class StudentProvider extends ChangeNotifier {
       if (token == null) throw Exception('Usuário não autenticado.');
 
       final body = {
-        'name': nome,
-        'birth_date': DateFormat('yyyy-MM-dd').format(dataNascimento),
+        'name': name,
+        'birth_date': DateFormat('yyyy-MM-dd').format(birthDate),
         'gender': gender,
         'school_id': schoolId,
         'address': address,
-        'latitude': latitude,
-        'longitude': longitude,
+        'shift_going': shiftGoing,
+        'shift_return': shiftReturn,
       };
 
       final response = await http.post(
-        Uri.parse(Endpoints.registration), // Verifique se o endpoint está correto
+        Uri.parse(Endpoints.createStudent),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
@@ -102,15 +109,18 @@ class StudentProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
-        await getStudents(); // Atualiza a lista de alunos na tela
+        await getStudents();
+        return true;
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao adicionar aluno.';
         notifyListeners();
+        return false;
       }
     } catch (e) {
       _error = 'Erro de conexão: ${e.toString()}';
       notifyListeners();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

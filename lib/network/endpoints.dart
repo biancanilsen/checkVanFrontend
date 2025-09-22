@@ -3,11 +3,10 @@ class Endpoints {
 
   // user
   static const String login = '$baseUrl/user/login';
-  static const String userRegistration = '$baseUrl/user/registration';
+  static const String userRegistration = '$baseUrl/user/create';
   static const String getProfile = '$baseUrl/user/getProfile';
   static const String updateUser = '$baseUrl/user/update';
   static const String forgotPassword = '$baseUrl/user/recoverPassword';
-  static const String createStudent = '$baseUrl/user/recoverPassword';
 
   // student
   static const String registration = '$baseUrl/student/registration';
@@ -16,6 +15,8 @@ class Endpoints {
   static const String getAllStudents = '$baseUrl/student/getAll';
   static const String getStudents = '$baseUrl/student/getStudents';
   static const String getStudentsByTeamId = '$baseUrl/student/getByTeamId';
+  static const String createStudent = '$baseUrl/student/create';
+
 
   // trip
   static const String tripRegistration = '$baseUrl/trip/registration';
@@ -35,7 +36,7 @@ class Endpoints {
   static const String unassignStudentFromTeam = '$baseUrl/studentTeam/unassign';
 
   //schoool
-  static const String listSchools = '$baseUrl/school/list';
+  static const String getAllSchools = '$baseUrl/school/getAll';
 
   // geocoding
   static const String autocompleteAddress = '$baseUrl/geocoding/autocomplete';

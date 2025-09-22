@@ -28,13 +28,13 @@ class _StudentPageState extends State<StudentPage> {
       value: _studentProvider,
       child: Scaffold(
         appBar: AppBar(
+          // backgroundColor: Colors.transparent,
           title: const Text('Gestão de Alunos'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        // O body foi simplificado para mostrar apenas a lista
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Consumer<StudentProvider>(

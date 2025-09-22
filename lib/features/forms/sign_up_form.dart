@@ -255,6 +255,7 @@ class _SignUpFormState extends State<SignUpForm> {
                     : const Text('Cadastrar'),
               ),
             ),
+            const SizedBox(height: 40),
           ],
         ),
       ),
