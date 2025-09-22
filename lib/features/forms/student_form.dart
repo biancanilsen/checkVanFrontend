@@ -43,9 +43,9 @@ class _StudentFormState extends State<StudentForm> {
 
     final fullAddress = '${_streetController.text}, ${_numberController.text}, ${_selectedCity ?? ''}, ${_selectedState ?? ''}, ${_selectedCountry ?? ''}';
 
-    Provider.of<StudentProvider>(context, listen: false).addStudent(
-      _nameController.text, _birthDate!, _selectedGender!, _selectedSchoolId!, fullAddress, _selectedLat, _selectedLon,
-    );
+    // Provider.of<StudentProvider>(context, listen: false).addStudent(
+    //   _nameController.text, _birthDate!, _selectedGender!, _selectedSchoolId!, fullAddress, _selectedLat, _selectedLon,
+    // );
 
     _formKey.currentState?.reset();
     _nameController.clear();
