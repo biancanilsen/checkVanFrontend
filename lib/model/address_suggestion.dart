@@ -2,32 +2,52 @@
 
 class AddressSuggestion {
   final String displayName;
-  final String city;
-  final String state;
-  final String country;
-  final double lat;
-  final double lon;
+  final String addressDetails;
+  final String placeId;
+
+  // Campos que vamos extrair depois de selecionar um endereço
+  final String? city;
+  final String? state;
+  final String? country;
+  final double? lat;
+  final double? lon;
 
   AddressSuggestion({
     required this.displayName,
-    required this.city,
-    required this.state,
-    required this.country,
-    required this.lat,
-    required this.lon,
+    required this.addressDetails,
+    required this.placeId,
+    this.city,
+    this.state,
+    this.country,
+    this.lat,
+    this.lon,
   });
 
-  // Constrói a string de detalhes a partir dos campos separados
-  String get addressDetails => [city, state, country].where((s) => s.isNotEmpty).join(', ');
-
   factory AddressSuggestion.fromJson(Map<String, dynamic> json) {
+    final fullDescription = json['description'] as String? ?? 'Local desconhecido';
+
+    // 2. Divide a descrição para criar um título e um subtítulo.
+    //    Ex: "Rua Alberto Cintra - União, Belo Horizonte - MG, Brasil"
+    //    displayName   -> "Rua Alberto Cintra"
+    //    addressDetails -> "União, Belo Horizonte - MG, Brasil"
+    String displayName;
+    String addressDetails;
+
+    if (fullDescription.contains(' - ')) {
+      final parts = fullDescription.split(' - ');
+      displayName = parts.first; // A primeira parte é o nome da rua
+      addressDetails = parts.sublist(1).join(' - '); // O resto é o detalhe
+    } else {
+      // Se não tiver ' - ', usa a descrição toda como título e deixa os detalhes vazios.
+      displayName = fullDescription;
+      addressDetails = '';
+    }
+
     return AddressSuggestion(
-      displayName: json['display_name'] ?? 'Local desconhecido',
-      city: json['city'] ?? '',
-      state: json['state'] ?? '',
-      country: json['country'] ?? '',
-      lat: (json['lat'] ?? 0.0).toDouble(),
-      lon: (json['lon'] ?? 0.0).toDouble(),
+      displayName: displayName,
+      addressDetails: addressDetails,
+      // Pega o placeId diretamente do JSON.
+      placeId: json['placeId'] as String? ?? '',
     );
   }
 }

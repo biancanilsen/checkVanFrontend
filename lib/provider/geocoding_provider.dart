@@ -14,7 +14,6 @@ class GeocodingProvider extends ChangeNotifier {
     // Cancela o timer anterior se o usuário continuar digitando
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-    // Cria um novo timer
     final completer = Completer<List<AddressSuggestion>>();
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       if (query.length < 3) {
@@ -24,8 +23,10 @@ class GeocodingProvider extends ChangeNotifier {
 
       try {
         final token = await UserSession.getToken();
+        if (token == null) throw Exception('Usuário não autenticado.');
+
         final response = await http.get(
-          Uri.parse('${Endpoints.autocompleteAddress}?text=${Uri.encodeComponent(query)}'),
+          Uri.parse('${Endpoints.autocompleteAddress}?input=${Uri.encodeComponent(query)}'),
           headers: {'Authorization': 'Bearer $token'},
         );
 
@@ -37,6 +38,7 @@ class GeocodingProvider extends ChangeNotifier {
           completer.complete([]);
         }
       } catch (e) {
+        print('Erro ao buscar sugestões de endereço: $e');
         completer.completeError(e);
       }
     });
