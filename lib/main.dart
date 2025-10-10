@@ -1,3 +1,5 @@
+import 'package:check_van_frontend/features/pages/active_route_page.dart';
+import 'package:check_van_frontend/features/pages/confirmar_presenca_page.dart';
 import 'package:check_van_frontend/features/pages/route_page.dart';
 import 'package:check_van_frontend/features/pages/van_page.dart';
 import 'package:check_van_frontend/provider/geocoding_provider.dart';
@@ -71,6 +73,7 @@ class MyApp extends StatelessWidget {
         '/van': (context) => const VanPage(),
         '/add-school': (context) => const SchoolPage(),
         '/route': (context) => const RoutePage(),
+        '/active-route': (context) => const ActiveRoutePage(),
       },
     );
   }

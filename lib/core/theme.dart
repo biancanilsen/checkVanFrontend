@@ -22,6 +22,7 @@ class AppPalette {
   static const Color red500 = Color(0xFFD32F2F);
   static const Color red700 = Color(0xFFBF360C);
   static const Color green500 = Color(0xFF037D2C);
+  static const Color green600 = Color(0xFF206820);
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
@@ -29,68 +30,85 @@ class AppPalette {
 
 class AppTheme {
   static ThemeData get theme {
-    final textTheme = GoogleFonts.poppinsTextTheme();
-    final colorScheme = ColorScheme(
-      brightness: Brightness.light,
-      primary: AppPalette.primary900,         // Cor principal para elementos interativos
-      onPrimary: AppPalette.white,           // Cor do conteúdo (texto/ícone) sobre a cor primária
-      secondary: AppPalette.secondary500,     // Cor secundária
-      onSecondary: AppPalette.black,         // Conteúdo sobre a cor secundária
-      error: AppPalette.red500,              // Cor para erros
-      onError: AppPalette.white,             // Conteúdo sobre a cor de erro
-      background: AppPalette.white,          // Fundo principal do app
-      onBackground: AppPalette.primary900,   // Conteúdo sobre o fundo principal
-      surface: AppPalette.neutral100,        // Cor de superfície de cards, modais (seu cinzaClaro)
-      onSurface: AppPalette.primary900,      // Conteúdo sobre as superfícies
+    final poppinsTextTheme = GoogleFonts.poppinsTextTheme();
+
+    final baseTheme = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme(
+        brightness: Brightness.light,
+        primary: AppPalette.primary900,
+        onPrimary: AppPalette.white,
+        secondary: AppPalette.secondary500,
+        onSecondary: AppPalette.black,
+        error: AppPalette.red500,
+        onError: AppPalette.white,
+        background: AppPalette.white,
+        onBackground: AppPalette.primary900,
+        surface: AppPalette.neutral100,
+        onSurface: AppPalette.primary900,
+      ),
+      scaffoldBackgroundColor: AppPalette.white,
+      textTheme: poppinsTextTheme,
     );
 
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: colorScheme,
-      scaffoldBackgroundColor: colorScheme.background,
+    return baseTheme.copyWith(
+      textTheme: baseTheme.textTheme.copyWith(
+        titleLarge: poppinsTextTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: AppPalette.neutral900,
+        ),
+        bodyLarge: poppinsTextTheme.bodyLarge?.copyWith(
+          color: AppPalette.neutral900,
+        ),
+        bodyMedium: poppinsTextTheme.bodyMedium?.copyWith(
+          color: AppPalette.neutral600,
+        ),
+        labelLarge: poppinsTextTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+        ),
+      ).apply( // Garante que a fonte seja aplicada a todos os estilos
+        fontFamily: 'Poppins',
+        bodyColor: AppPalette.neutral800, // Cor padrão para textos
+        displayColor: AppPalette.neutral900, // Cor para títulos e displays
+      ),
 
       appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
+        backgroundColor: baseTheme.colorScheme.primary,
+        foregroundColor: baseTheme.colorScheme.onPrimary,
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         filled: true,
         fillColor: AppPalette.neutral75,
-
         hintStyle: const TextStyle(
           color: AppPalette.neutral500,
           fontSize: 16,
         ),
-
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppPalette.primary100, width: 1.0),
         ),
-
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppPalette.neutral900, width: 1.0),
         ),
-
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: colorScheme.error, width: 1.0),
+          borderSide: BorderSide(color: baseTheme.colorScheme.error, width: 1.0),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: colorScheme.error, width: 1.0),
+          borderSide: BorderSide(color: baseTheme.colorScheme.error, width: 1.0),
         ),
-
         labelStyle: const TextStyle(color: AppPalette.neutral600),
-        floatingLabelStyle: TextStyle(color: colorScheme.primary),
+        floatingLabelStyle: TextStyle(color: baseTheme.colorScheme.primary),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: colorScheme.secondary,
-          foregroundColor: colorScheme.onSecondary,
+          backgroundColor: baseTheme.colorScheme.secondary,
+          foregroundColor: baseTheme.colorScheme.onSecondary,
           minimumSize: const Size.fromHeight(40),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           shape: const RoundedRectangleBorder(
@@ -116,15 +134,8 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.0),
         ),
-        elevation: 4.0, // Adiciona uma sombra
+        elevation: 4.0,
         contentTextStyle: const TextStyle(color: AppPalette.white, fontFamily: 'Poppins'),
-      ),
-
-      textTheme: textTheme.copyWith(
-        titleLarge: TextStyle(fontWeight: FontWeight.bold, color: AppPalette.neutral900),
-        bodyLarge: TextStyle(color: AppPalette.neutral900),
-        bodyMedium: TextStyle(color: AppPalette.neutral600),
-        labelLarge: TextStyle(fontWeight: FontWeight.bold),
       ),
     );
   }

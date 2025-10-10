@@ -100,7 +100,7 @@ class _RoutePageState extends State<RoutePage> {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 24),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +181,9 @@ class _RoutePageState extends State<RoutePage> {
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/active-route');
+                        },
                         style: buttonStyle,
                         child: const Text('Iniciar rota'),
                       ),
