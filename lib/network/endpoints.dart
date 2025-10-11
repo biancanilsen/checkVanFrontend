@@ -31,6 +31,9 @@ class Endpoints {
   static const String deleteTeam = '$baseUrl/team/delete';
   static const String updateTeam = '$baseUrl/team/update';
 
+  // route
+  static const generateRoute = '$baseUrl/routeGenerator/generate';
+
   // student_team
   static const String assignStudentToTeam = '$baseUrl/studentTeam/assign';
   static const String unassignStudentFromTeam = '$baseUrl/studentTeam/unassign';

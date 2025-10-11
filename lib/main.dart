@@ -4,6 +4,7 @@ import 'package:check_van_frontend/features/pages/route_page.dart';
 import 'package:check_van_frontend/features/pages/van_page.dart';
 import 'package:check_van_frontend/provider/geocoding_provider.dart';
 import 'package:check_van_frontend/provider/login_provider.dart';
+import 'package:check_van_frontend/provider/route_provider.dart';
 import 'package:check_van_frontend/provider/school_provider.dart';
 import 'package:check_van_frontend/provider/student_provider.dart';
 import 'package:check_van_frontend/provider/team_provider.dart';
@@ -34,6 +35,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => TeamProvider()),
         ChangeNotifierProvider(create: (_) => GeocodingProvider()),
         ChangeNotifierProvider(create: (_) => VanProvider()),
+        ChangeNotifierProvider(create: (_) => RouteProvider()),
       ],
       child: const MyApp(),
     ),

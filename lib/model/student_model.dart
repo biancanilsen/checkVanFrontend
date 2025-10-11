@@ -23,6 +23,8 @@ class Student {
   final School? school;
   final String shiftGoing;
   final String shiftReturn;
+  final double latitude;
+  final double longitude;
 
   Student({
     required this.id,
@@ -35,6 +37,8 @@ class Student {
     required this.shiftReturn,
     this.schoolId,
     this.school,
+    required this.latitude,
+    required this.longitude,
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
@@ -51,6 +55,8 @@ class Student {
       school: json['school'] != null ? School.fromJson(json['school']) : null,
       shiftGoing: json['shift_going'] ?? 'Não informado',
       shiftReturn: json['shift_return'] ?? 'Não informado',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
     );
   }
 

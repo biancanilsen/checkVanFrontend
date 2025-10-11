@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme.dart';
+import '../../provider/route_provider.dart';
 import '../../utils/user_session.dart';
 
 class RoutePage extends StatefulWidget {
@@ -30,6 +33,33 @@ class _RoutePageState extends State<RoutePage> {
       });
     }
   }
+
+  Future<void> _startRoute() async {
+    final routeProvider = context.read<RouteProvider>();
+
+    // Conforme solicitado, usamos o teamId=1 por enquanto
+    final success = await routeProvider.generateRoute(teamId: 2);
+
+    if (mounted) {
+      if (success) {
+        // Navega para a tela de rota ativa, passando os dados da rota
+        Navigator.pushNamed(
+          context,
+          '/active-route',
+          arguments: routeProvider.routeData,
+        );
+      } else {
+        // Mostra uma mensagem de erro se a geração da rota falhar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(routeProvider.error ?? 'Ocorreu um erro desconhecido'),
+            backgroundColor: AppPalette.red500,
+          ),
+        );
+      }
+    }
+  }
+
 
   Widget _buildSummaryCard(String title, int count, Color color) {
     return Container(
@@ -121,6 +151,8 @@ class _RoutePageState extends State<RoutePage> {
 
   @override
   Widget build(BuildContext context) {
+    final routeProvider = context.watch<RouteProvider>();
+
     final buttonStyle = ElevatedButton.styleFrom(
       backgroundColor: AppPalette.primary800,
       foregroundColor: AppPalette.white,
@@ -179,9 +211,10 @@ class _RoutePageState extends State<RoutePage> {
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/active-route');
-                        },
+                        //onPressed: () {
+                        //  Navigator.pushNamed(context, '/active-route');
+                        //},
+                        onPressed: routeProvider.isLoading ? null : _startRoute,
                         style: buttonStyle,
                         child: const Text('Iniciar rota'),
                       ),
