@@ -25,6 +25,7 @@ class Student {
   final String shiftReturn;
   final double latitude;
   final double longitude;
+  final bool? isConfirmed;
 
   Student({
     required this.id,
@@ -39,6 +40,7 @@ class Student {
     this.school,
     required this.latitude,
     required this.longitude,
+    this.isConfirmed,
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
@@ -57,6 +59,7 @@ class Student {
       shiftReturn: json['shift_return'] ?? 'Não informado',
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      isConfirmed: json['is_confirmed'] as bool?,
     );
   }
 

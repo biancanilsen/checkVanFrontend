@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/home_provider.dart';
+import '../../provider/team_provider.dart'; // Importe o TeamProvider
 import '../../utils/user_session.dart';
 import '../widgets/home_header.dart';
 import '../widgets/home_menu_button.dart';
@@ -11,15 +12,28 @@ class HomeDriver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => HomeProvider(),
-      child: const _HomeDriverView(),
-    );
+    // O ChangeNotifierProvider foi movido para o main.dart,
+    // então a HomeProvider já está disponível aqui.
+    return const _HomeDriverView();
   }
 }
 
-class _HomeDriverView extends StatelessWidget {
+class _HomeDriverView extends StatefulWidget {
   const _HomeDriverView();
+
+  @override
+  State<_HomeDriverView> createState() => _HomeDriverViewState();
+}
+
+class _HomeDriverViewState extends State<_HomeDriverView> {
+  @override
+  void initState() {
+    super.initState();
+    // Busca os dados das turmas assim que a tela é construída
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<TeamProvider>(context, listen: false).getTeams();
+    });
+  }
 
   void _logout(BuildContext context) async {
     await UserSession.signOutUser();
@@ -28,83 +42,55 @@ class _HomeDriverView extends StatelessWidget {
     }
   }
 
-  Future<String> _loadNameUser() async {
-    final user = await UserSession.getUser();
-    return user?.name?.isNotEmpty == true ? user!.name : "Usuário";
-  }
-
-
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<HomeProvider>(context);
-    final user = UserSession.getUser();
+    // Escuta as mudanças no TeamProvider para obter a lista de turmas
+    final teamProvider = context.watch<TeamProvider>();
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            HomeHeader(onLogout: () => _logout(context)),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/students');
-                    },
-                    child: HomeMenuButton(icon: Icons.school, label: 'Alunos'),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/van');
-                    },
-                    child: HomeMenuButton(icon: Icons.map, label: 'Van'),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/add-school');
-                    },
-                    child: HomeMenuButton(icon: Icons.map, label: 'Escola'),
-                  ),
-                ],
+        child: SingleChildScrollView( // Usamos SingleChildScrollView para evitar overflow
+          child: Column(
+            children: [
+              HomeHeader(onLogout: () => _logout(context)),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/students'),
+                      child: HomeMenuButton(icon: Icons.school, label: 'Alunos'),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/van'),
+                      child: HomeMenuButton(icon: Icons.map, label: 'Van'),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/add-school'),
+                      child: HomeMenuButton(icon: Icons.map, label: 'Escola'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Próxima rota', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Próximas rotas', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
               ),
-            ),
-            HomeRouteCard(),
-
-            // const Padding(
-            //   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            //   child: Row(
-            //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //     children: [
-            //       Text('Boletos em aberto', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            //       Text('Ver tudo', style: TextStyle(color: Colors.blue)),
-            //     ],
-            //   ),
-            // ),
-            // Expanded(
-            //   child: ListView.builder(
-            //     padding: const EdgeInsets.symmetric(horizontal: 16),
-            //     itemCount: provider.boletos.length,
-            //     itemBuilder: (_, index) {
-            //       final item = provider.boletos[index];
-            //       return Card(
-            //         child: ListTile(title: Text(item)),
-            //       );
-            //     },
-            //   ),
-            // ),
-          ],
+              // Constrói a lista de rotas
+              if (teamProvider.isLoading)
+                const Center(child: CircularProgressIndicator())
+              else if (teamProvider.teams.isEmpty)
+                const Center(child: Text('Nenhuma turma encontrada.'))
+              else
+              // Cria um card de rota para cada turma
+                ...teamProvider.teams.map((team) => HomeRouteCard(teamId: team.id)),
+            ],
+          ),
         ),
       ),
     );

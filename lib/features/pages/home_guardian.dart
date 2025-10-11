@@ -5,7 +5,9 @@ import 'package:check_van_frontend/core/theme.dart';
 import 'package:check_van_frontend/features/pages/confirmar_presenca_page.dart';
 
 import '../../provider/student_provider.dart';
+import '../../provider/route_provider.dart';
 import '../../utils/user_session.dart';
+import '../widgets/home_route_card.dart';
 
 class HomeGuardian extends StatefulWidget {
   const HomeGuardian({super.key});
@@ -100,11 +102,17 @@ class _HomeGuardianState extends State<HomeGuardian> {
 
               const SizedBox(height: 20),
 
+              // Route Card
+              const HomeRouteCard(teamId: 3),
+
+              const SizedBox(height: 20),
+
+              // School Bus Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Image.asset(
                   'assets/school_bus.png',
-                  height: 260,
+                  height: 200,
                   width: double.infinity,
                   fit: BoxFit.contain,
                 ),

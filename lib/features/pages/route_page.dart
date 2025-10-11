@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme.dart';
+import '../../model/route_model.dart';
 import '../../provider/route_provider.dart';
 import '../../utils/user_session.dart';
 
@@ -17,6 +17,16 @@ class RoutePage extends StatefulWidget {
 class _RoutePageState extends State<RoutePage> {
   String? _userName;
   bool _isLoadingUser = true;
+  RouteData? routeData;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is RouteData) {
+      routeData = args;
+    }
+  }
 
   @override
   void initState() {
@@ -35,28 +45,12 @@ class _RoutePageState extends State<RoutePage> {
   }
 
   Future<void> _startRoute() async {
-    final routeProvider = context.read<RouteProvider>();
-
-    // Conforme solicitado, usamos o teamId=1 por enquanto
-    final success = await routeProvider.generateRoute(teamId: 3);
-
     if (mounted) {
-      if (success) {
-        // Navega para a tela de rota ativa, passando os dados da rota
-        Navigator.pushNamed(
-          context,
-          '/active-route',
-          arguments: routeProvider.routeData,
-        );
-      } else {
-        // Mostra uma mensagem de erro se a geração da rota falhar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(routeProvider.error ?? 'Ocorreu um erro desconhecido'),
-            backgroundColor: AppPalette.red500,
-          ),
-        );
-      }
+      Navigator.pushNamed(
+        context,
+        '/active-route',
+        arguments: routeData,
+      );
     }
   }
 
@@ -152,6 +146,19 @@ class _RoutePageState extends State<RoutePage> {
   @override
   Widget build(BuildContext context) {
     final routeProvider = context.watch<RouteProvider>();
+    
+    if (routeData == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Dados da rota não encontrados'),
+        ),
+      );
+    }
+
+    // Calculate counts only if routeData is not null
+    final students = routeData!.students;
+    final confirmedCount = students.where((s) => s.isConfirmed ?? false).length;
+    final absentCount = students.length - confirmedCount;
 
     final buttonStyle = ElevatedButton.styleFrom(
       backgroundColor: AppPalette.primary800,
@@ -211,10 +218,7 @@ class _RoutePageState extends State<RoutePage> {
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        //onPressed: () {
-                        //  Navigator.pushNamed(context, '/active-route');
-                        //},
-                        onPressed: routeProvider.isLoading ? null : _startRoute,
+                        onPressed: _startRoute,
                         style: buttonStyle,
                         child: const Text('Iniciar rota'),
                       ),
@@ -233,24 +237,22 @@ class _RoutePageState extends State<RoutePage> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildSummaryCard('Confirmados', 12, AppPalette.green500)),
+                Expanded(child: _buildSummaryCard('Confirmados', confirmedCount, AppPalette.green500)),
                 const SizedBox(width: 16),
-                Expanded(child: _buildSummaryCard('Ausentes', 3, AppPalette.red500)),
+                Expanded(child: _buildSummaryCard('Ausentes', absentCount, AppPalette.red500)),
               ],
             ),
             const SizedBox(height: 24),
 
-            // Lista de Alunos com o novo layout
-            _buildStudentTile(index: 1, name: 'Estella Mello', address: 'Rua 15 de setembro, 345', isConfirmed: true),
-            _buildStudentTile(index: 2, name: 'João Pereira', address: 'Rua das Flores, 123', isConfirmed: false),
-            _buildStudentTile(index: 3, name: 'Ana Clara', address: 'Avenida Brasil, 789', isConfirmed: true),
-            _buildStudentTile(index: 4, name: 'Ana Clara', address: 'Avenida Brasil, 789', isConfirmed: true),
-            _buildStudentTile(index: 5, name: 'Ana Clara', address: 'Avenida Brasil, 789', isConfirmed: true),
-            _buildStudentTile(index: 6, name: 'Ana Clara', address: 'Avenida Brasil, 789', isConfirmed: true),
-            _buildStudentTile(index: 7, name: 'Ana Clara', address: 'Avenida Brasil, 789', isConfirmed: true),
-            _buildStudentTile(index: 8, name: 'Ana Clara', address: 'Avenida Brasil, 789', isConfirmed: true),
-            _buildStudentTile(index: 9, name: 'Ana Clara', address: 'Avenida Brasil, 789', isConfirmed: true),
-            _buildStudentTile(index: 10, name: 'Ana Clara', address: 'Avenida Brasil, 789', isConfirmed: true),
+            // Lista de Alunos
+            ...students.asMap().entries.map(
+              (entry) => _buildStudentTile(
+                index: entry.key + 1,
+                name: entry.value.name,
+                address: entry.value.address,
+                isConfirmed: entry.value.isConfirmed ?? false,
+              ),
+            ),
           ],
         ),
       ),
