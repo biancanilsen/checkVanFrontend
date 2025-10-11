@@ -38,7 +38,7 @@ class _RoutePageState extends State<RoutePage> {
     final routeProvider = context.read<RouteProvider>();
 
     // Conforme solicitado, usamos o teamId=1 por enquanto
-    final success = await routeProvider.generateRoute(teamId: 2);
+    final success = await routeProvider.generateRoute(teamId: 3);
 
     if (mounted) {
       if (success) {

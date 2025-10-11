@@ -59,7 +59,12 @@ class RouteProvider extends ChangeNotifier {
           }
         }
 
-        _routeData = RouteData(students: students, waypoints: waypoints);
+        final String encodedPolyline = data['route']?['overview_polyline']?['points'] ?? '';
+
+        _routeData = RouteData(
+            students: students,
+            waypoints: waypoints,
+            encodedPolyline: encodedPolyline,);
         return true;
       } else {
         final data = jsonDecode(response.body);

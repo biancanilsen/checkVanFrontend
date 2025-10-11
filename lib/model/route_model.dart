@@ -11,8 +11,13 @@ class Waypoint {
 class RouteData {
   final List<Student> students;
   final List<Waypoint> waypoints;
+  final String encodedPolyline;
   // Você pode adicionar outros campos que a API de rota retornar,
   // como a linha do trajeto (polyline), distância, duração, etc.
 
-  RouteData({required this.students, required this.waypoints});
+  RouteData({
+    required this.students,
+    required this.waypoints,
+    required this.encodedPolyline,
+  });
 }
