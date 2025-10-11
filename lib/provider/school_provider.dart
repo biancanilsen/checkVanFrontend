@@ -14,7 +14,6 @@ class SchoolProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Busca a lista de todas as escolas cadastradas.
   Future<void> getSchools() async {
     _isLoading = true;
     _error = null;
@@ -24,7 +23,6 @@ class SchoolProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // Usa o endpoint para listar todas as escolas
       final response = await http.get(
         Uri.parse(Endpoints.getAllSchools),
         headers: {
@@ -35,7 +33,6 @@ class SchoolProvider extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        // O backend retorna um objeto: { "schools": [...] }
         final List<dynamic> schoolListJson = data['schools'];
         _schools = schoolListJson.map((json) => School.fromJson(json)).toList();
       } else {
@@ -77,7 +74,6 @@ class SchoolProvider extends ChangeNotifier {
         body: json.encode({
           'name': name,
           'address': address,
-          // Os campos de lat/lon foram removidos do corpo da requisição
           'morning_limit': morningLimit,
           'morning_departure': morningDeparture,
           'afternoon_limit': afternoonLimit,
@@ -85,7 +81,6 @@ class SchoolProvider extends ChangeNotifier {
         }),
       );
 
-      // ... resto do método
       if (response.statusCode == 201) {
         _isLoading = false;
         notifyListeners();

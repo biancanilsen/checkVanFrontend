@@ -17,27 +17,21 @@ class _TripPageState extends State<TripPage> {
   @override
   void initState() {
     super.initState();
-    // A lógica para buscar os dados na inicialização permanece a mesma
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<TripProvider>(context, listen: false).getTrips();
     });
   }
 
-  // Método que abre o Bottom Sheet com o formulário
   void _openAddTripSheet() {
     showModalBottomSheet(
       context: context,
-      // Permite que o sheet seja rolável e ocupe mais espaço
       isScrollControlled: true,
-      // Define o formato com cantos arredondados
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (modalContext) {
-        // O conteúdo do Bottom Sheet é o nosso TripForm
         return const Padding(
           padding: EdgeInsets.all(16.0),
-          // O TripForm já tem a lógica de cadastro
           child: TripForm(),
         );
       },
@@ -50,9 +44,8 @@ class _TripPageState extends State<TripPage> {
       appBar: AppBar(
         title: const Text('Gerenciar Viagens'),
       ),
-      // O corpo agora é apenas a lista
       body: Padding(
-        padding: const EdgeInsets.all(8.0), // Um padding geral
+        padding: const EdgeInsets.all(8.0),
         child: Consumer<TripProvider>(
           builder: (context, provider, child) {
             if (provider.isLoading && provider.trips.isEmpty) {
@@ -65,7 +58,6 @@ class _TripPageState extends State<TripPage> {
               return const Center(child: Text('Nenhuma viagem cadastrada.'));
             }
 
-            // A Lista de Viagens usando o TripExpansionTile
             return ListView.builder(
               itemCount: provider.trips.length,
               itemBuilder: (context, index) {
@@ -76,7 +68,6 @@ class _TripPageState extends State<TripPage> {
           },
         ),
       ),
-      // Botão flutuante para adicionar nova viagem
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddTripSheet,
         child: const Icon(Icons.add),

@@ -25,7 +25,7 @@ class TeamProvider extends ChangeNotifier {
       if (token == null) throw Exception('Usuário não autenticado.');
 
       final response = await http.get(
-        Uri.parse(Endpoints.getAllTeamsByDriver), // Endpoint para buscar turmas do motorista
+        Uri.parse(Endpoints.getAllTeamsByDriver),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -88,7 +88,6 @@ class TeamProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // O ID da turma é passado diretamente na URL, sem corpo (body)
       final response = await http.delete(
         Uri.parse('${Endpoints.deleteTeam}/$teamId'),
         headers: {
@@ -98,7 +97,6 @@ class TeamProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        // Se a deleção for bem-sucedida, atualiza a lista de turmas
         await getTeams();
       } else {
         final data = jsonDecode(response.body);
@@ -110,8 +108,6 @@ class TeamProvider extends ChangeNotifier {
       notifyListeners();
     } finally {
       _isLoading = false;
-      // O getTeams() já chama o notifyListeners() no sucesso,
-      // mas podemos chamar de novo para garantir que o estado de loading termine.
       if (hasListeners) {
         notifyListeners();
       }
@@ -133,7 +129,7 @@ class TeamProvider extends ChangeNotifier {
       final body = {'name': name, 'trip_id': tripId};
 
       final response = await http.put(
-        Uri.parse('${Endpoints.updateTeam}/$teamId'), // Passa o ID na URL
+        Uri.parse('${Endpoints.updateTeam}/$teamId'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
@@ -142,7 +138,7 @@ class TeamProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        await getTeams(); // Recarrega a lista
+        await getTeams();
         return true;
       } else {
         final data = jsonDecode(response.body);
@@ -179,13 +175,11 @@ class TeamProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
-        // Após atribuir, é uma boa prática recarregar os dados daquela turma
-        // (Esta lógica será adicionada no próprio modal)
         return true;
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao atribuir aluno.';
-        notifyListeners(); // Notifica a UI sobre o erro
+        notifyListeners();
         return false;
       }
     } catch (e) {
@@ -200,7 +194,6 @@ class TeamProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // Usa o endpoint que busca alunos por ID da turma
       final response = await http.get(
         Uri.parse('${Endpoints.getStudentsByTeamId}/$teamId'),
         headers: {'Authorization': 'Bearer $token'},
@@ -228,7 +221,7 @@ class TeamProvider extends ChangeNotifier {
         'team_id': teamId,
       };
 
-      final response = await http.delete( // Usando o método DELETE
+      final response = await http.delete(
         Uri.parse(Endpoints.unassignStudentFromTeam),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -238,7 +231,7 @@ class TeamProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        return true; // Sucesso
+        return true;
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao desvincular aluno.';

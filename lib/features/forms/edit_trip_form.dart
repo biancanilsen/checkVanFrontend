@@ -22,7 +22,6 @@ class _EditTripFormState extends State<EditTripForm> {
   @override
   void initState() {
     super.initState();
-    // Garante que a lista de escolas esteja disponível
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Provider.of<SchoolProvider>(context, listen: false).getSchools();
     });
@@ -38,7 +37,6 @@ class _EditTripFormState extends State<EditTripForm> {
   }
 
   Future<void> _pickTime({required bool isDeparture}) async {
-    // ... (seu método _pickTime permanece o mesmo)
   }
 
   void _submitUpdate() {
@@ -76,7 +74,6 @@ class _EditTripFormState extends State<EditTripForm> {
             TextFormField(controller: _startPointController, decoration: const InputDecoration(labelText: 'Ponto de Partida')),
             const SizedBox(height: 12),
 
-            // SELETOR DE ESCOLAS
             DropdownButtonFormField<int>(
               value: _selectedSchoolId,
               hint: Text(schoolProvider.isLoading ? 'Carregando...' : 'Selecione a escola'),

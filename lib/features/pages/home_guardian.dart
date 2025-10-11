@@ -7,7 +7,6 @@ import 'package:check_van_frontend/features/pages/confirmar_presenca_page.dart';
 import '../../provider/student_provider.dart';
 import '../../utils/user_session.dart';
 
-// A classe StatefulWidget permanece a mesma
 class HomeGuardian extends StatefulWidget {
   const HomeGuardian({super.key});
 
@@ -15,12 +14,10 @@ class HomeGuardian extends StatefulWidget {
   State<HomeGuardian> createState() => _HomeGuardianState();
 }
 
-// A classe State permanece a mesma
 class _HomeGuardianState extends State<HomeGuardian> {
   String _greeting = 'Olá,';
   String _userName = 'Usuário';
 
-  // O initState e o _loadUserAndGreeting permanecem os mesmos
   @override
   void initState() {
     super.initState();
@@ -44,7 +41,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
 
   @override
   Widget build(BuildContext context) {
-    // Pegue o tema e o textTheme para fácil acesso
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
@@ -56,7 +52,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top greeting "AppBar"
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -68,7 +63,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
                         children: [
                           Text(
                             _greeting,
-                            // MUDANÇA AQUI: Usa o tema
                             style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w400,
                               color: AppPalette.neutral900,
@@ -79,7 +73,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
                             _userName,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            // MUDANÇA AQUI: Usa o tema
                             style: textTheme.headlineMedium?.copyWith(
                               height: 1.2,
                               fontWeight: FontWeight.w700,
@@ -90,7 +83,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
                       ),
                     ),
                   ),
-                  // O CircleAvatar não tem texto, permanece igual
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: Colors.white,
@@ -108,7 +100,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
 
               const SizedBox(height: 20),
 
-              // A imagem não tem texto, permanece igual
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Image.asset(

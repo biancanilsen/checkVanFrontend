@@ -18,7 +18,6 @@ class _TeamFormState extends State<TeamForm> {
   @override
   void initState() {
     super.initState();
-    // Garante que a lista de viagens esteja disponível
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<TripProvider>(context, listen: false).getTrips();
     });
@@ -31,7 +30,7 @@ class _TeamFormState extends State<TeamForm> {
         .addTeam(name: _nameController.text, tripId: _selectedTripId!)
         .then((success) {
       if (success && mounted) {
-        Navigator.of(context).pop(); // Fecha o Bottom Sheet
+        Navigator.of(context).pop();
       }
     });
   }

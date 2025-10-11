@@ -17,19 +17,16 @@ class EditStudentForm extends StatefulWidget {
 class _EditStudentFormState extends State<EditStudentForm> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
   late TextEditingController _nameController;
   late TextEditingController _birthDateController;
   late TextEditingController _addressController;
 
-  // Variáveis de estado
   late DateTime _birthDate;
   late String _selectedGender;
   int? _selectedSchoolId;
   late String _selectedShiftGoing;
   late String _selectedShiftReturn;
 
-  // --- AJUSTE: Mapeamento dos valores internos para os textos de exibição ---
   final Map<String, String> shiftOptions = {
     'morning': 'Manhã',
     'afternoon': 'Tarde',
@@ -175,11 +172,10 @@ class _EditStudentFormState extends State<EditStudentForm> {
                   child: DropdownButtonFormField<String>(
                     value: _selectedShiftGoing,
                     decoration: const InputDecoration(labelText: 'Turno Ida'),
-                    // --- AJUSTE: Usando o Map para criar os itens ---
                     items: shiftOptions.entries.map((entry) {
                       return DropdownMenuItem<String>(
-                        value: entry.key,   // O valor interno, ex: "morning"
-                        child: Text(entry.value), // O texto de exibição, ex: "Manhã"
+                        value: entry.key,
+                        child: Text(entry.value),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -193,7 +189,6 @@ class _EditStudentFormState extends State<EditStudentForm> {
                   child: DropdownButtonFormField<String>(
                     value: _selectedShiftReturn,
                     decoration: const InputDecoration(labelText: 'Turno Volta'),
-                    // --- AJUSTE: Usando o Map para criar os itens ---
                     items: shiftOptions.entries.map((entry) {
                       return DropdownMenuItem<String>(
                         value: entry.key,

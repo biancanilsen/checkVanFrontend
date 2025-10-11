@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/theme.dart'; // Importe seu tema para usar as cores
+import '../../core/theme.dart';
 import '../../provider/sign_up_provider.dart';
 import '../forms/sign_up_form.dart';
 
@@ -13,7 +13,6 @@ class SignUpPage extends StatelessWidget {
     return ChangeNotifierProvider<SignUpProvider>(
       create: (_) => SignUpProvider(),
       child: Scaffold(
-        // backgroundColor: AppPalette.neutral100,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,

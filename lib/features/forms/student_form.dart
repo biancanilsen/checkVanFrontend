@@ -3,9 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 
-import '../../core/theme.dart'; // Importe seu AppColors
-import '../../model/address_suggestion.dart';
-import '../../provider/geocoding_provider.dart';
+import '../../core/theme.dart';
 import '../../provider/school_provider.dart';
 import '../../provider/student_provider.dart';
 
@@ -40,12 +38,6 @@ class _StudentFormState extends State<StudentForm> {
 
   void _addStudent() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    final fullAddress = '${_streetController.text}, ${_numberController.text}, ${_selectedCity ?? ''}, ${_selectedState ?? ''}, ${_selectedCountry ?? ''}';
-
-    // Provider.of<StudentProvider>(context, listen: false).addStudent(
-    //   _nameController.text, _birthDate!, _selectedGender!, _selectedSchoolId!, fullAddress, _selectedLat, _selectedLon,
-    // );
 
     _formKey.currentState?.reset();
     _nameController.clear();

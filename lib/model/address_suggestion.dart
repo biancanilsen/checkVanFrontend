@@ -2,13 +2,13 @@ class AddressSuggestion {
   final String displayName;
   final String addressDetails;
   final String placeId;
-  final String fullDescription; // <- NOVO CAMPO
+  final String fullDescription;
 
   AddressSuggestion({
     required this.displayName,
     required this.addressDetails,
     required this.placeId,
-    required this.fullDescription, // <- NOVO CAMPO
+    required this.fullDescription,
   });
 
   factory AddressSuggestion.fromJson(Map<String, dynamic> json) {
@@ -30,7 +30,7 @@ class AddressSuggestion {
       displayName: displayName,
       addressDetails: addressDetails,
       placeId: json['placeId'] as String? ?? '',
-      fullDescription: fullDescription, // <- Armazena a string original
+      fullDescription: fullDescription,
     );
   }
 }

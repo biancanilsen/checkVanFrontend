@@ -20,15 +20,12 @@ class _TeamsTabViewState extends State<TeamsTabView> {
   @override
   void initState() {
     super.initState();
-    // Garante que a lista de turmas seja carregada ao iniciar a aba
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<TeamProvider>(context, listen: false).getTeams();
     });
   }
 
-  /// Abre o Bottom Sheet para cadastrar uma nova turma
   void _openAddTeamSheet() {
-    // Pega as instâncias dos providers que o formulário precisará
     final teamProvider = Provider.of<TeamProvider>(context, listen: false);
     final tripProvider = Provider.of<TripProvider>(context, listen: false);
 

@@ -13,16 +13,13 @@ class TripProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  // Mapa para controlar o estado de loading de cada acordeão individualmente
   final Map<int, bool> _isLoadingTeams = {};
 
-  // Getters públicos para acessar o estado
   List<Trip> get trips => _trips;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool isLoadingTeams(int tripId) => _isLoadingTeams[tripId] ?? false;
 
-  /// Busca a lista principal de viagens.
   Future<void> getTrips() async {
     _isLoading = true;
     _error = null;
@@ -63,7 +60,6 @@ class TripProvider extends ChangeNotifier {
     }
   }
 
-  /// Busca as turmas e seus respectivos alunos para uma viagem específica (carregamento sob demanda).
   Future<void> getTeamsForTrip(int tripId) async {
     _isLoadingTeams[tripId] = true;
     notifyListeners();
@@ -72,7 +68,6 @@ class TripProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // --- BUSCA DE TURMAS ---
       final teamsResponse = await http.get(
         Uri.parse('${Endpoints.getTeamsByTripId}/$tripId'),
         headers: {'Authorization': 'Bearer $token'},
@@ -84,14 +79,12 @@ class TripProvider extends ChangeNotifier {
 
       final teamsData = jsonDecode(teamsResponse.body);
 
-      // CORREÇÃO 1: Trata o caso de a chave 'teams' não existir no JSON
       final List<dynamic> teamListJson = teamsData['teams'] ?? [];
 
       final List<Team> teams = teamListJson
           .map((json) => Team.fromJson(json))
           .toList();
 
-      // --- BUSCA DE ALUNOS ---
       final studentFetchFutures = teams.map((team) async {
         final studentsResponse = await http.get(
           Uri.parse('${Endpoints.getStudentsByTeamId}/${team.id}'),
@@ -101,7 +94,6 @@ class TripProvider extends ChangeNotifier {
         if (studentsResponse.statusCode == 200) {
           final studentsData = jsonDecode(studentsResponse.body);
 
-          // CORREÇÃO 2: Trata o caso de a chave 'students' não existir no JSON
           final List<dynamic> studentListJson = studentsData['students'] ?? [];
 
           final studentList = studentListJson
@@ -129,7 +121,6 @@ class TripProvider extends ChangeNotifier {
     }
   }
 
-  /// Adiciona uma nova viagem.
   Future<bool> addTrip({
     required TimeOfDay departureTime,
     required TimeOfDay arrivalTime,
@@ -196,17 +187,14 @@ class TripProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // --- CORREÇÃO AQUI ---
-      // As variáveis 'departureDateTime' e 'arrivalDateTime' precisam ser
-      // criadas antes de serem usadas no 'body'.
       final now = DateTime.now();
       final departureDateTime = DateTime(now.year, now.month, now.day, departureTime.hour, departureTime.minute).toIso8601String();
       final arrivalDateTime = DateTime(now.year, now.month, now.day, arrivalTime.hour, arrivalTime.minute).toIso8601String();
 
       final body = {
         'id': id,
-        'departure_time': departureDateTime, // Agora a variável existe
-        'arrival_time': arrivalDateTime,     // Agora a variável existe
+        'departure_time': departureDateTime,
+        'arrival_time': arrivalDateTime,
         'starting_point': startingPoint,
         'school_id': schoolId,
       };
@@ -233,7 +221,6 @@ class TripProvider extends ChangeNotifier {
     }
   }
 
-  /// Deleta uma viagem.
   Future<void> deleteTrip(int tripId) async {
     _isLoading = true;
     notifyListeners();

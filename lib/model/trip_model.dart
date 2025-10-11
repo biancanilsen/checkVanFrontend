@@ -1,5 +1,4 @@
-import 'package:intl/intl.dart';
-import 'team_model.dart'; // 1. Importe o modelo da Turma
+import 'team_model.dart';
 
 class Trip {
   final int id;
@@ -9,8 +8,6 @@ class Trip {
   final int? schoolId;
   final String? schoolName;
 
-  // 2. Adicione este campo para guardar a lista de turmas
-  // A interrogação (?) indica que ele pode ser nulo (inicialmente será)
   List<Team>? teams;
 
   Trip({
@@ -20,11 +17,10 @@ class Trip {
     required this.startingPoint,
     this.schoolId,
     this.schoolName,
-    this.teams, // 3. Adicione o campo ao construtor
+    this.teams,
   });
 
   factory Trip.fromJson(Map<String, dynamic> json) {
-    // A função fromJson permanece a mesma, pois 'teams' é carregado depois
     return Trip(
       id: json['id'] ?? 0,
       departureTime: json['departure_time'] ?? '00:00',

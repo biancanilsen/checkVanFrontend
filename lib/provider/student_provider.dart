@@ -16,8 +16,6 @@ class StudentProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Busca a lista de alunos do backend.
-  /// A lista varia conforme o tipo de usuário (motorista ou responsável).
   Future<void> getStudents() async {
     _isLoading = true;
     _error = null;
@@ -27,7 +25,6 @@ class StudentProvider extends ChangeNotifier {
       final user = await UserSession.getUser();
       if (user?.role == null) throw Exception('Não foi possível identificar o tipo de usuário.');
 
-      // Define o endpoint correto com base na role do usuário
       final endpointUrl = user!.role == 'driver' ? Endpoints.getAllStudents : Endpoints.getStudents;
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
@@ -44,10 +41,9 @@ class StudentProvider extends ChangeNotifier {
         final data = jsonDecode(response.body);
         final List<dynamic> studentListJson = data['students'];
         _students = studentListJson.map((json) => Student.fromJson(json)).toList();
-        // Ordena a lista em ordem alfabética para exibição consistente
         _students.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       } else if (response.statusCode == 404) {
-        _students = []; // Limpa a lista se não encontrar nada
+        _students = [];
       } else {
         final data = jsonDecode(response.body);
         throw Exception(data['message'] ?? 'Falha ao carregar alunos.');
@@ -61,7 +57,6 @@ class StudentProvider extends ChangeNotifier {
     }
   }
 
-  /// Adiciona um novo aluno.
   Future<bool> addStudent({
     required String name,
     required DateTime birthDate,
@@ -97,7 +92,7 @@ class StudentProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
-        await getStudents(); // Atualiza a lista local após o sucesso
+        await getStudents();
         return true;
       } else {
         final data = jsonDecode(response.body);
@@ -112,8 +107,6 @@ class StudentProvider extends ChangeNotifier {
     }
   }
 
-  /// Atualiza os dados de um aluno existente.
-  /// Retorna `true` em caso de sucesso.
   Future<bool> updateStudent({
     required int id,
     required String name,
@@ -133,7 +126,7 @@ class StudentProvider extends ChangeNotifier {
       if (token == null) throw Exception('Usuário não autenticado.');
 
       final response = await http.put(
-        Uri.parse('${Endpoints.updateStudent}/$id'), // O ID é passado na URL
+        Uri.parse('${Endpoints.updateStudent}/$id'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
@@ -144,13 +137,13 @@ class StudentProvider extends ChangeNotifier {
           'gender': gender,
           'school_id': schoolId,
           'address': address,
-          'shift_going': shiftGoing,   // AJUSTE: Adicionado campo de turno
-          'shift_return': shiftReturn, // AJUSTE: Adicionado campo de turno
+          'shift_going': shiftGoing,
+          'shift_return': shiftReturn,
         }),
       );
 
       if (response.statusCode == 200) {
-        await getStudents(); // Recarrega a lista para refletir a alteração
+        await getStudents();
         return true;
       } else {
         final data = jsonDecode(response.body);
@@ -158,15 +151,13 @@ class StudentProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = e.toString();
-      return false; // AJUSTE: Retorna `false` em caso de erro
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Exclui um aluno.
-  /// Retorna `true` em caso de sucesso.
   Future<bool> deleteStudent(int studentId) async {
     _isLoading = true;
     _error = null;
@@ -176,8 +167,6 @@ class StudentProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // AJUSTE: A melhor prática para DELETE é passar o ID na URL, sem corpo (body).
-      // Isso é mais seguro e segue o padrão RESTful.
       final response = await http.delete(
         Uri.parse('${Endpoints.deleteStudent}/$studentId'),
         headers: {
@@ -186,8 +175,6 @@ class StudentProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        // AJUSTE: Remove o aluno da lista localmente para uma resposta de UI mais rápida,
-        // antes de recarregar a lista completa do servidor.
         _students.removeWhere((student) => student.id == studentId);
         notifyListeners();
         return true;
@@ -197,15 +184,10 @@ class StudentProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = e.toString();
-      return false; // AJUSTE: Retorna `false` em caso de erro
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
-      // Opcional: recarregar a lista para garantir consistência total.
-      // await getStudents();
     }
   }
-
-// O método `getAllStudentsForDriver` foi removido pois sua lógica
-// já está contida de forma mais eficiente dentro do `getStudents`.
 }

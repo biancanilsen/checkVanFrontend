@@ -1,8 +1,6 @@
-// lib/view/widgets/forms/trip_form.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../provider/school_provider.dart'; // Importe o provider de escolas
+import '../../../provider/school_provider.dart';
 import '../../../provider/trip_provider.dart';
 
 class TripForm extends StatefulWidget {
@@ -16,16 +14,13 @@ class _TripFormState extends State<TripForm> {
   final _formKey = GlobalKey<FormState>();
   final _startPointController = TextEditingController();
 
-  // Controller do ponto de chegada foi removido
-
   TimeOfDay? _departureTime;
   TimeOfDay? _arrivalTime;
-  int? _selectedSchoolId; // Nova variável para o ID da escola
+  int? _selectedSchoolId;
 
   @override
   void initState() {
     super.initState();
-    // Garante que a lista de escolas seja carregada
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Provider.of<SchoolProvider>(context, listen: false).getSchools();
     });
@@ -58,10 +53,10 @@ class _TripFormState extends State<TripForm> {
       departureTime: _departureTime!,
       arrivalTime: _arrivalTime!,
       startingPoint: _startPointController.text,
-      schoolId: _selectedSchoolId!, // Passa o ID da escola
+      schoolId: _selectedSchoolId!,
     ).then((success) {
       if (success && mounted) {
-        Navigator.of(context).pop(); // Fecha o Bottom Sheet
+        Navigator.of(context).pop();
       }
     });
   }
@@ -94,7 +89,6 @@ class _TripFormState extends State<TripForm> {
             ),
             const SizedBox(height: 12),
 
-            // --- CAMPO DE PONTO DE CHEGADA SUBSTITUÍDO PELO DROPDOWN DE ESCOLAS ---
             DropdownButtonFormField<int>(
               value: _selectedSchoolId,
               hint: Text(schoolProvider.isLoading ? 'Carregando escolas...' : 'Selecione a escola de destino'),

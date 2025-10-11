@@ -19,7 +19,7 @@ class _SchoolPageState extends State<SchoolPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
-  final _numberController = TextEditingController(); // --- ADICIONADO ---
+  final _numberController = TextEditingController();
   final _morningLimitController = TextEditingController();
   final _morningDepartureController = TextEditingController();
   final _afternoonLimitController = TextEditingController();
@@ -42,7 +42,7 @@ class _SchoolPageState extends State<SchoolPage> {
   void dispose() {
     _nameController.dispose();
     _addressController.dispose();
-    _numberController.dispose(); // --- ADICIONADO ---
+    _numberController.dispose();
     _morningLimitController.dispose();
     _morningDepartureController.dispose();
     _afternoonLimitController.dispose();
@@ -100,13 +100,12 @@ class _SchoolPageState extends State<SchoolPage> {
       return;
     }
 
-    // --- AJUSTE: Concatena o endereço com o número ---
     final fullAddress = '${_addressController.text}, ${_numberController.text}';
 
     final schoolProvider = context.read<SchoolProvider>();
     final success = await schoolProvider.createSchool(
       name: _nameController.text,
-      address: fullAddress, // Envia o endereço completo
+      address: fullAddress,
       morningLimit: _morningLimitController.text,
       morningDeparture: _morningDepartureController.text,
       afternoonLimit: _afternoonLimitController.text,
@@ -179,7 +178,7 @@ class _SchoolPageState extends State<SchoolPage> {
                 validator: (v) => (v == null || v.isEmpty) ? 'Campo obrigatório' : null,
               ),
               const SizedBox(height: 16),
-              _buildAddressField(), // Widget de endereço com autocomplete
+              _buildAddressField(),
               const SizedBox(height: 24),
               const Text('Horários', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppPalette.neutral800)),
               const SizedBox(height: 16),

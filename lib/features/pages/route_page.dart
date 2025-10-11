@@ -23,7 +23,6 @@ class _RoutePageState extends State<RoutePage> {
 
   Future<void> _loadUserName() async {
     final user = await UserSession.getUser();
-    // Garante que o widget ainda está na tela antes de atualizar o estado
     if (mounted) {
       setState(() {
         _userName = user?.name;
@@ -32,20 +31,19 @@ class _RoutePageState extends State<RoutePage> {
     }
   }
 
-  // Widget auxiliar para os cards de "Confirmados" e "Ausentes"
   Widget _buildSummaryCard(String title, int count, Color color) {
     return Container(
       decoration: BoxDecoration(
-        color: AppPalette.white, // Fundo branco sólido
+        color: AppPalette.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08), // Sombra sutil
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: color.withOpacity(0.1)), // Borda colorida
+        border: Border.all(color: color.withOpacity(0.1)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),

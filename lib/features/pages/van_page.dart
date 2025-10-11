@@ -13,10 +13,8 @@ class VanPage extends StatefulWidget {
 }
 
 class _VanPageState extends State<VanPage> {
-  // Chave para identificar e validar o formulário
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers para os campos do formulário
   final _nicknameController = TextEditingController();
   final _plateController = TextEditingController();
   final _capacityController = TextEditingController();
@@ -29,24 +27,19 @@ class _VanPageState extends State<VanPage> {
     super.dispose();
   }
 
-  /// Método para validar e submeter o formulário
   void _submitVan() async {
-    // 1. Valida todos os campos do formulário
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    // 2. Acessa o provider (sem escutar por mudanças) para chamar a função
     final vanProvider = context.read<VanProvider>();
 
-    // 3. Chama o método para criar a van, passando os dados dos controllers
     final success = await vanProvider.createVan(
       nickname: _nicknameController.text,
       plate: _plateController.text,
       capacity: int.tryParse(_capacityController.text) ?? 0,
     );
 
-    // 4. Exibe o feedback para o usuário (sucesso ou erro)
     if (mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -56,7 +49,6 @@ class _VanPageState extends State<VanPage> {
             duration: const Duration(seconds: 3),
           ),
         );
-        // Limpa os campos do formulário
         _nicknameController.clear();
         _plateController.clear();
         _capacityController.clear();
@@ -86,7 +78,6 @@ class _VanPageState extends State<VanPage> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        // 5. Envolve a Column com um widget Form
         child: Form(
           key: _formKey,
           child: Column(
@@ -106,7 +97,6 @@ class _VanPageState extends State<VanPage> {
               ),
               const SizedBox(height: 32),
 
-              // Formulário da Van com validadores
               CustomTextField(
                 controller: _nicknameController,
                 label: 'Apelido da van',
@@ -138,7 +128,6 @@ class _VanPageState extends State<VanPage> {
               ),
               const SizedBox(height: 32),
 
-              // Botão para salvar a van
               ElevatedButton(
                 onPressed: vanProvider.isLoading ? null : _submitVan,
                 style: ElevatedButton.styleFrom(

@@ -9,9 +9,7 @@ import '../utils/user_session.dart';
 class GeocodingProvider extends ChangeNotifier {
   Timer? _debounce;
 
-  /// Busca sugestões de endereço com um atraso (debounce) para não sobrecarregar a API.
   Future<List<AddressSuggestion>> fetchSuggestions(String query) async {
-    // Cancela o timer anterior se o usuário continuar digitando
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
     final completer = Completer<List<AddressSuggestion>>();

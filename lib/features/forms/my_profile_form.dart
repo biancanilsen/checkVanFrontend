@@ -235,7 +235,6 @@ class _MyProfileFormState extends State<MyProfileForm> {
       validator: (value) => value == null || value.isEmpty ? 'Campo obrigatório' : null,
       onTap: () async {
         final picked = await showDatePicker(
-          // TODO: ver como deixar em pt-BR
           context: context,
           initialDate: _birthDate != null ? _birthDate! : DateTime.now(),
           firstDate: DateTime(1900),

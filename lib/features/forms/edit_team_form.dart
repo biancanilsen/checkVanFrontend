@@ -20,11 +20,9 @@ class _EditTeamFormState extends State<EditTeamForm> {
   @override
   void initState() {
     super.initState();
-    // Pré-preenche o formulário com os dados da turma
     _nameController = TextEditingController(text: widget.team.name);
     _selectedTripId = widget.team.trip?.id;
 
-    // Garante que a lista de viagens esteja disponível para o dropdown
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<TripProvider>(context, listen: false).getTrips();
     });
@@ -41,7 +39,7 @@ class _EditTeamFormState extends State<EditTeamForm> {
     )
         .then((success) {
       if (success && mounted) {
-        Navigator.of(context).pop(); // Fecha o Bottom Sheet
+        Navigator.of(context).pop();
       }
     });
   }

@@ -160,7 +160,6 @@ class _SignUpFormState extends State<SignUpForm> {
             ),
             const SizedBox(height: 32),
 
-            // Campos do formulário usando o novo estilo
             _buildCustomTextField(
               controller: _nameController,
               label: 'Nome',
@@ -215,7 +214,6 @@ class _SignUpFormState extends State<SignUpForm> {
             ),
             const SizedBox(height: 16),
 
-            // Switch "Sou motorista"
             Row(
               children: [
                 Switch(
@@ -228,7 +226,6 @@ class _SignUpFormState extends State<SignUpForm> {
             ),
             const SizedBox(height: 8),
 
-            // Campo CNH (condicional)
             if (_isDriver) ...[
               _buildCustomTextField(
                 controller: _cnhController,
@@ -240,7 +237,6 @@ class _SignUpFormState extends State<SignUpForm> {
             ],
             const SizedBox(height: 24),
 
-            // Botão de Cadastro
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

@@ -4,13 +4,13 @@ import 'trip_model.dart';
 class Team {
   final int id;
   final String name;
-  final Trip? trip; // 1. Marque o trip como opcional (pode ser nulo)
-  List<Student> students; // 2. Remova o 'final' para permitir a atribuição posterior
+  final Trip? trip;
+  List<Student> students;
 
   Team({
     required this.id,
     required this.name,
-    this.trip, // Construtor atualizado
+    this.trip,
     required this.students,
   });
 
@@ -26,17 +26,14 @@ class Team {
   }
 
   factory Team.fromJson(Map<String, dynamic> json) {
-    // 3. Lógica mais segura para parsing
     return Team(
       id: json['id'] ?? 0,
       name: json['name'] ?? 'Turma sem nome',
 
-      // Verifica se o campo 'trip' existe antes de tentar converter
       trip: json.containsKey('trip') && json['trip'] != null
           ? Trip.fromJson(json['trip'])
           : null,
 
-      // Verifica se o campo 'students' existe, senão, começa com uma lista vazia
       students: json.containsKey('students') && json['students'] != null
           ? (json['students'] as List).map((s) => Student.fromJson(s)).toList()
           : [],

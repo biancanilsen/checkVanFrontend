@@ -66,10 +66,10 @@ class AppTheme {
         labelLarge: poppinsTextTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.bold,
         ),
-      ).apply( // Garante que a fonte seja aplicada a todos os estilos
+      ).apply(
         fontFamily: 'Poppins',
-        bodyColor: AppPalette.neutral800, // Cor padrão para textos
-        displayColor: AppPalette.neutral900, // Cor para títulos e displays
+        bodyColor: AppPalette.neutral800,
+        displayColor: AppPalette.neutral900,
       ),
 
       appBarTheme: AppBarTheme(
