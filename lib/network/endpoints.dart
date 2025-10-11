@@ -35,9 +35,6 @@ class Endpoints {
   static const String assignStudentToTeam = '$baseUrl/studentTeam/assign';
   static const String unassignStudentFromTeam = '$baseUrl/studentTeam/unassign';
 
-  //schoool
-  static const String getAllSchools = '$baseUrl/school/getAll';
-
   // geocoding
   static const String autocompleteAddress = '$baseUrl/geocoding/autocomplete';
 
@@ -45,5 +42,6 @@ class Endpoints {
   static const String createVan = '$baseUrl/van/create';
 
   // School
+  static const String getAllSchools = '$baseUrl/school/getAll';
   static const String createSchool = '$baseUrl/school/create';
 }

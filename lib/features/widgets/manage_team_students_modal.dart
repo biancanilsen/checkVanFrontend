@@ -39,7 +39,6 @@ class _ManageTeamStudentsModalState extends State<ManageTeamStudentsModal> {
     // Usa Future.wait para executar as duas buscas de dados em paralelo
     final results = await Future.wait([
       teamProvider.getStudentsForTeam(widget.team.id),
-      studentProvider.getAllStudentsForDriver(),
     ]);
 
     // Após a conclusão, atualiza o estado se o widget ainda estiver montado

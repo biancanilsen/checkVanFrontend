@@ -60,6 +60,8 @@ class _VanPageState extends State<VanPage> {
         _nicknameController.clear();
         _plateController.clear();
         _capacityController.clear();
+
+        Navigator.pushReplacementNamed(context, '/home');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -148,24 +150,6 @@ class _VanPageState extends State<VanPage> {
                 child: vanProvider.isLoading
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Text('Salvar Van'),
-              ),
-              const SizedBox(height: 24),
-
-              const Divider(),
-              const SizedBox(height: 24),
-
-              OutlinedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Cadastrar escola'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  foregroundColor: AppPalette.primary900,
-                  side: const BorderSide(color: AppPalette.primary900),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/add-school');
-                },
               ),
               const SizedBox(height: 24),
             ],

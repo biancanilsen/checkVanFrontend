@@ -52,7 +52,6 @@ class SchoolProvider extends ChangeNotifier {
     }
   }
 
-  /// Cria uma nova escola.
   Future<bool> createSchool({
     required String name,
     required String address,
@@ -66,44 +65,42 @@ class SchoolProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final url = Uri.parse(Endpoints.createSchool);
       final token = await UserSession.getToken();
-      if (token == null) throw Exception('Usuário não autenticado.');
-
-      final body = {
-        'name': name,
-        'address': address,
-        'morning_limit': morningLimit,
-        'morning_departure': morningDeparture,
-        'afternoon_limit': afternoonLimit,
-        'afternoon_departure': afternoonDeparture,
-      };
 
       final response = await http.post(
-        Uri.parse(Endpoints.createSchool),
+        url,
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
+          'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(body),
+        body: json.encode({
+          'name': name,
+          'address': address,
+          // Os campos de lat/lon foram removidos do corpo da requisição
+          'morning_limit': morningLimit,
+          'morning_departure': morningDeparture,
+          'afternoon_limit': afternoonLimit,
+          'afternoon_departure': afternoonDeparture,
+        }),
       );
 
+      // ... resto do método
       if (response.statusCode == 201) {
-        // Após criar, atualiza a lista de escolas
-        await getSchools();
+        _isLoading = false;
+        notifyListeners();
         return true;
       } else {
-        final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Erro ao criar escola.';
+        _error = 'Falha ao cadastrar a escola.';
+        _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _error = 'Erro de conexão: ${e.toString()}';
-      notifyListeners();
-      return false;
-    } finally {
+      _error = 'Ocorreu um erro: $e';
       _isLoading = false;
       notifyListeners();
+      return false;
     }
   }
 }

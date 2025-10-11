@@ -61,9 +61,14 @@ class _HomeDriverView extends StatelessWidget {
                     onTap: () {
                       Navigator.pushNamed(context, '/van');
                     },
-                    child: HomeMenuButton(icon: Icons.map, label: 'Van/Escola'),
+                    child: HomeMenuButton(icon: Icons.map, label: 'Van'),
                   ),
-                  HomeMenuButton(icon: Icons.alt_route, label: 'Rotas'),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/add-school');
+                    },
+                    child: HomeMenuButton(icon: Icons.map, label: 'Escola'),
+                  ),
                 ],
               ),
             ),

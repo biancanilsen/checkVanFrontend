@@ -16,6 +16,8 @@ class StudentProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  /// Busca a lista de alunos do backend.
+  /// A lista varia conforme o tipo de usuário (motorista ou responsável).
   Future<void> getStudents() async {
     _isLoading = true;
     _error = null;
@@ -23,19 +25,10 @@ class StudentProvider extends ChangeNotifier {
 
     try {
       final user = await UserSession.getUser();
-      final role = user?.role;
+      if (user?.role == null) throw Exception('Não foi possível identificar o tipo de usuário.');
 
-      if (user == null || role == null) {
-        throw Exception('Não foi possível identificar o tipo de usuário.');
-      }
-
-      String endpointUrl;
-      if (role == 'driver') {
-        endpointUrl = Endpoints.getAllStudents;
-      } else {
-        endpointUrl = Endpoints.getStudents;
-      }
-
+      // Define o endpoint correto com base na role do usuário
+      final endpointUrl = user!.role == 'driver' ? Endpoints.getAllStudents : Endpoints.getStudents;
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
@@ -51,20 +44,16 @@ class StudentProvider extends ChangeNotifier {
         final data = jsonDecode(response.body);
         final List<dynamic> studentListJson = data['students'];
         _students = studentListJson.map((json) => Student.fromJson(json)).toList();
-
+        // Ordena a lista em ordem alfabética para exibição consistente
         _students.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-
-        _error = null;
       } else if (response.statusCode == 404) {
-        _students = [];
-        _error = null;
+        _students = []; // Limpa a lista se não encontrar nada
       } else {
         final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Falha ao carregar alunos.';
-        _students = [];
+        throw Exception(data['message'] ?? 'Falha ao carregar alunos.');
       }
     } catch (e) {
-      _error = 'Erro de conexão: ${e.toString()}';
+      _error = e.toString();
       _students = [];
     } finally {
       _isLoading = false;
@@ -72,6 +61,7 @@ class StudentProvider extends ChangeNotifier {
     }
   }
 
+  /// Adiciona um novo aluno.
   Future<bool> addStudent({
     required String name,
     required DateTime birthDate,
@@ -89,37 +79,32 @@ class StudentProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final body = {
-        'name': name,
-        'birth_date': DateFormat('yyyy-MM-dd').format(birthDate),
-        'gender': gender,
-        'school_id': schoolId,
-        'address': address,
-        'shift_going': shiftGoing,
-        'shift_return': shiftReturn,
-      };
-
       final response = await http.post(
         Uri.parse(Endpoints.createStudent),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(body),
+        body: jsonEncode({
+          'name': name,
+          'birth_date': DateFormat('yyyy-MM-dd').format(birthDate),
+          'gender': gender,
+          'school_id': schoolId,
+          'address': address,
+          'shift_going': shiftGoing,
+          'shift_return': shiftReturn,
+        }),
       );
 
       if (response.statusCode == 201) {
-        await getStudents();
+        await getStudents(); // Atualiza a lista local após o sucesso
         return true;
       } else {
         final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Erro ao adicionar aluno.';
-        notifyListeners();
-        return false;
+        throw Exception(data['message'] ?? 'Erro ao adicionar aluno.');
       }
     } catch (e) {
-      _error = 'Erro de conexão: ${e.toString()}';
-      notifyListeners();
+      _error = e.toString();
       return false;
     } finally {
       _isLoading = false;
@@ -127,110 +112,100 @@ class StudentProvider extends ChangeNotifier {
     }
   }
 
-  // lib/provider/student_provider.dart
-  Future<void> updateStudent(
-      int id,
-      String name,
-      DateTime birthDate,
-      String gender,
-      int schoolId,
-      String address,
-      ) async {
+  /// Atualiza os dados de um aluno existente.
+  /// Retorna `true` em caso de sucesso.
+  Future<bool> updateStudent({
+    required int id,
+    required String name,
+    required DateTime birthDate,
+    required String gender,
+    required int schoolId,
+    required String address,
+    required String shiftGoing,
+    required String shiftReturn,
+  }) async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final body = {
-        'name': name,
-        'birth_date': DateFormat('yyyy-MM-dd').format(birthDate),
-        'gender': gender,
-        'school_id': schoolId,
-        'address': address,
-      };
-
-      // O ID é passado na URL
       final response = await http.put(
-        Uri.parse('${Endpoints.updateStudent}/$id'),
+        Uri.parse('${Endpoints.updateStudent}/$id'), // O ID é passado na URL
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(body),
+        body: jsonEncode({
+          'name': name,
+          'birth_date': DateFormat('yyyy-MM-dd').format(birthDate),
+          'gender': gender,
+          'school_id': schoolId,
+          'address': address,
+          'shift_going': shiftGoing,   // AJUSTE: Adicionado campo de turno
+          'shift_return': shiftReturn, // AJUSTE: Adicionado campo de turno
+        }),
       );
 
       if (response.statusCode == 200) {
-        await getStudents(); // Recarrega a lista
+        await getStudents(); // Recarrega a lista para refletir a alteração
+        return true;
       } else {
         final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Erro ao atualizar aluno.';
-        notifyListeners(); // Mostra o erro na UI
+        throw Exception(data['message'] ?? 'Erro ao atualizar aluno.');
       }
     } catch (e) {
-      _error = 'Erro de conexão ao atualizar: ${e.toString()}';
-      notifyListeners();
+      _error = e.toString();
+      return false; // AJUSTE: Retorna `false` em caso de erro
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> deleteStudent(int studentId) async {
+  /// Exclui um aluno.
+  /// Retorna `true` em caso de sucesso.
+  Future<bool> deleteStudent(int studentId) async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final body = {
-        'studentId': studentId,
-      };
-
+      // AJUSTE: A melhor prática para DELETE é passar o ID na URL, sem corpo (body).
+      // Isso é mais seguro e segue o padrão RESTful.
       final response = await http.delete(
-        Uri.parse(Endpoints.deleteStudent),
+        Uri.parse('${Endpoints.deleteStudent}/$studentId'),
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(body),
       );
 
       if (response.statusCode == 200) {
-        await getStudents();
+        // AJUSTE: Remove o aluno da lista localmente para uma resposta de UI mais rápida,
+        // antes de recarregar a lista completa do servidor.
+        _students.removeWhere((student) => student.id == studentId);
+        notifyListeners();
+        return true;
       } else {
         final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Erro ao excluir aluno.';
-        await getStudents();
+        throw Exception(data['message'] ?? 'Erro ao excluir aluno.');
       }
     } catch (e) {
-      _error = 'Erro de conexão ao excluir: ${e.toString()}';
+      _error = e.toString();
+      return false; // AJUSTE: Retorna `false` em caso de erro
+    } finally {
+      _isLoading = false;
       notifyListeners();
+      // Opcional: recarregar a lista para garantir consistência total.
+      // await getStudents();
     }
   }
 
-  /// Busca e retorna a lista de todos os alunos (para o Autocomplete).
-  Future<List<Student>> getAllStudentsForDriver() async {
-    try {
-      final token = await UserSession.getToken();
-      if (token == null) throw Exception('Usuário não autenticado.');
-
-      final response = await http.get(
-        Uri.parse(Endpoints.getAllStudents),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List<dynamic> studentListJson = data['students'];
-        return studentListJson.map((json) => Student.fromJson(json)).toList();
-      } else {
-        return [];
-      }
-    } catch (e) {
-      return [];
-    }
-  }
+// O método `getAllStudentsForDriver` foi removido pois sua lógica
+// já está contida de forma mais eficiente dentro do `getStudents`.
 }

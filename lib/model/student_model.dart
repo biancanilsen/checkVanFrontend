@@ -20,7 +20,9 @@ class Student {
   final int guardianId;
   final String address;
   final int? schoolId;
-  final School? school; // Objeto da escola aninhado
+  final School? school;
+  final String shiftGoing;
+  final String shiftReturn;
 
   Student({
     required this.id,
@@ -29,6 +31,8 @@ class Student {
     required this.gender,
     required this.guardianId,
     required this.address,
+    required this.shiftGoing,
+    required this.shiftReturn,
     this.schoolId,
     this.school,
   });
@@ -44,8 +48,9 @@ class Student {
       guardianId: json['guardian_id'] ?? 0,
       address: json['address'] ?? 'Endereço não informado',
       schoolId: json['school_id'],
-      // Verifica se o objeto 'school' existe no JSON antes de criá-lo
       school: json['school'] != null ? School.fromJson(json['school']) : null,
+      shiftGoing: json['shift_going'] ?? 'Não informado',
+      shiftReturn: json['shift_return'] ?? 'Não informado',
     );
   }
 
@@ -57,5 +62,7 @@ class Student {
     'guardian_id': guardianId,
     'address': address,
     'school_id': schoolId,
+    'shift_going': shiftGoing,
+    'shift_return': shiftReturn,
   };
 }
