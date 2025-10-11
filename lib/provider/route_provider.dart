@@ -1,9 +1,8 @@
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../model/route_model.dart';
-import '../model/student_model.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 
@@ -16,6 +15,7 @@ class RouteProvider extends ChangeNotifier {
   String? get error => _error;
   RouteData? get routeData => _routeData;
 
+  /// Gera a rota otimizada, buscando os dados do backend.
   Future<bool> generateRoute({required int teamId}) async {
     _isLoading = true;
     _error = null;
@@ -33,45 +33,21 @@ class RouteProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // Mapeia os alunos da resposta (isso já estava correto)
-        final List<dynamic> studentsJson = data['studentsGoing'] ?? [];
-        final students = studentsJson.map((json) => Student.fromJson(json)).toList();
+        // --- CORREÇÃO ---
+        // A lógica de parsing complexa agora está dentro do RouteData.fromJson.
+        // O provider só precisa chamar o construtor de fábrica e ele faz todo o trabalho.
+        _routeData = RouteData.fromJson(data);
 
-        // --- AJUSTE AQUI: Construindo a lista de waypoints a partir dos "legs" ---
-        final List<dynamic> legsJson = data['route']?['legs'] ?? [];
-        final List<Waypoint> waypoints = [];
-
-        if (legsJson.isNotEmpty) {
-          // Adiciona o ponto de partida do primeiro "leg"
-          final startLocation = legsJson.first['start_location'];
-          waypoints.add(Waypoint(
-            lat: (startLocation['lat'] as num).toDouble(),
-            lon: (startLocation['lng'] as num).toDouble(),
-          ));
-
-          // Adiciona os pontos de chegada de cada "leg" (que são as paradas)
-          for (var leg in legsJson) {
-            final endLocation = leg['end_location'];
-            waypoints.add(Waypoint(
-              lat: (endLocation['lat'] as num).toDouble(),
-              lon: (endLocation['lng'] as num).toDouble(),
-            ));
-          }
-        }
-
-        final String encodedPolyline = data['route']?['overview_polyline']?['points'] ?? '';
-
-        _routeData = RouteData(
-            students: students,
-            waypoints: waypoints,
-            encodedPolyline: encodedPolyline,);
         return true;
       } else {
         final data = jsonDecode(response.body);
-        throw Exception(data['message'] ?? 'Falha ao gerar a rota.');
+        _error = data['message'] ?? 'Falha ao gerar a rota.';
+        notifyListeners();
+        return false;
       }
     } catch (e) {
       _error = e.toString();
+      notifyListeners();
       return false;
     } finally {
       _isLoading = false;

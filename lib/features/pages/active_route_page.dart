@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:math' show cos, sqrt, asin;
 import 'package:check_van_frontend/model/route_model.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 import '../../core/theme.dart';
 
@@ -21,68 +23,105 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
 
+  // --- Variáveis para Navegação por Voz ---
+  final FlutterTts _flutterTts = FlutterTts();
+  late final RouteData _routeData;
+  int _currentStepIndex = 0;
+  String _currentInstruction = "Iniciando a rota...";
+  bool _isDisposed = false;
+  bool _isSoundOn = true; // Novo: controla o estado do som
+
   final Location _location = Location();
   StreamSubscription<LocationData>? _locationSubscription;
 
-  // Constantes para o controle da câmera de navegação
+  // Constantes para o controle da câmera
   static const double _navigationZoom = 18.0;
   static const double _navigationTilt = 45.0;
 
   @override
   void initState() {
     super.initState();
-    _setupLocationListener();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ModalRoute.of(context)!.settings.arguments is RouteData) {
+        _routeData = ModalRoute.of(context)!.settings.arguments as RouteData;
+        if (_routeData.steps.isNotEmpty) {
+          _currentInstruction = _routeData.steps.first.instruction;
+        }
+        _initializeTts();
+        _setupLocationListener();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _isDisposed = true;
     _locationSubscription?.cancel();
+    _flutterTts.stop();
     super.dispose();
   }
 
-  /// Chamado quando o mapa é criado, inicializa a UI da rota.
-  void _onMapCreated(GoogleMapController controller, RouteData routeData) {
+  /// Inicializa o motor de Text-to-Speech e fala a primeira instrução.
+  Future<void> _initializeTts() async {
+    await _flutterTts.setLanguage("pt-BR");
+    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setPitch(1.0);
+
+    if (_routeData.steps.isNotEmpty) {
+      _speakInstruction(_routeData.steps.first.instruction);
+    }
+  }
+
+  /// Converte um texto em voz, SE o som estiver ativado.
+  void _speakInstruction(String text) {
+    if (_isDisposed || !_isSoundOn) return; // Não fala se o som estiver desligado
+    // Limpa tags HTML que podem vir da API do Google
+    final cleanText = text.replaceAll(RegExp(r'<[^>]*>'), ' ');
+    _flutterTts.speak(cleanText);
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
     if (!_mapControllerCompleter.isCompleted) {
       _mapControllerCompleter.complete(controller);
     }
-    _setupMapUI(routeData);
+    _setupMapUI(_routeData);
   }
 
-  /// Configura os marcadores dos alunos e a linha da rota no mapa.
+  /// Desenha a rota e os marcadores no mapa.
   void _setupMapUI(RouteData routeData) {
     List<PointLatLng> polylineCoordinates = PolylinePoints().decodePolyline(routeData.encodedPolyline);
     List<LatLng> latLngList = polylineCoordinates.map((p) => LatLng(p.latitude, p.longitude)).toList();
-
     Polyline routePolyline = Polyline(
       polylineId: const PolylineId('route'),
       color: AppPalette.primary800,
       width: 6,
       points: latLngList,
     );
-
     setState(() {
-      _markers.clear(); // Limpa marcadores de rotas anteriores
+      _markers.clear();
       for (var student in routeData.students) {
-        _markers.add(
-          Marker(
-            markerId: MarkerId('student_${student.id}'),
-            position: LatLng(student.latitude, student.longitude),
-            infoWindow: InfoWindow(title: student.name),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-          ),
-        );
+        if(student.latitude != null && student.longitude != null){
+          _markers.add(
+            Marker(
+              markerId: MarkerId('student_${student.id}'),
+              position: LatLng(student.latitude!, student.longitude!),
+              infoWindow: InfoWindow(title: student.name),
+              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            ),
+          );
+        }
       }
       _polylines.add(routePolyline);
     });
-
-    // Move a câmera para focar na rota inteira ao iniciar
-    _mapController.animateCamera(
-      CameraUpdate.newLatLngBounds(_boundsFromLatLngList(latLngList), 60.0),
-    );
+    if (latLngList.isNotEmpty) {
+      _mapController.animateCamera(
+        CameraUpdate.newLatLngBounds(_boundsFromLatLngList(latLngList), 60.0),
+      );
+    }
   }
 
-  /// Inicia o rastreamento da localização em tempo real do motorista.
+  /// Inicia o listener de localização e implementa a lógica de navegação.
   void _setupLocationListener() async {
     bool serviceEnabled = await _location.serviceEnabled();
     if (!serviceEnabled) {
@@ -97,66 +136,134 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
 
     _locationSubscription = _location.onLocationChanged.listen((LocationData newLocation) {
-      if (mounted && newLocation.latitude != null && newLocation.longitude != null) {
+      if (_isDisposed || newLocation.latitude == null || newLocation.longitude == null) return;
 
-        setState(() {
-          // Atualiza o marcador da posição do motorista
-          _markers.removeWhere((m) => m.markerId.value == 'van_location');
-          _markers.add(
-            Marker(
-              markerId: const MarkerId('van_location'),
-              position: LatLng(newLocation.latitude!, newLocation.longitude!),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-              flat: true, // Faz o ícone "deitar" no mapa
-              rotation: newLocation.heading ?? 0.0, // Rotaciona o ícone com a direção
-              anchor: const Offset(0.5, 0.5), // Centraliza o ícone
-            ),
-          );
-        });
+      final currentPosition = LatLng(newLocation.latitude!, newLocation.longitude!);
 
-        // Anima a câmera para seguir o motorista com perspectiva de navegação
-        _mapController.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: LatLng(newLocation.latitude!, newLocation.longitude!),
-              zoom: _navigationZoom,
-              tilt: _navigationTilt,
-              bearing: newLocation.heading ?? 0.0, // Orienta o mapa na direção do movimento
-            ),
+      setState(() {
+        _markers.removeWhere((m) => m.markerId.value == 'van_location');
+        _markers.add(
+          Marker(
+            markerId: const MarkerId('van_location'),
+            position: currentPosition,
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+            flat: true, // "Deita" o ícone no mapa para permitir rotação
+            rotation: newLocation.heading ?? 0.0, // Rotaciona o ícone com a direção do celular
+            anchor: const Offset(0.5, 0.5), // Centraliza o ícone
           ),
         );
+      });
+
+      // Anima a câmera para uma visão de navegação 3D
+      _mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: currentPosition,
+            zoom: _navigationZoom,
+            tilt: _navigationTilt, // Inclina a câmera
+            bearing: newLocation.heading ?? 0.0, // Gira o mapa para corresponder à direção
+          ),
+        ),
+      );
+
+      // Lógica para as instruções de voz
+      if (_currentStepIndex < _routeData.steps.length - 1) {
+        final nextManeuverPosition = _routeData.steps[_currentStepIndex].endLocation;
+        final distanceToManeuver = _calculateDistance(
+          currentPosition.latitude, currentPosition.longitude,
+          nextManeuverPosition.latitude, nextManeuverPosition.longitude,
+        );
+
+        if (distanceToManeuver < 130) { // Fala a próxima instrução a 50m da manobra
+          _currentStepIndex++;
+          final nextInstruction = _routeData.steps[_currentStepIndex].instruction;
+          setState(() => _currentInstruction = nextInstruction);
+          _speakInstruction(nextInstruction);
+        }
       }
     });
   }
 
+  // Função para calcular a distância em metros entre duas coordenadas (Haversine)
+  double _calculateDistance(lat1, lon1, lat2, lon2){
+    var p = 0.017453292519943295;
+    var c = cos;
+    var a = 0.5 - c((lat2 - lat1) * p)/2 +
+        c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p))/2;
+    return 12742 * asin(sqrt(a)) * 1000;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final routeData = ModalRoute.of(context)!.settings.arguments as RouteData;
+    final routeData = ModalRoute.of(context)?.settings.arguments;
+    if (routeData == null || routeData is! RouteData) {
+      return const Scaffold(body: Center(child: Text("Dados da rota não encontrados.")));
+    }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text("Rota Ativa", style: TextStyle(color: AppPalette.primary900, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white.withOpacity(0.8),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppPalette.primary900),
+        foregroundColor: AppPalette.primary900,
       ),
       body: Stack(
         children: [
-          // O Mapa do Google
           GoogleMap(
-            onMapCreated: (controller) => _onMapCreated(controller, routeData),
+            onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
-              target: LatLng(routeData.waypoints.first.lat, routeData.waypoints.first.lon),
+              target: LatLng(routeData.students.first.latitude ?? 0.0, routeData.students.first.longitude ?? 0.0),
               zoom: 14,
             ),
             markers: _markers,
             polylines: _polylines,
             myLocationEnabled: false,
             myLocationButtonEnabled: false,
+            compassEnabled: false, // Remove a bússola padrão, pois o mapa já gira
           ),
 
-          // O painel inferior com a lista de paradas
+          // Card de instrução no topo com o botão de som
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            right: 16,
+            child: Card(
+              color: AppPalette.primary800,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              elevation: 8,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _currentInstruction,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppPalette.white),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Botão para ativar/desativar o som
+                    CircleAvatar(
+                      backgroundColor: Colors.black.withOpacity(0.2),
+                      child: IconButton(
+                        icon: Icon(_isSoundOn ? Icons.volume_up : Icons.volume_off, color: Colors.white),
+                        onPressed: () {
+                          setState(() {
+                            _isSoundOn = !_isSoundOn;
+                            if (!_isSoundOn) {
+                              _flutterTts.stop(); // Para a fala atual se o som for desativado
+                            }
+                          });
+                        },
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
+
           DraggableScrollableSheet(
             initialChildSize: 0.4,
             minChildSize: 0.15,
@@ -168,8 +275,8 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                   boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 20)],
                 ),
-                child: ListView(
-                  controller: scrollController,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -191,19 +298,25 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                         style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppPalette.primary900),
                       ),
                     ),
-                    // Lista dinâmica de alunos
-                    ...routeData.students.asMap().entries.map((entry) {
-                      int idx = entry.key;
-                      var student = entry.value;
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: _buildStopTile(
-                          name: student.name,
-                          address: student.address,
-                          isLastStop: idx == routeData.students.length - 1,
-                        ),
-                      );
-                    }).toList(),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: routeData.students.length,
+                        itemBuilder: (context, index) {
+                          final student = routeData.students[index];
+                          // Adiciona um padding para o espaçamento vertical
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 24.0),
+                            child: _buildStopTile(
+                              name: student.name,
+                              address: student.address ?? 'Endereço não informado',
+                              isLastStop: index == routeData.students.length - 1,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -214,7 +327,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     );
   }
 
-  // Widget auxiliar para cada item da lista de paradas
+  // Widget auxiliar para cada item da lista de paradas (ATUALIZADO)
   Widget _buildStopTile({
     required String name,
     required String address,
@@ -224,6 +337,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // A "Linha do Tempo" com o pino e a linha vertical
           SizedBox(
             width: 40,
             child: Column(
@@ -241,6 +355,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             ),
           ),
           const SizedBox(width: 8),
+          // Avatar e informações do aluno
           Expanded(
             child: Row(
               children: [
