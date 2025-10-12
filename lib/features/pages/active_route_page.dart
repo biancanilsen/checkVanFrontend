@@ -8,7 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/theme.dart';
 
 class ActiveRoutePage extends StatefulWidget {
@@ -25,6 +25,8 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
   BitmapDescriptor? _navigationIcon;
+  bool _isCameraCentered = true;
+  LocationData? _lastLocation;
 
   // --- Variáveis para Navegação por Voz ---
   final FlutterTts _flutterTts = FlutterTts();
@@ -49,33 +51,32 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       ..color = AppPalette.primary800
       ..style = PaintingStyle.fill;
 
-    // Desenha a seta de navegação
+    // Draw a navigation arrow
     final path = Path();
-    path.moveTo(size.width / 2, 0); // Ponto superior
-    path.lineTo(size.width, size.height); // Canto inferior direito
-    path.lineTo(size.width / 2, size.height * 0.8); // Recuo do meio
-    path.lineTo(0, size.height); // Canto inferior esquerdo
+    path.moveTo(size.width / 2, 0); // Top point
+    path.lineTo(size.width, size.height); // Bottom right
+    path.lineTo(size.width / 2, size.height * 0.8); // Middle indent
+    path.lineTo(0, size.height); // Bottom left
     path.close();
 
     canvas.drawPath(path, paint);
 
-    // Adiciona a borda branca
+    // Add white border
     final borderPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3; // Aumentado de 2 para 3 para manter a proporção
+      ..strokeWidth = 2;
     canvas.drawPath(path, borderPaint);
 
     final picture = pictureRecorder.endRecording();
-    // Usa o novo tamanho ao converter para imagem
     final image = await picture.toImage(size.width.toInt(), size.height.toInt());
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-
+    
     if (byteData != null) {
       return BitmapDescriptor.fromBytes(byteData.buffer.asUint8List());
     }
-
-    // Fallback para o marcador padrão se a conversão falhar
+    
+    // Fallback to default marker if conversion fails
     return BitmapDescriptor.defaultMarker;
   }
 
@@ -184,6 +185,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     _locationSubscription = _location.onLocationChanged.listen((LocationData newLocation) {
       if (_isDisposed || newLocation.latitude == null || newLocation.longitude == null) return;
 
+      _lastLocation = newLocation;
       final currentPosition = LatLng(newLocation.latitude!, newLocation.longitude!);
 
       if (_navigationIcon != null) {
@@ -194,26 +196,27 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
               markerId: const MarkerId('van_location'),
               position: currentPosition,
               icon: _navigationIcon!,
-              flat: true, // Mantém o ícone no plano do mapa
+              flat: true,
               rotation: newLocation.heading ?? 0.0,
               anchor: const Offset(0.5, 0.5),
-              zIndex: 2, // Garante que o ícone fique acima da linha da rota
+              zIndex: 2,
             ),
           );
         });
       }
 
-      // Anima a câmera para uma visão de navegação 3D
-      _mapController.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: currentPosition,
-            zoom: _navigationZoom,
-            tilt: _navigationTilt, // Inclina a câmera
-            bearing: newLocation.heading ?? 0.0, // Gira o mapa para corresponder à direção
+      if (_isCameraCentered) {
+        _mapController.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: currentPosition,
+              zoom: _navigationZoom,
+              tilt: _navigationTilt,
+              bearing: newLocation.heading ?? 0.0,
+            ),
           ),
-        ),
-      );
+        );
+      }
 
       // Lógica para as instruções de voz
       if (_currentStepIndex < _routeData.steps.length - 1) {
@@ -268,7 +271,12 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             polylines: _polylines,
             myLocationEnabled: false,
             myLocationButtonEnabled: false,
-            compassEnabled: false, // Remove a bússola padrão, pois o mapa já gira
+            compassEnabled: false,
+            onCameraMoveStarted: () {
+              if (_isCameraCentered) {
+                setState(() => _isCameraCentered = false);
+              }
+            },
           ),
 
           // Card de instrução no topo com o botão de som
@@ -373,6 +381,26 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           ),
         ],
       ),
+      floatingActionButton: !_isCameraCentered && _lastLocation != null
+          ? FloatingActionButton(
+              onPressed: () {
+                if (_lastLocation?.latitude != null && _lastLocation?.longitude != null) {
+                  setState(() => _isCameraCentered = true);
+                  _mapController.animateCamera(
+                    CameraUpdate.newCameraPosition(
+                      CameraPosition(
+                        target: LatLng(_lastLocation!.latitude!, _lastLocation!.longitude!),
+                        zoom: _navigationZoom,
+                        tilt: _navigationTilt,
+                        bearing: _lastLocation?.heading ?? 0.0,
+                      ),
+                    ),
+                  );
+                }
+              },
+              child: const Icon(Icons.gps_fixed),
+            )
+          : null,
     );
   }
 
