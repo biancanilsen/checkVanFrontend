@@ -289,8 +289,10 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
                 onPressed: isLoading ? null : _confirmPresence,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppPalette.green600,
+                  foregroundColor: AppPalette.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                 ),
                 child: isLoading
@@ -304,10 +306,7 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
                 )
                     : const Text(
                   'Confirmar',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
