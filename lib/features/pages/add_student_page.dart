@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -24,7 +26,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
   final _streetController = TextEditingController();
   final _numberController = TextEditingController();
 
-  // --- VARIÁVEIS DE ESTADO SIMPLIFICADAS PARA O AUTOCOMPLETE ---
   final _addressFocusNode = FocusNode();
   List<AddressSuggestion> _addressSuggestions = [];
   bool _isAddressLoading = false;
@@ -38,6 +39,69 @@ class _AddStudentPageState extends State<AddStudentPage> {
   int? _selectedSchoolId;
   String? _selectedShiftGoing;
   String? _selectedShiftReturn;
+
+  XFile? _imageFile;
+  final ImagePicker _picker = ImagePicker();
+
+  // NOVO: Crie uma função para selecionar a imagem da galeria
+  Future<void> _pickImage() async {
+    try {
+      final XFile? selectedImage = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80, // Opcional: comprime a imagem para economizar dados
+        maxWidth: 800,   // Opcional: redimensiona a imagem
+      );
+      if (selectedImage != null) {
+        setState(() {
+          _imageFile = selectedImage;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao selecionar imagem: $e')),
+      );
+    }
+  }
+
+  // ATUALIZE o método _submitForm para passar o arquivo da imagem
+  void _submitForm() async {
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    final fullAddress = '${_streetController.text}, ${_numberController.text}';
+
+    final studentProvider = context.read<StudentProvider>();
+    final success = await studentProvider.addStudent(
+      name: _nameController.text,
+      birthDate: _birthDate!,
+      gender: _selectedGender!,
+      schoolId: _selectedSchoolId!,
+      address: fullAddress,
+      shiftGoing: _selectedShiftGoing!,
+      shiftReturn: _selectedShiftReturn!,
+      imageFile: _imageFile, // NOVO: Passe o arquivo da imagem para o provider
+    );
+
+    if (mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Aluno cadastrado com sucesso!'),
+            backgroundColor: AppPalette.green500,
+          ),
+        );
+        Navigator.pushReplacementNamed(context, '/students');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(studentProvider.error ?? 'Ocorreu um erro.'),
+            backgroundColor: AppPalette.red500,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -110,45 +174,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
     }
   }
 
-  void _submitForm() async {
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
-    }
-
-    // Monta o endereço final a partir dos campos de texto
-    final fullAddress = '${_streetController.text}, ${_numberController.text}';
-
-    final studentProvider = context.read<StudentProvider>();
-    final success = await studentProvider.addStudent(
-      name: _nameController.text,
-      birthDate: _birthDate!,
-      gender: _selectedGender!,
-      schoolId: _selectedSchoolId!,
-      address: fullAddress, // Envia apenas a string do endereço
-      shiftGoing: _selectedShiftGoing!,
-      shiftReturn: _selectedShiftReturn!,
-    );
-
-    if (mounted) {
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Aluno cadastrado com sucesso!'),
-            backgroundColor: AppPalette.green500,
-          ),
-        );
-        Navigator.pushReplacementNamed(context, '/students');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(studentProvider.error ?? 'Ocorreu um erro.'),
-            backgroundColor: AppPalette.red500,
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final schoolProvider = context.watch<SchoolProvider>();
@@ -174,7 +199,29 @@ class _AddStudentPageState extends State<AddStudentPage> {
               const SizedBox(height: 8),
               const Text('Preencha os dados para realizar o cadastro', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: AppPalette.neutral600)),
               const SizedBox(height: 32),
-              const Center(child: CircleAvatar(radius: 80, backgroundImage: AssetImage('assets/retratoCrianca.webp'))),
+              Center(
+                child: GestureDetector(
+                  onTap: _pickImage, // Chama a função para escolher a imagem
+                  child: CircleAvatar(
+                    radius: 80,
+                    backgroundColor: Colors.grey.shade200,
+                    // Mostra a imagem selecionada ou a imagem padrão
+                    backgroundImage: _imageFile != null
+                        ? FileImage(File(_imageFile!.path))
+                        : const AssetImage('assets/retratoCrianca.webp') as ImageProvider,
+                    child: _imageFile == null
+                        ? Align(
+                      alignment: Alignment.bottomRight,
+                      child: CircleAvatar(
+                        radius: 24,
+                        backgroundColor: AppPalette.primary900,
+                        child: Icon(Icons.edit, color: Colors.white),
+                      ),
+                    )
+                        : null,
+                  ),
+                ),
+              ),
               const SizedBox(height: 32),
 
               CustomTextField(controller: _nameController, label: 'Nome', hint: 'Nome do aluno', isRequired: true, validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null),

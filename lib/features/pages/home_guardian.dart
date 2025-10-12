@@ -24,7 +24,7 @@ class _HomeGuardianState extends State<HomeGuardian> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StudentProvider>().getStudents();
+      context.read<StudentProvider>().getPresenceSummary();
       _loadUserAndGreeting();
     });
   }
@@ -183,7 +183,7 @@ class _HomeGuardianState extends State<HomeGuardian> {
                     );
                   }
 
-                  final students = provider.students;
+                  final students = provider.presenceSummaryStudents;
                   if (students.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -197,25 +197,26 @@ class _HomeGuardianState extends State<HomeGuardian> {
 
                   // O map para _PresenceStudentCard permanece igual
                   return Column(
-                    children: students
-                        .map(
+                    children: students.map(
                           (s) => _PresenceStudentCard(
                         name: s.name,
+                        // NOVO: Passe o status de confirmação para o card
+                        isConfirmed: s.isPresenceConfirmed,
+                        // NOVO: Desabilite o clique se já estiver confirmado
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => ConfirmAttendancePage(
                                 studentId: s.id,
-                                studentName: s.name, // <-- Adicione o nome
-                                studentImageUrl: 'assets/retratoCrianca.webp', // <-- Adicione a imagem
+                                studentName: s.name,
+                                studentImageUrl: 'assets/retratoCrianca.webp',
                               ),
                             ),
                           );
                         },
                       ),
-                    )
-                        .toList(),
+                    ).toList(),
                   );
                 },
               ),
@@ -231,11 +232,13 @@ class _HomeGuardianState extends State<HomeGuardian> {
 // Widget _PresenceStudentCard corrigido
 class _PresenceStudentCard extends StatelessWidget {
   final String name;
-  final VoidCallback onTap;
+  final bool isConfirmed;
+  final VoidCallback? onTap;
 
   const _PresenceStudentCard({
     required this.name,
-    required this.onTap,
+    required this.isConfirmed,
+    this.onTap,
   });
 
   @override
@@ -266,6 +269,7 @@ class _PresenceStudentCard extends StatelessWidget {
                   ),
                 ),
               ),
+
               const SizedBox(width: 20),
               Expanded(
                 child: Column(
@@ -281,18 +285,32 @@ class _PresenceStudentCard extends StatelessWidget {
                         fontSize: 16,
                       ),
                     ),
+
                     const SizedBox(height: 6),
-                    _StatusChip(
+                    // LÓGICA DO STATUS CHIP ATUALIZADA
+                    isConfirmed
+                        ? const _StatusChip(
+                      label: 'Confirmado',
+                      background: Color(0xFFE4F8F0),
+                      border: Color(0xFF66DDAA),
+                      text: Color(0xFF006B3F),
+                    )
+                        : const _StatusChip(
                       label: 'Pendente',
-                      background: const Color(0xFFFFF1E0),
-                      border: const Color(0xFFFFC48A),
-                      text: const Color(0xFFB86100),
+                      background: Color(0xFFFFF1E0),
+                      border: Color(0xFFFFC48A),
+                      text: Color(0xFFB86100),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: AppPalette.neutral600, size: 32),
+              Icon(
+                Icons.chevron_right,
+                // Torna o ícone mais claro se o card estiver desabilitado
+                color: onTap == null ? AppPalette.neutral300 : AppPalette.neutral600,
+                size: 32,
+              ),
             ],
           ),
         ),

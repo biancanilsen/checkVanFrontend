@@ -1,20 +1,60 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../model/student_model.dart';
+import '../model/student_presence_summary.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 
 class StudentProvider extends ChangeNotifier {
   List<Student> _students = [];
+  List<StudentPresenceSummary> _presenceSummaryStudents = [];
   bool _isLoading = false;
   String? _error;
 
   List<Student> get students => _students;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  List<StudentPresenceSummary> get presenceSummaryStudents => _presenceSummaryStudents;
+
+  Future<void> getPresenceSummary() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      final response = await http.get(
+        Uri.parse(Endpoints.getPresenceSummary),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // O endpoint retorna uma lista diretamente
+        final List<dynamic> data = jsonDecode(response.body);
+        _presenceSummaryStudents = data.map((json) => StudentPresenceSummary.fromJson(json)).toList();
+        _presenceSummaryStudents.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['message'] ?? 'Falha ao carregar o resumo de presença.');
+      }
+    } catch (e) {
+      _error = e.toString();
+      _presenceSummaryStudents = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> getStudents() async {
     _isLoading = true;
@@ -65,6 +105,7 @@ class StudentProvider extends ChangeNotifier {
     required String address,
     required String shiftGoing,
     required String shiftReturn,
+    XFile? imageFile,
   }) async {
     _isLoading = true;
     _error = null;
@@ -74,25 +115,40 @@ class StudentProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final response = await http.post(
+      // 2. Crie uma MultipartRequest
+      final request = http.MultipartRequest(
+        'POST',
         Uri.parse(Endpoints.createStudent),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'name': name,
-          'birth_date': DateFormat('yyyy-MM-dd').format(birthDate),
-          'gender': gender,
-          'school_id': schoolId,
-          'address': address,
-          'shift_going': shiftGoing,
-          'shift_return': shiftReturn,
-        }),
       );
 
+      // 3. Adicione os cabeçalhos
+      request.headers['Authorization'] = 'Bearer $token';
+
+      // 4. Adicione os campos de texto
+      request.fields['name'] = name;
+      request.fields['birth_date'] = DateFormat('yyyy-MM-dd').format(birthDate);
+      request.fields['gender'] = gender;
+      request.fields['school_id'] = schoolId.toString();
+      request.fields['address'] = address;
+      request.fields['shift_going'] = shiftGoing;
+      request.fields['shift_return'] = shiftReturn;
+
+      // 5. Se houver um arquivo de imagem, adicione-o à requisição
+      if (imageFile != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image_profile', // Este nome DEVE ser o mesmo usado no backend (upload.single('image_profile'))
+            imageFile.path,
+          ),
+        );
+      }
+
+      // 6. Envie a requisição
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
       if (response.statusCode == 201) {
-        await getStudents();
+        await getStudents(); // Atualiza a lista de alunos
         return true;
       } else {
         final data = jsonDecode(response.body);

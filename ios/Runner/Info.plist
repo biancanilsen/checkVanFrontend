@@ -28,6 +28,12 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Este app precisa da sua localização para mostrar a rota em tempo real.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+    <string>Precisamos de acesso à sua galeria para selecionar a foto do perfil do aluno.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Precisamos de acesso à sua câmera para tirar a foto do perfil do aluno.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>O acesso ao microfone é necessário para gravar vídeos com som.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
