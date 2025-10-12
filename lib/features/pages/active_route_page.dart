@@ -379,28 +379,36 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
               );
             },
           ),
+          // Botão de recentralizar
+          if (!_isCameraCentered && _lastLocation != null)
+            Positioned(
+              left: 16,
+              bottom: MediaQuery.of(context).size.height * 0.4 + 16, // Posiciona acima do BottomSheet
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  if (_lastLocation?.latitude != null && _lastLocation?.longitude != null) {
+                    setState(() => _isCameraCentered = true);
+                    _mapController.animateCamera(
+                      CameraUpdate.newCameraPosition(
+                        CameraPosition(
+                          target: LatLng(_lastLocation!.latitude!, _lastLocation!.longitude!),
+                          zoom: _navigationZoom,
+                          tilt: _navigationTilt,
+                          bearing: _lastLocation?.heading ?? 0.0,
+                        ),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.navigation),
+                label: const Text('Centralizar'),
+                backgroundColor: Colors.white,
+                foregroundColor: AppPalette.primary800,
+                elevation: 4,
+              ),
+            ),
         ],
       ),
-      floatingActionButton: !_isCameraCentered && _lastLocation != null
-          ? FloatingActionButton(
-              onPressed: () {
-                if (_lastLocation?.latitude != null && _lastLocation?.longitude != null) {
-                  setState(() => _isCameraCentered = true);
-                  _mapController.animateCamera(
-                    CameraUpdate.newCameraPosition(
-                      CameraPosition(
-                        target: LatLng(_lastLocation!.latitude!, _lastLocation!.longitude!),
-                        zoom: _navigationZoom,
-                        tilt: _navigationTilt,
-                        bearing: _lastLocation?.heading ?? 0.0,
-                      ),
-                    ),
-                  );
-                }
-              },
-              child: const Icon(Icons.gps_fixed),
-            )
-          : null,
     );
   }
 
