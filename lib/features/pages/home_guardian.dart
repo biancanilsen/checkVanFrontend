@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:check_van_frontend/core/theme.dart';
-import 'package:check_van_frontend/features/pages/confirmar_presenca_page.dart';
+import 'package:check_van_frontend/features/pages/confirm_attendance_page.dart';
 
 import '../../provider/student_provider.dart';
 import '../../provider/route_provider.dart';
@@ -102,11 +102,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
 
               const SizedBox(height: 20),
 
-              // Route Card
-              const HomeRouteCard(teamId: 3),
-
-              const SizedBox(height: 20),
-
               // School Bus Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
@@ -160,7 +155,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
 
               Text(
                 'Confirmação de presença',
-                // MUDANÇA AQUI: Usa o tema
                 style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppPalette.neutral900,
@@ -211,7 +205,7 @@ class _HomeGuardianState extends State<HomeGuardian> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => ConfirmarPresencaPage(
+                              builder: (_) => ConfirmAttendancePage(
                                 studentId: s.id,
                                 studentName: s.name, // <-- Adicione o nome
                                 studentImageUrl: 'assets/retratoCrianca.webp', // <-- Adicione a imagem

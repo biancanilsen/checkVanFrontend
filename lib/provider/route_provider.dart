@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 import '../model/route_model.dart';
 import '../network/endpoints.dart';
@@ -15,7 +16,6 @@ class RouteProvider extends ChangeNotifier {
   String? get error => _error;
   RouteData? get routeData => _routeData;
 
-  /// Gera a rota otimizada, buscando os dados do backend.
   Future<bool> generateRoute({required int teamId}) async {
     _isLoading = true;
     _error = null;
@@ -25,19 +25,18 @@ class RouteProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
+      final String formattedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      final uri = Uri.parse('${Endpoints.generateRoute}/$teamId?date=$formattedDate');
+
       final response = await http.get(
-        Uri.parse('${Endpoints.generateRoute}/$teamId'),
+        uri, // Use a nova URI
         headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
-        // --- CORREÇÃO ---
-        // A lógica de parsing complexa agora está dentro do RouteData.fromJson.
-        // O provider só precisa chamar o construtor de fábrica e ele faz todo o trabalho.
         _routeData = RouteData.fromJson(data);
-
         return true;
       } else {
         final data = jsonDecode(response.body);

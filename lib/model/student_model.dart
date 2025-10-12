@@ -44,6 +44,14 @@ class Student {
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
+    bool isStudentConfirmed = true; // Padrão é true
+    if (json['presences'] != null && (json['presences'] as List).isNotEmpty) {
+      // Se a lista de presenças não for vazia, pega o status do primeiro registro
+      final status = json['presences'][0]['status'];
+      // O aluno está confirmado se o status for qualquer coisa diferente de 'NONE'
+      isStudentConfirmed = (status != 'NONE');
+    }
+
     return Student(
       id: json['id'] ?? 0,
       name: json['name'] ?? 'Nome Indisponível',
@@ -59,7 +67,7 @@ class Student {
       shiftReturn: json['shift_return'] ?? 'Não informado',
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
-      isConfirmed: json['is_confirmed'] as bool?,
+      isConfirmed: isStudentConfirmed,
     );
   }
 

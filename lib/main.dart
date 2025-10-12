@@ -1,9 +1,10 @@
 import 'package:check_van_frontend/features/pages/active_route_page.dart';
-import 'package:check_van_frontend/features/pages/confirmar_presenca_page.dart';
+import 'package:check_van_frontend/features/pages/confirm_attendance_page.dart';
 import 'package:check_van_frontend/features/pages/route_page.dart';
 import 'package:check_van_frontend/features/pages/van_page.dart';
 import 'package:check_van_frontend/provider/geocoding_provider.dart';
 import 'package:check_van_frontend/provider/login_provider.dart';
+import 'package:check_van_frontend/provider/presence_provider.dart';
 import 'package:check_van_frontend/provider/route_provider.dart';
 import 'package:check_van_frontend/provider/school_provider.dart';
 import 'package:check_van_frontend/provider/student_provider.dart';
@@ -36,6 +37,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => GeocodingProvider()),
         ChangeNotifierProvider(create: (_) => VanProvider()),
         ChangeNotifierProvider(create: (_) => RouteProvider()),
+        ChangeNotifierProvider(create: (_) => PresenceProvider()),
       ],
       child: const MyApp(),
     ),

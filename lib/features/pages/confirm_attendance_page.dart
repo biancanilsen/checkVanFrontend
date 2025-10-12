@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import '../../core/theme.dart';
+import '../../provider/presence_provider.dart';
 
-class ConfirmarPresencaPage extends StatefulWidget {
+class ConfirmAttendancePage extends StatefulWidget {
   final int studentId;
   final String studentName;
   final String studentImageUrl;
 
-  const ConfirmarPresencaPage({
+  const ConfirmAttendancePage({
     Key? key,
     required this.studentId,
     required this.studentName,
@@ -18,16 +20,16 @@ class ConfirmarPresencaPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ConfirmarPresencaPage> createState() => _ConfirmarPresencaPageState();
+  State<ConfirmAttendancePage> createState() => _ConfirmAttendancePageState();
 }
 
-class _ConfirmarPresencaPageState extends State<ConfirmarPresencaPage> {
+class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
   late DateTime _selectedDay;
   late DateTime _focusedDay;
   late CalendarFormat _calendarFormat;
   String? _selectedTransportOption;
-  // CORREÇÃO: Removido o ponto explícito de 'MMM.' para 'MMM'
   final DateFormat _dateFormatter = DateFormat('EEEE, dd MMM yyyy', 'pt_BR');
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -73,12 +75,68 @@ class _ConfirmarPresencaPageState extends State<ConfirmarPresencaPage> {
     return parts.join(' ');
   }
 
+  String _mapOptionToStatus(String? option) {
+    switch (option) {
+      case 'Ida e volta':
+        return 'BOTH';
+      case 'Somente Ida':
+        return 'GOING';
+      case 'Somente Volta':
+        return 'RETURNING';
+      case 'Não utilizará o transporte':
+        return 'NONE';
+      default:
+        return '';
+    }
+  }
+
   Future<void> _confirmPresence() async {
-    // ... (seu método _confirmPresence)
+    if (_selectedTransportOption == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor, selecione uma opção de transporte.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Acessa o provider sem ouvir mudanças, pois estamos apenas chamando um método
+    final presenceProvider = Provider.of<PresenceProvider>(context, listen: false);
+    final status = _mapOptionToStatus(_selectedTransportOption);
+
+    final success = await presenceProvider.updatePresence(
+      studentId: widget.studentId,
+      date: _selectedDay,
+      status: status,
+    );
+
+    // Garante que o widget ainda está na árvore antes de mostrar a SnackBar
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Presença confirmada com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro: ${presenceProvider.error ?? "Ocorreu um problema."}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final presenceProvider = context.watch<PresenceProvider>();
+    final isLoading = presenceProvider.isLoading;
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -228,14 +286,23 @@ class _ConfirmarPresencaPageState extends State<ConfirmarPresencaPage> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: _confirmPresence,
+                onPressed: isLoading ? null : _confirmPresence,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppPalette.green600,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
-                child: const Text(
+                child: isLoading
+                    ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 3,
+                  ),
+                )
+                    : const Text(
                   'Confirmar',
                   style: TextStyle(
                     fontSize: 16,
