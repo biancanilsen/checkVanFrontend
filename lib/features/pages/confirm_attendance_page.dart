@@ -10,13 +10,13 @@ import '../../provider/presence_provider.dart';
 class ConfirmAttendancePage extends StatefulWidget {
   final int studentId;
   final String studentName;
-  final String studentImageUrl;
+  final String? studentImageUrl;
 
   const ConfirmAttendancePage({
     Key? key,
     required this.studentId,
     required this.studentName,
-    required this.studentImageUrl,
+    this.studentImageUrl,
   }) : super(key: key);
 
   @override
@@ -142,19 +142,19 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: true, // Centraliza o título
+        centerTitle: true,
         title: Row(
-          mainAxisSize: MainAxisSize.min, // Para o Row não ocupar todo o espaço
+          mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
-              radius: 20, // Raio menor para a AppBar
+              radius: 25,
               backgroundColor: Colors.grey.shade200,
               child: ClipOval(
-                child: Image.asset(
-                  widget.studentImageUrl, // Use a imagem recebida
-                  height: 40,
-                  width: 40,
-                  fit: BoxFit.cover,
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundImage: (widget.studentImageUrl != null && widget.studentImageUrl!.isNotEmpty)
+                      ? NetworkImage(widget.studentImageUrl!)
+                      : const AssetImage('assets/profile.png') as ImageProvider,
                 ),
               ),
             ),

@@ -208,7 +208,7 @@ class _HomeGuardianState extends State<HomeGuardian> {
                               builder: (_) => ConfirmAttendancePage(
                                 studentId: s.id,
                                 studentName: s.name,
-                                studentImageUrl: 'assets/retratoCrianca.webp',
+                                studentImageUrl: s.imageProfile,
                               ),
                             ),
                           );
