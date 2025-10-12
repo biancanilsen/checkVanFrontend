@@ -208,7 +208,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                     // Mostra a imagem selecionada ou a imagem padrão
                     backgroundImage: _imageFile != null
                         ? FileImage(File(_imageFile!.path))
-                        : const AssetImage('assets/retratoCrianca.webp') as ImageProvider,
+                        : const AssetImage('assets/profile.png') as ImageProvider,
                     child: _imageFile == null
                         ? Align(
                       alignment: Alignment.bottomRight,

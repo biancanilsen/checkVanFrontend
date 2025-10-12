@@ -195,14 +195,12 @@ class _HomeGuardianState extends State<HomeGuardian> {
                     );
                   }
 
-                  // O map para _PresenceStudentCard permanece igual
                   return Column(
                     children: students.map(
                           (s) => _PresenceStudentCard(
                         name: s.name,
-                        // NOVO: Passe o status de confirmação para o card
                         isConfirmed: s.isPresenceConfirmed,
-                        // NOVO: Desabilite o clique se já estiver confirmado
+                        imageUrl: s.imageProfile,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -234,11 +232,13 @@ class _PresenceStudentCard extends StatelessWidget {
   final String name;
   final bool isConfirmed;
   final VoidCallback? onTap;
+  final String? imageUrl;
 
   const _PresenceStudentCard({
     required this.name,
     required this.isConfirmed,
     this.onTap,
+    this.imageUrl,
   });
 
   @override
@@ -259,15 +259,9 @@ class _PresenceStudentCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 35,
-                backgroundColor: Colors.white,
-                child: ClipOval( // Corrigido para ClipOval para avatares
-                  child: Image.asset(
-                    'assets/retratoCrianca.webp',
-                    height: 70, // Corrigido tamanho
-                    width: 70, // Corrigido tamanho
-                    fit: BoxFit.cover,
-                  ),
-                ),
+                backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
+                    ? NetworkImage(imageUrl!)
+                    : const AssetImage('assets/profile.png') as ImageProvider,
               ),
 
               const SizedBox(width: 20),
