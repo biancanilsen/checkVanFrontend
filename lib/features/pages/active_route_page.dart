@@ -21,6 +21,8 @@ class ActiveRoutePage extends StatefulWidget {
 class _ActiveRoutePageState extends State<ActiveRoutePage> {
   final Completer<GoogleMapController> _mapControllerCompleter = Completer();
   late GoogleMapController _mapController;
+  final _sheetController = DraggableScrollableController();
+  double _sheetPosition = 0.4; // Initial sheet size
 
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
@@ -83,6 +85,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   @override
   void initState() {
     super.initState();
+    _sheetController.addListener(_onSheetChanged);
     _createNavigationIcon().then((icon) {
       setState(() {
         _navigationIcon = icon;
@@ -105,7 +108,14 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     _isDisposed = true;
     _locationSubscription?.cancel();
     _flutterTts.stop();
+    _sheetController.dispose();
     super.dispose();
+  }
+
+  void _onSheetChanged() {
+    setState(() {
+      _sheetPosition = _sheetController.size;
+    });
   }
 
   /// Inicializa o motor de Text-to-Speech e fala a primeira instrução.
@@ -325,6 +335,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             initialChildSize: 0.4,
             minChildSize: 0.15,
             maxChildSize: 0.6,
+            controller: _sheetController,
             builder: (context, scrollController) {
               return Container(
                 decoration: const BoxDecoration(
@@ -383,12 +394,12 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           if (!_isCameraCentered && _lastLocation != null)
             Positioned(
               left: 16,
-              bottom: MediaQuery.of(context).size.height * 0.4 + 16, // Posiciona acima do BottomSheet
+              bottom: MediaQuery.of(context).size.height * _sheetController.size + 16,
               child: FloatingActionButton.extended(
-                onPressed: () {
+                onPressed: () async {
                   if (_lastLocation?.latitude != null && _lastLocation?.longitude != null) {
                     setState(() => _isCameraCentered = true);
-                    _mapController.animateCamera(
+                    await _mapController.animateCamera(
                       CameraUpdate.newCameraPosition(
                         CameraPosition(
                           target: LatLng(_lastLocation!.latitude!, _lastLocation!.longitude!),
