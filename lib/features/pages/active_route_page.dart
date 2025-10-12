@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math' show cos, sqrt, asin;
+import 'dart:ui' as ui;
 import 'package:check_van_frontend/model/route_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -22,6 +24,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
 
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
+  BitmapDescriptor? _navigationIcon;
 
   // --- Variáveis para Navegação por Voz ---
   final FlutterTts _flutterTts = FlutterTts();
@@ -38,9 +41,52 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   static const double _navigationZoom = 18.0;
   static const double _navigationTilt = 45.0;
 
+  Future<BitmapDescriptor> _createNavigationIcon() async {
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+    final size = Size(160, 160);
+    final paint = Paint()
+      ..color = AppPalette.primary800
+      ..style = PaintingStyle.fill;
+
+    // Desenha a seta de navegação
+    final path = Path();
+    path.moveTo(size.width / 2, 0); // Ponto superior
+    path.lineTo(size.width, size.height); // Canto inferior direito
+    path.lineTo(size.width / 2, size.height * 0.8); // Recuo do meio
+    path.lineTo(0, size.height); // Canto inferior esquerdo
+    path.close();
+
+    canvas.drawPath(path, paint);
+
+    // Adiciona a borda branca
+    final borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3; // Aumentado de 2 para 3 para manter a proporção
+    canvas.drawPath(path, borderPaint);
+
+    final picture = pictureRecorder.endRecording();
+    // Usa o novo tamanho ao converter para imagem
+    final image = await picture.toImage(size.width.toInt(), size.height.toInt());
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+    if (byteData != null) {
+      return BitmapDescriptor.fromBytes(byteData.buffer.asUint8List());
+    }
+
+    // Fallback para o marcador padrão se a conversão falhar
+    return BitmapDescriptor.defaultMarker;
+  }
+
   @override
   void initState() {
     super.initState();
+    _createNavigationIcon().then((icon) {
+      setState(() {
+        _navigationIcon = icon;
+      });
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (ModalRoute.of(context)!.settings.arguments is RouteData) {
         _routeData = ModalRoute.of(context)!.settings.arguments as RouteData;
@@ -140,19 +186,22 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
 
       final currentPosition = LatLng(newLocation.latitude!, newLocation.longitude!);
 
-      setState(() {
-        _markers.removeWhere((m) => m.markerId.value == 'van_location');
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('van_location'),
-            position: currentPosition,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-            flat: true, // "Deita" o ícone no mapa para permitir rotação
-            rotation: newLocation.heading ?? 0.0, // Rotaciona o ícone com a direção do celular
-            anchor: const Offset(0.5, 0.5), // Centraliza o ícone
-          ),
-        );
-      });
+      if (_navigationIcon != null) {
+        setState(() {
+          _markers.removeWhere((m) => m.markerId.value == 'van_location');
+          _markers.add(
+            Marker(
+              markerId: const MarkerId('van_location'),
+              position: currentPosition,
+              icon: _navigationIcon!,
+              flat: true, // Mantém o ícone no plano do mapa
+              rotation: newLocation.heading ?? 0.0,
+              anchor: const Offset(0.5, 0.5),
+              zIndex: 2, // Garante que o ícone fique acima da linha da rota
+            ),
+          );
+        });
+      }
 
       // Anima a câmera para uma visão de navegação 3D
       _mapController.animateCamera(
