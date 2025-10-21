@@ -182,10 +182,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cadastro de Aluno'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppPalette.primary900,
+        foregroundColor: AppPalette.primary800,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -195,7 +194,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
-              const Text('Dados do aluno', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary900)),
+              const Text('Dados do aluno', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800)),
               const SizedBox(height: 8),
               const Text('Preencha os dados para realizar o cadastro', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: AppPalette.neutral600)),
               const SizedBox(height: 32),
@@ -269,7 +268,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
               ElevatedButton(
                 onPressed: studentProvider.isLoading ? null : _submitForm,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.primary900, foregroundColor: Colors.white,
+                  backgroundColor: AppPalette.primary800, foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),

@@ -150,7 +150,7 @@ class _SignUpFormState extends State<SignUpForm> {
           children: [
             const Text(
               'Dados do cadastro',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary900),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -241,7 +241,7 @@ class _SignUpFormState extends State<SignUpForm> {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.primary900,
+                  backgroundColor: AppPalette.primary800,
                   foregroundColor: AppPalette.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),

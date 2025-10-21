@@ -161,7 +161,7 @@ class _SchoolPageState extends State<SchoolPage> {
               const Text(
                 'Dados da Escola',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary900),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -233,7 +233,7 @@ class _SchoolPageState extends State<SchoolPage> {
               ElevatedButton(
                 onPressed: schoolProvider.isLoading ? null : _submitForm,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.primary900,
+                  backgroundColor: AppPalette.primary800,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),

@@ -140,6 +140,7 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        // TODO - aumentar o tamanho dessa appBar para deixar a imagem do aluno com raidus 40
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,

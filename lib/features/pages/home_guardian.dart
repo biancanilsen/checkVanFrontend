@@ -241,6 +241,13 @@ class _PresenceStudentCard extends StatelessWidget {
     this.imageUrl,
   });
 
+  void _logout(BuildContext context) async {
+    await UserSession.signOutUser();
+    if (context.mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -257,11 +264,16 @@ class _PresenceStudentCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 35,
-                backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
-                    ? NetworkImage(imageUrl!)
-                    : const AssetImage('assets/profile.png') as ImageProvider,
+              GestureDetector(
+                onTap: () {
+                  _logout(context);
+                },
+                child: CircleAvatar(
+                  radius: 35,
+                  backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
+                      ? NetworkImage(imageUrl!)
+                      : const AssetImage('assets/profile.png') as ImageProvider,
+                ),
               ),
 
               const SizedBox(width: 20),

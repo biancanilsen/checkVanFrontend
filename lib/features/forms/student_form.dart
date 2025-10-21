@@ -172,11 +172,11 @@ class _StudentFormState extends State<StudentForm> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppPalette.secondary500,
-              foregroundColor: AppPalette.primary900,
+              foregroundColor: AppPalette.primary800,
             ),
             onPressed: studentProvider.isLoading ? null : _addStudent,
             child: studentProvider.isLoading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppPalette.primary900))
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppPalette.primary800))
                 : const Text('Adicionar'),
           ),
         ],
