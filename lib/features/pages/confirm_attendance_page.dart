@@ -6,6 +6,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import '../../core/theme.dart';
 import '../../provider/presence_provider.dart';
+import '../../provider/student_provider.dart';
 
 class ConfirmAttendancePage extends StatefulWidget {
   final int studentId;
@@ -121,6 +122,8 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
           backgroundColor: Colors.green,
         ),
       );
+      // Atualiza o resumo de presença ao confirmar
+      await context.read<StudentProvider>().getPresenceSummary();
       Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
