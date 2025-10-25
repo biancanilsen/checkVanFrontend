@@ -3,7 +3,7 @@ import '../../utils/user_session.dart';
 import '../widgets/ScheduledRoutes/scheduled_routes_list.dart';
 import '../widgets/main_bottom_nav_bar.dart';
 import '../widgets/nextRoute/next_route_card.dart';
-import '../widgets/home/home_header.dart';
+import '../widgets/home/home_header_driver.dart';
 
 class HomeDriver extends StatelessWidget {
   const HomeDriver({super.key});

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:check_van_frontend/features/pages/confirm_attendance_page.dart';
 
 import '../../provider/student_provider.dart';
-import '../../provider/route_provider.dart';
 import '../../utils/user_session.dart';
-import '../widgets/home_route_card.dart';
+import '../widgets/home/confirm_presence_callout.dart';
+import '../widgets/home/guardian_home_header.dart';
+import '../widgets/home/presence_student_card.dart';
 
 class HomeGuardian extends StatefulWidget {
   const HomeGuardian({super.key});
@@ -33,7 +33,8 @@ class _HomeGuardianState extends State<HomeGuardian> {
     final user = await UserSession.getUser();
     final name = user?.name?.isNotEmpty == true ? user!.name : 'Usuário';
     final hour = DateTime.now().hour;
-    final greeting = hour < 12 ? 'Bom dia,' : hour < 18 ? 'Boa tarde,' : 'Boa noite,';
+    final greeting =
+    hour < 12 ? 'Bom dia,' : hour < 18 ? 'Boa tarde,' : 'Boa noite,';
     if (!mounted) return;
     setState(() {
       _greeting = greeting;
@@ -54,55 +55,14 @@ class _HomeGuardianState extends State<HomeGuardian> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8, right: 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _greeting,
-                            style: textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w400,
-                              color: AppPalette.neutral900,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _userName,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: textTheme.headlineMedium?.copyWith(
-                              height: 1.2,
-                              fontWeight: FontWeight.w700,
-                              color: AppPalette.neutral900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: Colors.white,
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/retratoCrianca.webp',
-                        fit: BoxFit.cover,
-                        width: 44,
-                        height: 44,
-                      ),
-                    ),
-                  ),
-                ],
+              GuardianHomeHeader(
+                greeting: _greeting,
+                userName: _userName,
+                // imageUrl: _userImageUrl, // TODO - substituir por imagem do cadastro
               ),
 
               const SizedBox(height: 20),
 
-              // School Bus Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Image.asset(
@@ -115,41 +75,7 @@ class _HomeGuardianState extends State<HomeGuardian> {
 
               const SizedBox(height: 16),
 
-              // Yellow "Confirm" callout
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF8E1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppPalette.secondary500, width: 1.5),
-                ),
-                child: Row(
-                  children: [
-                    SvgPicture.asset(
-                      'assets/icons/warning_icon.svg', // <-- Use o caminho do seu SVG
-                      width: 24, // Ajuste o tamanho conforme a necessidade
-                      height: 24, // Ajuste o tamanho conforme a necessidade
-                      colorFilter: ColorFilter.mode(
-                        Colors.amber.shade700, // <-- Mantém a cor original
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Confirme a presença da rota de amanhã!',
-                        // MUDANÇA AQUI: Usa o tema
-                        style: textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppPalette.neutral900,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const ConfirmPresenceCallout(),
 
               const SizedBox(height: 24),
 
@@ -162,7 +88,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
               ),
               const SizedBox(height: 12),
 
-              // Students list (Consumer)
               Consumer<StudentProvider>(
                 builder: (context, provider, _) {
                   if (provider.isLoading) {
@@ -177,7 +102,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Text(
                         provider.error!,
-                        // MUDANÇA AQUI: Usa o tema
                         style: textTheme.bodyMedium?.copyWith(color: Colors.red),
                       ),
                     );
@@ -189,7 +113,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Text(
                         'Nenhum aluno encontrado.',
-                        // MUDANÇA AQUI: Usa o tema
                         style: textTheme.bodyMedium,
                       ),
                     );
@@ -197,7 +120,7 @@ class _HomeGuardianState extends State<HomeGuardian> {
 
                   return Column(
                     children: students.map(
-                          (s) => _PresenceStudentCard(
+                          (s) => PresenceStudentCard( // Usa o novo componente
                         name: s.name,
                         isConfirmed: s.isPresenceConfirmed,
                         imageUrl: s.imageProfile,
@@ -221,142 +144,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
               const SizedBox(height: 8),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// Widget _PresenceStudentCard corrigido
-class _PresenceStudentCard extends StatelessWidget {
-  final String name;
-  final bool isConfirmed;
-  final VoidCallback? onTap;
-  final String? imageUrl;
-
-  const _PresenceStudentCard({
-    required this.name,
-    required this.isConfirmed,
-    this.onTap,
-    this.imageUrl,
-  });
-
-  void _logout(BuildContext context) async {
-    await UserSession.signOutUser();
-    if (context.mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      color: AppPalette.neutral50,
-      elevation: 0.6,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () {
-                  _logout(context);
-                },
-                child: CircleAvatar(
-                  radius: 35,
-                  backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
-                      ? NetworkImage(imageUrl!)
-                      : const AssetImage('assets/profile.png') as ImageProvider,
-                ),
-              ),
-
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppPalette.neutral900,
-                        fontSize: 16,
-                      ),
-                    ),
-
-                    const SizedBox(height: 6),
-                    // LÓGICA DO STATUS CHIP ATUALIZADA
-                    isConfirmed
-                        ? const _StatusChip(
-                      label: 'Confirmado',
-                      background: Color(0xFFE4F8F0),
-                      border: Color(0xFF66DDAA),
-                      text: Color(0xFF006B3F),
-                    )
-                        : const _StatusChip(
-                      label: 'Pendente',
-                      background: Color(0xFFFFF1E0),
-                      border: Color(0xFFFFC48A),
-                      text: Color(0xFFB86100),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.chevron_right,
-                // Torna o ícone mais claro se o card estiver desabilitado
-                color: onTap == null ? AppPalette.neutral300 : AppPalette.neutral600,
-                size: 32,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Widget _StatusChip corrigido
-class _StatusChip extends StatelessWidget {
-  final String label;
-  final Color background;
-  final Color border;
-  final Color text;
-
-  const _StatusChip({
-    required this.label,
-    required this.background,
-    required this.border,
-    required this.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Pegue o textTheme aqui também
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border),
-      ),
-      child: Text(
-        label,
-        // MUDANÇA AQUI: Usa o tema
-        style: textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: text,
         ),
       ),
     );
