@@ -5,12 +5,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/theme.dart';
-import '../../model/address_suggestion.dart';
-import '../../provider/geocoding_provider.dart';
-import '../../provider/school_provider.dart';
-import '../../provider/student_provider.dart';
-import '../widgets/custom_text_field.dart';
+import '../../../core/theme.dart';
+import '../../../model/address_suggestion.dart';
+import '../../../provider/geocoding_provider.dart';
+import '../../../provider/school_provider.dart';
+import '../../../provider/student_provider.dart';
+import '../../widgets/custom_text_field.dart';
 
 class AddStudentPage extends StatefulWidget {
   const AddStudentPage({super.key});

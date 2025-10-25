@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../provider/forgot_password_provider.dart';
-import '../../provider/login_provider.dart';
-import '../widgets/forgot_password_modal.dart';
+import '../../../provider/forgot_password_provider.dart';
+import '../../../provider/login_provider.dart';
+import '../../widgets/login/forgot_password_modal.dart';
 
 class LoginPage extends StatelessWidget {
   final emailController = TextEditingController();

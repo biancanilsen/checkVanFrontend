@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/theme.dart';
-import '../../model/address_suggestion.dart';
-import '../../provider/geocoding_provider.dart';
-import '../../provider/school_provider.dart';
-import '../widgets/custom_text_field.dart';
+import '../../../core/theme.dart';
+import '../../../model/address_suggestion.dart';
+import '../../../provider/geocoding_provider.dart';
+import '../../../provider/school_provider.dart';
+import '../../widgets/custom_text_field.dart';
 
 class SchoolPage extends StatefulWidget {
   const SchoolPage({super.key});

@@ -4,9 +4,9 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import '../../core/theme.dart';
-import '../../provider/presence_provider.dart';
-import '../../provider/student_provider.dart';
+import '../../../core/theme.dart';
+import '../../../provider/presence_provider.dart';
+import '../../../provider/student_provider.dart';
 
 class ConfirmAttendancePage extends StatefulWidget {
   final int studentId;

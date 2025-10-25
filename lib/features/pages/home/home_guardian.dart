@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:check_van_frontend/core/theme.dart';
-import 'package:check_van_frontend/features/pages/confirm_attendance_page.dart';
+import 'package:check_van_frontend/features/pages/attendance/confirm_attendance_page.dart';
 
-import '../../provider/student_provider.dart';
-import '../../utils/user_session.dart';
-import '../widgets/home/confirm_presence_callout.dart';
-import '../widgets/home/guardian_home_header.dart';
-import '../widgets/home/presence_student_card.dart';
+import '../../../provider/student_provider.dart';
+import '../../../utils/user_session.dart';
+import '../../widgets/home/homeGuaridan/confirm_presence_callout.dart';
+import '../../widgets/home/homeGuaridan/guardian_home_header.dart';
+import '../../widgets/home/homeGuaridan/presence_student_card.dart';
 
 class HomeGuardian extends StatefulWidget {
   const HomeGuardian({super.key});

@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import '../../provider/login_provider.dart';
 import '../../provider/sign_up_provider.dart';
-import '../pages/home_page.dart';
+import '../pages/home/home_page.dart';
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({super.key});

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../provider/student_provider.dart';
-import '../forms/edit_student_form.dart';
+import '../../../provider/student_provider.dart';
+import '../../forms/edit_student_form.dart';
 // import '../forms/student_form.dart'; // Removido
 
 class StudentPage extends StatefulWidget {

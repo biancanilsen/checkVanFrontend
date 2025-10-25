@@ -9,7 +9,7 @@ import 'package:location/location.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../core/theme.dart';
+import '../../../core/theme.dart';
 
 class ActiveRoutePage extends StatefulWidget {
   const ActiveRoutePage({super.key});

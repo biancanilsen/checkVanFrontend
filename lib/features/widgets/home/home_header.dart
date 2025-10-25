@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/user_session.dart';
+import '../../../utils/user_session.dart';
 
 class HomeHeader extends StatelessWidget {
   final VoidCallback onLogout;

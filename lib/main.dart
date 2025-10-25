@@ -1,7 +1,7 @@
-import 'package:check_van_frontend/features/pages/active_route_page.dart';
-import 'package:check_van_frontend/features/pages/confirm_attendance_page.dart';
-import 'package:check_van_frontend/features/pages/route_page.dart';
-import 'package:check_van_frontend/features/pages/van_page.dart';
+import 'package:check_van_frontend/features/pages/route/active_route_page.dart';
+import 'package:check_van_frontend/features/pages/attendance/confirm_attendance_page.dart';
+import 'package:check_van_frontend/features/pages/route/route_page.dart';
+import 'package:check_van_frontend/features/pages/van/van_page.dart';
 import 'package:check_van_frontend/provider/geocoding_provider.dart';
 import 'package:check_van_frontend/provider/login_provider.dart';
 import 'package:check_van_frontend/provider/presence_provider.dart';
@@ -16,13 +16,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'package:provider/provider.dart';
 import 'core/theme.dart';
-import 'features/pages/add_student_page.dart';
-import 'features/pages/home_page.dart';
-import 'features/pages/login_page.dart';
-import 'features/pages/my_profile.dart';
-import 'features/pages/school_page.dart';
-import 'features/pages/signup_page.dart';
-import 'features/pages/students_page.dart';
+import 'features/pages/student/add_student_page.dart';
+import 'features/pages/home/home_page.dart';
+import 'features/pages/login/login_page.dart';
+import 'features/pages/profile/my_profile.dart';
+import 'features/pages/school/school_page.dart';
+import 'features/pages/login/signup_page.dart';
+import 'features/pages/student/students_page.dart';
 import 'features/pages/trip_page.dart';
 
 void main() {

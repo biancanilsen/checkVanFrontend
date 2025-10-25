@@ -2,7 +2,8 @@ import 'package:check_van_frontend/core/theme.dart';
 import 'package:check_van_frontend/features/widgets/ScheduledRoutes/scheduled_route_card.dart';
 import 'package:flutter/material.dart';
 
-import '../page_indicator.dart';
+import '../../home/page_indicator.dart';
+
 
 class ScheduledRoutesList extends StatefulWidget {
   const ScheduledRoutesList({super.key});

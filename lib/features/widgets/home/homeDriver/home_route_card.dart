@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../provider/route_provider.dart';
-import '../../core/theme.dart';
+import '../../../../provider/route_provider.dart';
+import '../../../../core/theme.dart';
 
 class HomeRouteCard extends StatelessWidget {
   final int teamId;

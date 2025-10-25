@@ -9,17 +9,15 @@ import 'package:check_van_frontend/provider/route_provider.dart';
 // (O import do route_provider.dart pode precisar de ajuste no caminho)
 
 class NextRouteCard extends StatelessWidget {
-  // 2. ADICIONE O teamId, IGUAL AO HomeRouteCard
   final int teamId;
 
   const NextRouteCard({
     super.key,
-    required this.teamId, // Torne-o obrigatório
+    required this.teamId,
   });
 
   @override
   Widget build(BuildContext context) {
-    // 3. OBTENHA O PROVIDER
     final routeProvider = context.watch<RouteProvider>();
 
     const double cardHeight = 265;
@@ -34,7 +32,6 @@ class NextRouteCard extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Stack(
           children: [
-            // Camada 1: Fundo com o mapa
             Container(
               height: cardHeight,
               decoration: const BoxDecoration(
@@ -152,12 +149,11 @@ class NextRouteCard extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      // 4. SUBSTITUA O onPressed PELA LÓGICA DO HomeRouteCard
                       onPressed: routeProvider.isLoading
                           ? null // Desabilita o botão se estiver carregando
                           : () async {
                         final success = await routeProvider.generateRoute(
-                          teamId: teamId, // Usa o teamId passado
+                          teamId: teamId,
                         );
                         if (success && context.mounted) {
                           Navigator.pushNamed(

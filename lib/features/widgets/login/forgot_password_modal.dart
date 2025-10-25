@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../provider/forgot_password_provider.dart';
+import '../../../provider/forgot_password_provider.dart';
 
 class ForgotPasswordModal extends StatefulWidget {
   const ForgotPasswordModal({Key? key}) : super(key: key);
