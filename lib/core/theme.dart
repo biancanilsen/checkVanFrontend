@@ -12,6 +12,7 @@ class AppPalette {
   static const Color neutral60 = Color(0xFFFEFEFE);
   static const Color neutral75 = Color(0xFFFAFAFA);
   static const Color neutral100 = Color(0xFFF5F5F5);
+  static const Color neutral150 = Color(0xFFEFEFEF);
   static const Color neutral200 = Color(0xFFCED6D9);
   static const Color neutral300 = Color(0xFFE0E0E0);
   static const Color neutral400 = Color(0xFFAEB9BB);

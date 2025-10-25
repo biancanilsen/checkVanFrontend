@@ -29,8 +29,8 @@ class _ScheduledRoutesListState extends State<ScheduledRoutesList> {
       studentCount: '9',
       startTime: 'Às 18h',
       icon: Icons.dark_mode_outlined,
-      chipBgColor: Colors.purple.shade100,
-      chipTextColor: Colors.purple.shade800,
+      chipBgColor: AppPalette.primary50,
+      chipTextColor: AppPalette.primary900,
     ),
   ];
 

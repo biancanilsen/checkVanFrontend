@@ -22,7 +22,7 @@ class ScheduledRouteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: MediaQuery.of(context).size.width * 0.75,
+      width: MediaQuery.of(context).size.width * 0.80,
       child: Card(
         color: AppPalette.neutral50,
         elevation: 1.0,
@@ -75,19 +75,14 @@ class ScheduledRouteCard extends StatelessWidget {
               ElevatedButton(
                 onPressed: null, // Botão desabilitado
                 style: ElevatedButton.styleFrom(
-                  disabledBackgroundColor: Colors.grey[350],
+                  disabledBackgroundColor: AppPalette.neutral150,
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 child: Text(
-                  'Iniciar rota',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  '',
                 ),
               ),
             ],
