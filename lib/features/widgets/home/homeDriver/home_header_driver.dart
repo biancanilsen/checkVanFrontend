@@ -62,7 +62,7 @@ class HomeHeader extends StatelessWidget {
               size: 28,
             ),
             onPressed: () {
-              // Ação ao clicar no sino
+              Navigator.pushNamed(context, '/add-school');
             },
           ),
         ],

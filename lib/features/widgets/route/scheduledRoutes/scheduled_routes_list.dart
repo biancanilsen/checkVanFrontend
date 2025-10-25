@@ -1,5 +1,5 @@
 import 'package:check_van_frontend/core/theme.dart';
-import 'package:check_van_frontend/features/widgets/ScheduledRoutes/scheduled_route_card.dart';
+import 'package:check_van_frontend/features/widgets/route/scheduledRoutes/scheduled_route_card.dart';
 import 'package:flutter/material.dart';
 
 import '../../home/page_indicator.dart';

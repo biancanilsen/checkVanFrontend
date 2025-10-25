@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../utils/user_session.dart';
-import '../../widgets/ScheduledRoutes/scheduled_routes_list.dart';
 import '../../widgets/home/homeDriver/driver_main_bottom_nav_bar.dart';
 import '../../widgets/home/homeDriver/home_header_driver.dart';
 import '../../widgets/route/nextRoute/next_route_card.dart';
+import '../../widgets/route/scheduledRoutes/scheduled_routes_list.dart';
 
 class HomeDriver extends StatelessWidget {
   const HomeDriver({super.key});
@@ -63,7 +63,6 @@ class _HomeDriverViewState extends State<_HomeDriverView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 2. SUBSTITUA O BottomNavigationBar
       bottomNavigationBar: MainBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
@@ -73,7 +72,6 @@ class _HomeDriverViewState extends State<_HomeDriverView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 3. SUBSTITUA O _buildHeader()
               HomeHeader(
                 isLoading: _isLoadingUser,
                 userName: _userName,
@@ -91,7 +89,6 @@ class _HomeDriverViewState extends State<_HomeDriverView> {
                 teamId: 3,
               ),
 
-              // 4. Título "Rotas programadas"
               const Padding(
                 padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
                 child: Text(
@@ -100,9 +97,8 @@ class _HomeDriverViewState extends State<_HomeDriverView> {
                 ),
               ),
 
-              // 5. Lista Horizontal Mocado "Rotas programadas"
               const ScheduledRoutesList(),
-              const SizedBox(height: 20), // Espaçamento no final
+              const SizedBox(height: 20),
             ],
           ),
         ),

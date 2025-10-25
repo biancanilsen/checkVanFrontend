@@ -31,9 +31,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
   bool _isAddressLoading = false;
   bool _showSuggestions = false;
   Timer? _debounce;
-  // As variáveis _selectedCity, _selectedState, _selectedCountry, _selectedLat e _selectedLon foram REMOVIDAS.
 
-  // Variáveis de estado para os dados do formulário
   DateTime? _birthDate;
   String? _selectedGender;
   int? _selectedSchoolId;

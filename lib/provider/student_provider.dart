@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
@@ -39,7 +40,6 @@ class StudentProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        // O endpoint retorna uma lista diretamente
         final List<dynamic> data = jsonDecode(response.body);
         _presenceSummaryStudents = data.map((json) => StudentPresenceSummary.fromJson(json)).toList();
         _presenceSummaryStudents.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
@@ -115,45 +115,56 @@ class StudentProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // 2. Crie uma MultipartRequest
-      final request = http.MultipartRequest(
-        'POST',
+      final createResponse = await http.post(
         Uri.parse(Endpoints.createStudent),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8', // MUDOU PARA JSON
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'name': name,
+          'birth_date': DateFormat('yyyy-MM-dd').format(birthDate),
+          'gender': gender,
+          'school_id': schoolId,
+          'address': address,
+          'shift_going': shiftGoing,
+          'shift_return': shiftReturn,
+        }),
       );
 
-      // 3. Adicione os cabeçalhos
-      request.headers['Authorization'] = 'Bearer $token';
+      final data = jsonDecode(createResponse.body);
 
-      // 4. Adicione os campos de texto
-      request.fields['name'] = name;
-      request.fields['birth_date'] = DateFormat('yyyy-MM-dd').format(birthDate);
-      request.fields['gender'] = gender;
-      request.fields['school_id'] = schoolId.toString();
-      request.fields['address'] = address;
-      request.fields['shift_going'] = shiftGoing;
-      request.fields['shift_return'] = shiftReturn;
-
-      // 5. Se houver um arquivo de imagem, adicione-o à requisição
-      if (imageFile != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'image_profile', // Este nome DEVE ser o mesmo usado no backend (upload.single('image_profile'))
-            imageFile.path,
-          ),
-        );
-      }
-
-      // 6. Envie a requisição
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 201) {
-        await getStudents(); // Atualiza a lista de alunos
-        return true;
-      } else {
-        final data = jsonDecode(response.body);
+      if (createResponse.statusCode != 201) {
         throw Exception(data['message'] ?? 'Erro ao adicionar aluno.');
       }
+
+      if (imageFile != null) {
+        final int studentId = data['student']['id'];
+
+        final uploadUrl = Uri.parse('${Endpoints.baseUrl}/student/$studentId/upload-image'); // Ajuste o endpoint base
+
+        final request = http.MultipartRequest('POST', uploadUrl);
+        request.headers['Authorization'] = 'Bearer $token';
+
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image_profile',
+            imageFile.path,
+            contentType: MediaType('image', imageFile.path.split('.').last),
+          ),
+        );
+
+        final streamedResponse = await request.send();
+        final uploadResponse = await http.Response.fromStream(streamedResponse);
+
+        if (uploadResponse.statusCode != 200) {
+          print('Aluno criado, mas o upload da imagem falhou: ${uploadResponse.body}');
+        }
+      }
+
+      await getStudents();
+      return true;
+
     } catch (e) {
       _error = e.toString();
       return false;
