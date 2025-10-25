@@ -181,7 +181,6 @@ class NextRouteCard extends StatelessWidget {
                         textStyle: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
-                      // 5. ADICIONE O INDICADOR DE LOADING NO BOTÃO
                       child: routeProvider.isLoading
                           ? const SizedBox(
                         height: 24,

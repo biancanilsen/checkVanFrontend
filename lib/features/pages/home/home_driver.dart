@@ -33,7 +33,7 @@ class _HomeDriverViewState extends State<_HomeDriverView> {
       case 0:
         break;
       case 1:
-        Navigator.pushNamed(context, '/students');
+        Navigator.pushNamed(context, '/add-team');
         break;
       case 2:
         Navigator.pushNamed(context, '/van');
@@ -86,7 +86,7 @@ class _HomeDriverViewState extends State<_HomeDriverView> {
               ),
 
               NextRouteCard(
-                teamId: 3,
+                teamId: 1,
               ),
 
               const Padding(
