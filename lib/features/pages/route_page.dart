@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import '../../model/route_model.dart';
 import '../../provider/route_provider.dart';
 import '../../utils/user_session.dart';
+import '../widgets/route/route_page_header.dart';
+import '../widgets/route/start_route_map_card.dart';
+import '../widgets/route/studentAccordion/student_accordion.dart';
+import '../widgets/route/student_tile.dart';
+import '../widgets/route/summary_card.dart';
 
 class RoutePage extends StatefulWidget {
   const RoutePage({super.key});
@@ -54,99 +57,11 @@ class _RoutePageState extends State<RoutePage> {
     }
   }
 
-
-  Widget _buildSummaryCard(String title, int count, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppPalette.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: color.withOpacity(0.1)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-        child: Column(
-          children: [
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                color: AppPalette.neutral600,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              count.toString(),
-              style: GoogleFonts.poppins(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Widget auxiliar para cada item da lista de alunos
-  Widget _buildStudentTile({
-    required int index,
-    required String name,
-    required String address,
-    required bool isConfirmed,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Text(
-            (index).toString(), // O index já vem como 1, 2, 3...
-            style: const TextStyle(fontSize: 20, color: AppPalette.neutral800, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(width: 12),
-          Center(
-            child: Stack(
-              children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: AppPalette.neutral200,
-                  backgroundImage: const AssetImage('assets/retratoCrianca.webp')
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
-                const SizedBox(height: 2),
-                Text(address, style: const TextStyle(fontWeight: FontWeight.w400, color: AppPalette.neutral600, fontSize: 14)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          SvgPicture.asset(
-            isConfirmed ? 'assets/icons/check.svg' : 'assets/icons/cross.svg',
-            width: 21,
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    // A lógica de 'routeProvider' e cálculos permanece a mesma
     final routeProvider = context.watch<RouteProvider>();
-    
+
     if (routeData == null) {
       return const Scaffold(
         body: Center(
@@ -155,108 +70,79 @@ class _RoutePageState extends State<RoutePage> {
       );
     }
 
-    // Calculate counts only if routeData is not null
     final students = routeData!.students;
-    final confirmedCount = students.where((s) => s.isConfirmed ?? false).length;
-    final absentCount = students.length - confirmedCount;
-
-    final buttonStyle = ElevatedButton.styleFrom(
-      backgroundColor: AppPalette.primary800,
-      foregroundColor: AppPalette.white,
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(30),
-      ),
-      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-    );
+    final confirmedStudents =
+    students.where((s) => s.isConfirmed == true).toList();
+    final pendingStudents =
+    students.where((s) => s.isConfirmed == null).toList();
+    final absentStudents =
+    students.where((s) => s.isConfirmed == false).toList();
 
     return Scaffold(
-      backgroundColor: AppPalette.neutral100,
+      backgroundColor: AppPalette.appBackground, // Fundo do tema
       appBar: AppBar(
+        title: const Text('Rota ida manhã'),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppPalette.primary900,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        // Padding foi movido para horizontal: 16 para os cards
+        // ocuparem a largura total
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Cabeçalho com nome dinâmico
-            Center(
-              child: _isLoadingUser
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(
-                'Olá, ${_userName ?? 'Motorista'}!',
-                style: const TextStyle(fontSize: 18, color: AppPalette.neutral600),
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Center(
-              child: Text(
-                'Rota da manhã',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppPalette.primary900),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Card do Mapa e Botão
-            Card(
-              clipBehavior: Clip.antiAlias,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              elevation: 4,
-              child: Column(
-                children: [
-                  Image.asset(
-                    'assets/rota_gps.png',
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _startRoute,
-                        style: buttonStyle,
-                        child: const Text('Iniciar rota'),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            StartRouteMapCard(
+              onStartRoutePressed: _startRoute,
             ),
             const SizedBox(height: 32),
 
-            // Seção da Lista de Confirmação
-            const Text(
-              'Lista de confirmação',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppPalette.primary900),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _buildSummaryCard('Confirmados', confirmedCount, AppPalette.green500)),
-                const SizedBox(width: 16),
-                Expanded(child: _buildSummaryCard('Ausentes', absentCount, AppPalette.red500)),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Lista de Alunos
-            ...students.asMap().entries.map(
-              (entry) => _buildStudentTile(
-                index: entry.key + 1,
-                name: entry.value.name,
-                address: entry.value.address,
-                isConfirmed: entry.value.isConfirmed ?? false,
+            // Título da Seção
+            const Padding(
+              // Adiciona padding horizontal de volta para o título
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                'Lista de presença',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppPalette.primary900,
+                ),
               ),
             ),
+            const SizedBox(height: 16),
+
+            StudentAccordion(
+              title: 'Confirmados',
+              count: confirmedStudents.length,
+              countColor: AppPalette.green500,
+              students: confirmedStudents,
+              itemIcon: Icons.check_circle_outline, // Ícone de exemplo
+              itemIconColor: AppPalette.green500,
+            ),
+            StudentAccordion(
+              title: 'Pendentes',
+              count: pendingStudents.length,
+              countColor: AppPalette.orange700,
+              students: pendingStudents,
+              itemIcon: Icons.access_time_rounded, // Ícone de relógio da imagem
+              itemIconColor: AppPalette.orange700,
+              initiallyExpanded: true, // Deixa aberto por padrão
+            ),
+            StudentAccordion(
+              title: 'Ausentes',
+              count: absentStudents.length,
+              countColor: AppPalette.red500,
+              students: absentStudents,
+              itemIcon: Icons.cancel_outlined, // Ícone de exemplo
+              itemIconColor: AppPalette.red500,
+            ),
+            const SizedBox(height: 24), // Espaçamento no final
           ],
         ),
       ),
     );
   }
 }
-

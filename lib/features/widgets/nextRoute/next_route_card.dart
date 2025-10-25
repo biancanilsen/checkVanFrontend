@@ -1,20 +1,33 @@
+// lib/widgets/next_route_card.dart
+
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 
+// 1. ADICIONE OS IMPORTS NECESSÁRIOS
+import 'package:provider/provider.dart';
+import 'package:check_van_frontend/provider/route_provider.dart';
+// (O import do route_provider.dart pode precisar de ajuste no caminho)
+
 class NextRouteCard extends StatelessWidget {
-  const NextRouteCard({super.key});
+  // 2. ADICIONE O teamId, IGUAL AO HomeRouteCard
+  final int teamId;
+
+  const NextRouteCard({
+    super.key,
+    required this.teamId, // Torne-o obrigatório
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Definimos a altura total aqui para reutilizar
+    // 3. OBTENHA O PROVIDER
+    final routeProvider = context.watch<RouteProvider>();
+
     const double cardHeight = 265;
-    // Definimos a proporção visível do mapa (30% superior)
     const double mapVisibilityRatio = 0.3;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Card(
-        // Todo - rever essa borda por conta da imagem
         elevation: 1.0,
         shadowColor: Colors.black.withOpacity(0.1),
         clipBehavior: Clip.antiAlias,
@@ -35,7 +48,6 @@ class NextRouteCard extends StatelessWidget {
             // Camada 2: O CONTEÚDO (título, infos, botão)
             Container(
               height: cardHeight, // Ocupa a altura total do Card
-              // Padding TOP ajustado
               padding: EdgeInsets.fromLTRB(
                 12,
                 (cardHeight * mapVisibilityRatio) + 12,
@@ -85,9 +97,11 @@ class NextRouteCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Container(
-                            // Padding na base para alinhar com o chip
                             padding: const EdgeInsets.only(bottom: 6),
                             child: const Text(
+                              // Como não temos mais routeData,
+                              // voltamos ao valor estático
+                              // (ou você pode buscar isso de outro lugar)
                               '12',
                               style: TextStyle(
                                 fontSize: 24,
@@ -98,8 +112,6 @@ class NextRouteCard extends StatelessWidget {
                           ),
                         ],
                       ),
-
-                      // Direita: Início + chip "Em 5 min"
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -133,15 +145,35 @@ class NextRouteCard extends StatelessWidget {
                     ],
                   ),
 
-                  const Spacer(), // <-- Garante que o botão vá para baixo (sem overflow)
+                  const Spacer(),
 
                   // Botão "Iniciar rota"
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Ação de "Iniciar rota"
+                      // 4. SUBSTITUA O onPressed PELA LÓGICA DO HomeRouteCard
+                      onPressed: routeProvider.isLoading
+                          ? null // Desabilita o botão se estiver carregando
+                          : () async {
+                        final success = await routeProvider.generateRoute(
+                          teamId: teamId, // Usa o teamId passado
+                        );
+                        if (success && context.mounted) {
+                          Navigator.pushNamed(
+                            context,
+                            '/route',
+                            arguments: routeProvider.routeData,
+                          );
+                        } else if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(routeProvider.error ??
+                                  'Erro ao gerar rota'),
+                              backgroundColor: AppPalette.red500,
+                            ),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppPalette.primary800,
@@ -153,7 +185,17 @@ class NextRouteCard extends StatelessWidget {
                         textStyle: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
-                      child: const Text(
+                      // 5. ADICIONE O INDICADOR DE LOADING NO BOTÃO
+                      child: routeProvider.isLoading
+                          ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          color: AppPalette.white,
+                          strokeWidth: 3,
+                        ),
+                      )
+                          : const Text(
                         'Iniciar rota',
                         style: TextStyle(
                           color: Colors.white,
