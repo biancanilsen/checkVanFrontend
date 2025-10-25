@@ -5,9 +5,11 @@ class AppPalette {
   static const Color primary900 = Color(0xFF101C2C);
   static const Color primary800 = Color(0xFF03467D);
   static const Color primary100 = Color(0xFFD2E0EC);
+  static const Color primary50 = Color(0xFFDBE9F4);
   static const Color secondary500 = Color(0xFFFFC532);
 
   static const Color neutral50 = Color(0xFFFAFAFA);
+  static const Color neutral60 = Color(0xFFFEFEFE);
   static const Color neutral75 = Color(0xFFFAFAFA);
   static const Color neutral100 = Color(0xFFF5F5F5);
   static const Color neutral200 = Color(0xFFCED6D9);
@@ -21,11 +23,17 @@ class AppPalette {
 
   static const Color red500 = Color(0xFFD32F2F);
   static const Color red700 = Color(0xFFBF360C);
+
   static const Color green500 = Color(0xFF037D2C);
   static const Color green600 = Color(0xFF206820);
 
+  static const Color orange700 = Color(0xFFC45F00);
+  static const Color orange100 = Color(0xFFFFE0C3);
+
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
+
+  static const Color appBackground = Color(0xFFF5F6F8);
 }
 
 class AppTheme {
@@ -42,12 +50,10 @@ class AppTheme {
         onSecondary: AppPalette.black,
         error: AppPalette.red500,
         onError: AppPalette.white,
-        background: AppPalette.white,
-        onBackground: AppPalette.primary900,
-        surface: AppPalette.neutral100,
+        surface: AppPalette.appBackground,
         onSurface: AppPalette.primary900,
       ),
-      scaffoldBackgroundColor: AppPalette.white,
+      scaffoldBackgroundColor: AppPalette.appBackground,
       textTheme: poppinsTextTheme,
     );
 
