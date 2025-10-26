@@ -1,5 +1,5 @@
 class Endpoints {
-  static const String baseUrl = 'http://192.168.0.3:3200';
+  static const String baseUrl = 'http://192.168.0.251:3200';
 
   // user
   static const String login = '$baseUrl/user/login';
@@ -40,7 +40,8 @@ class Endpoints {
 
   // geocoding
   static const String autocompleteAddress = '$baseUrl/geocoding/autocomplete';
-
+  static const String geocodingDetails = '$baseUrl/geocoding/details';
+ 
   // Van
   static const String createVan = '$baseUrl/van/create';
 

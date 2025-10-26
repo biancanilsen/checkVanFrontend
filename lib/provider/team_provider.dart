@@ -44,16 +44,33 @@ class TeamProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> addTeam({required String name, required int tripId}) async {
+  Future<bool> addTeam({
+    required String name,
+    required int schoolId,
+    required double startingLat,
+    required double startingLon,
+    required String plate,
+    required String nickname,
+    required int capacity,
+  }) async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
-
+ 
     try {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
-
-      final body = {'name': name, 'trip_id': tripId};
-
+ 
+      final body = {
+        'name': name,
+        'school_id': schoolId,
+        'starting_lat': startingLat,
+        'starting_lon': startingLon,
+        'plate': plate,
+        'nickname': nickname,
+        'capacity': capacity,
+      };
+ 
       final response = await http.post(
         Uri.parse(Endpoints.teamRegistration),
         headers: {
@@ -62,8 +79,8 @@ class TeamProvider extends ChangeNotifier {
         },
         body: jsonEncode(body),
       );
-
-      if (response.statusCode == 201) {
+ 
+      if (response.statusCode == 201 || response.statusCode == 200) {
         await getTeams();
         return true;
       } else {
@@ -76,7 +93,9 @@ class TeamProvider extends ChangeNotifier {
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      if (hasListeners) {
+        notifyListeners();
+      }
     }
   }
 
