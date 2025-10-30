@@ -30,9 +30,9 @@ class MainBottomNavBar extends StatelessWidget {
           label: 'Mensagens',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: 'Perfil',
+          icon: Icon(Icons.menu),
+          activeIcon: Icon(Icons.menu),
+          label: 'Menu',
         ),
       ],
       currentIndex: selectedIndex,

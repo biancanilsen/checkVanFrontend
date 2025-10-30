@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/user_session.dart';
 import '../../widgets/home/homeDriver/driver_main_bottom_nav_bar.dart';
 import '../../widgets/home/homeDriver/home_header_driver.dart';
+import '../../widgets/menu/menu.dart';
 import '../../widgets/route/nextRoute/next_route_card.dart';
 import '../../widgets/route/scheduledRoutes/scheduled_routes_list.dart';
 
@@ -23,10 +24,16 @@ class _HomeDriverView extends StatefulWidget {
 
 class _HomeDriverViewState extends State<_HomeDriverView> {
   int _selectedIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   String? _userName;
   bool _isLoadingUser = true;
 
   void _onItemTapped(int index) {
+    if (index == 3) {
+      _scaffoldKey.currentState?.openEndDrawer();
+      return;
+    }
+
     if (index == _selectedIndex) return;
 
     switch (index) {
@@ -38,10 +45,12 @@ class _HomeDriverViewState extends State<_HomeDriverView> {
       case 2:
         Navigator.pushNamed(context, '/van');
         break;
-      case 3:
-        Navigator.pushNamed(context, '/my_profile');
-        break;
     }
+  }
+
+  void _onDrawerItemTapped(String routeName) {
+    Navigator.pop(context); // Fecha o menu lateral (drawer)
+    Navigator.pushNamed(context, routeName); // Navega para a tela clicada
   }
 
   @override
@@ -63,6 +72,8 @@ class _HomeDriverViewState extends State<_HomeDriverView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
+      endDrawer: DriverMenu(onItemTapped: _onDrawerItemTapped),
       bottomNavigationBar: MainBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,

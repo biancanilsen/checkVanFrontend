@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../utils/user_session.dart';
+import '../../widgets/home/driver_shell.dart';
 import 'home_guardian.dart';
 import 'home_driver.dart';
 
@@ -24,7 +25,7 @@ class HomePage extends StatelessWidget {
           final role = user.role;
 
           if (role == 'driver') {
-            return const HomeDriver();
+            return const DriverShell();
           } else if (role == 'guardian') {
             return const HomeGuardian();
           } else {
