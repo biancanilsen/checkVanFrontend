@@ -1,10 +1,12 @@
+import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../provider/student_provider.dart';
 import '../../forms/edit_student_form.dart';
-// import '../forms/student_form.dart'; // Removido
+import '../../widgets/student/student_tile.dart';
+import '../../widgets/utils/page_header.dart';
+import '../../widgets/utils/page_search_bar.dart';
 
 class StudentPage extends StatefulWidget {
   const StudentPage({super.key});
@@ -26,128 +28,109 @@ class _StudentPageState extends State<StudentPage> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: _studentProvider,
-      child: Scaffold(
-        appBar: AppBar(
-          // backgroundColor: Colors.transparent,
-          title: const Text('Gestão de Alunos'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Consumer<StudentProvider>(
-            builder: (context, provider, child) {
-              if (provider.isLoading && provider.students.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
-              }
+      child: SafeArea( // Sem Scaffold, usamos SafeArea
+        child: Stack( // Stack para o botão fixo
+          children: [
+            _buildStudentList(),
 
-              if (provider.error != null) {
-                return Center(child: Text(provider.error!));
-              }
-
-              return const StudentTable();
-            },
-          ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            // Navega para a nova tela de cadastro
-            Navigator.pushNamed(context, '/add-student');
-          },
-          child: const Icon(Icons.add),
-          tooltip: 'Adicionar Aluno',
+            // 2. Botão Fixo "+ Adicionar aluno"
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text(
+                    'Adicionar aluno',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/add-student');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppPalette.primary800, // Cor do tema
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
-}
 
-class StudentTable extends StatelessWidget {
-  const StudentTable({super.key});
+  // Widget auxiliar para construir a lista de conteúdo
+  Widget _buildStudentList() {
+    return Consumer<StudentProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading && provider.students.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<StudentProvider>();
-    final students = provider.students;
+        if (provider.error != null) {
+          return Center(child: Text(provider.error!));
+        }
 
-    if (provider.isLoading && students.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
+        if (provider.students.isEmpty && !provider.isLoading) {
+          // TODO: Adicionar um estado de "Nenhum aluno" mais amigável
+          return const Center(child: Text('Nenhum aluno cadastrado.'));
+        }
 
-    if (students.isEmpty) {
-      return const Center(child: Text('Nenhum aluno cadastrado.'));
-    }
+        // ListView agora contém o header, busca e os itens
+        return ListView.builder(
+          // Padding na parte inferior para não ser coberto pelo botão
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+          // +2 para o Header e a Barra de Busca
+          itemCount: provider.students.length + 2,
+          itemBuilder: (context, index) {
+            // Item 0: Header "Meus alunos"
+            if (index == 0) {
+              return PageHeader(title: 'Meus alunos');
+            }
 
-    return ListView.builder(
-      itemCount: students.length,
-      itemBuilder: (_, index) {
-        final s = students[index];
-        return Card(
-          child: ListTile(
-            title: Text(s.name),
-            subtitle: Text('Nasc: ${DateFormat('dd/MM/yyyy').format(s.birthDate)}'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blue),
-                  onPressed: () {
-                    final provider = Provider.of<StudentProvider>(context, listen: false);
+            // Item 1: Barra de Busca
+            if (index == 1) {
+              return PageSearchBar(
+                hintText: 'Pesquisar turma ou aluno',
+                onChanged: (value) {
+                  // Você pode adicionar sua lógica de filtro aqui
+                  // provider.filterStudents(value);
+                },
+              );
+            }
 
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext dialogContext) {
-                        return ChangeNotifierProvider.value(
-                          value: provider,
-                          child: AlertDialog(
-                            title: const Text('Editar Aluno'),
-                            content: SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.9,
-                              child: EditStudentForm(student: s),
-                            ),
-                            actions: [],
-                          ),
-                        );
-                      },
+            // Itens da Lista de Alunos
+            final student = provider.students[index - 2];
+            return StudentTile(
+              name: student.name,
+              address: student.address,
+              onEditPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext dialogContext) {
+                    return ChangeNotifierProvider.value(
+                      value: provider,
+                      child: AlertDialog(
+                        title: const Text('Editar Aluno'),
+                        content: SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          child: EditStudentForm(student: student),
+                        ),
+                        actions: [],
+                      ),
                     );
                   },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext dialogContext) {
-                        return AlertDialog(
-                          title: const Text('Confirmar Exclusão'),
-                          content: Text(
-                              'Você tem certeza que deseja deletar o aluno(a) ${s.name}? Esta ação não pode ser desfeita.'),
-                          actions: <Widget>[
-                            TextButton(
-                              child: const Text('Cancelar'),
-                              onPressed: () {
-                                Navigator.of(dialogContext).pop();
-                              },
-                            ),
-                            TextButton(
-                              style: TextButton.styleFrom(foregroundColor: Colors.red),
-                              child: const Text('Confirmar'),
-                              onPressed: () {
-                                Provider.of<StudentProvider>(context, listen: false).deleteStudent(s.id);
-                                Navigator.of(dialogContext).pop();
-                              },
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
+                );
+              },
+            );
+          },
         );
       },
     );

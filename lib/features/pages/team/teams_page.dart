@@ -1,6 +1,8 @@
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/team/team_card.dart';
+import '../../widgets/utils/page_header.dart';
+import '../../widgets/utils/page_search_bar.dart';
 
 final mockTurmas = [
   { 'name': 'Turma da manhã', 'period': 'manhã', 'students': 12, 'code': 'CHSGT5'},
@@ -25,39 +27,16 @@ class TeamsPage extends StatelessWidget {
             itemBuilder: (context, index) {
               // Item 0: Header "Minhas turmas"
               if (index == 0) {
-                return Padding(
-                  padding: const EdgeInsets.only(top: 24.0, bottom: 24.0),
-                  child: Text(
-                    'Minhas turmas',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                     fontWeight: FontWeight.w500,
-                      color: AppPalette.primary900,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                );
+                return PageHeader(title: 'Minhas turmas');
               }
               // Item 1: Barra de Busca
               if (index == 1) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Pesquisar turma ou aluno',
-                      suffixIcon: Icon(Icons.search, color: Colors.grey[600]),
-                      filled: true,
-                      fillColor: AppPalette.neutral70,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                    ),
-                  ),
+                return PageSearchBar(
+                  hintText: 'Pesquisar turma ou aluno',
+                  onChanged: (value) {
+                    // Você pode adicionar sua lógica de filtro aqui
+                    // provider.filterStudents(value);
+                  },
                 );
               }
 

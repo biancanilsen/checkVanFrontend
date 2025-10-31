@@ -1,6 +1,10 @@
-// Salve como: /lib/features/pages/school/escolas_page.dart
+// /lib/features/pages/school/escolas_page.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
+// 1. IMPORTE O NOVO WIDGET
+import '../../widgets/school/school_tile.dart';
+import '../../widgets/utils/page_header.dart';
+import '../../widgets/utils/page_search_bar.dart';
 
 // Dados mocados (substitua pelo seu endpoint futuramente)
 final mockEscolas = [
@@ -32,41 +36,14 @@ class SchoolPage extends StatelessWidget {
             // Padding para o conteúdo não ser coberto pelo botão
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
             children: [
-              // Header "Minhas escolas" (sem a seta de voltar)
-              Padding(
-                padding: const EdgeInsets.only(top: 24.0, bottom: 24.0),
-                // TODO - Criar um estilo no theme para essas "AppBar"
-                child: Text(
-                  'Minhas escolas',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: AppPalette.primary900,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+              const PageHeader(title: 'Minhas escolas'),
 
-              // Barra de Busca
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Pesquisar escola',
-                    suffixIcon: Icon(Icons.search, color: Colors.grey[600]),
-                    filled: true,
-                    // Use a cor de card que criamos
-                    fillColor: AppPalette.neutral70,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                  ),
-                ),
+              PageSearchBar(
+              hintText: 'Pesquisar escola',
+              onChanged: (value) {
+              // Você pode adicionar sua lógica de filtro aqui
+              // provider.filterStudents(value);
+              },
               ),
 
               // Card que agrupa os itens da lista
@@ -78,12 +55,24 @@ class SchoolPage extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Column(
                   children: [
-                    // Constrói a lista de escolas com divisores
-                    _buildSchoolTile(mockEscolas[0]),
+                    // 2. USE O NOVO WIDGET AQUI
+                    SchoolTile(
+                      name: mockEscolas[0]['name']!,
+                      address: mockEscolas[0]['address']!,
+                      onTap: () { /* Ação "Ver detalhes da escola" */ },
+                    ),
                     Divider(height: 1, indent: 16, endIndent: 16, color: Colors.grey[200]),
-                    _buildSchoolTile(mockEscolas[1]),
+                    SchoolTile(
+                      name: mockEscolas[1]['name']!,
+                      address: mockEscolas[1]['address']!,
+                      onTap: () { /* Ação "Ver detalhes da escola" */ },
+                    ),
                     Divider(height: 1, indent: 16, endIndent: 16, color: Colors.grey[200]),
-                    _buildSchoolTile(mockEscolas[2]),
+                    SchoolTile(
+                      name: mockEscolas[2]['name']!,
+                      address: mockEscolas[2]['address']!,
+                      onTap: () { /* Ação "Ver detalhes da escola" */ },
+                    ),
                   ],
                 ),
               ),
@@ -114,24 +103,6 @@ class SchoolPage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  // Helper para construir o item da lista (sem o divisor)
-  Widget _buildSchoolTile(Map<String, String> escola) {
-    return ListTile(
-      leading: Icon(Icons.menu_book_outlined, color: Colors.grey[700]),
-      title: Text(
-        escola['name']!,
-        style: const TextStyle(fontWeight: FontWeight.w600, color: AppPalette.primary900),
-      ),
-      subtitle: Text(
-        escola['address']!,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: Colors.grey[700]),
-      ),
-      trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[600]),
-      onTap: () { /* Ação "Ver detalhes da escola" */ },
     );
   }
 }

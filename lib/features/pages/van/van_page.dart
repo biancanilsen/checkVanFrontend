@@ -1,5 +1,7 @@
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
+import '../../widgets/utils/page_header.dart';
+import '../../widgets/utils/page_search_bar.dart';
 import '../../widgets/van/van_tile.dart';
 
 final mockVans = [
@@ -22,49 +24,21 @@ class VanPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // SEM SCAFFOLD
     return SafeArea(
-      child: Stack( // Usamos Stack para o botão "+ Nova van" ficar fixo
+      child: Stack(
         children: [
-          // 1. Conteúdo que rola (Header, Busca, Lista)
           ListView(
-            // Padding para o conteúdo não ser coberto pelo botão
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
             children: [
-              // Header "Minhas vans" (sem a seta de voltar)
-              Padding(
-                padding: const EdgeInsets.only(top: 24.0, bottom: 24.0),
-                child: Text(
-                  'Minhas vans',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: AppPalette.primary900,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
+              const PageHeader(title: 'Minhas vans'),
+
+              PageSearchBar(
+                hintText: 'Pesquisar modelo ou placa',
+                onChanged: (value) {
+                  // Você pode adicionar sua lógica de filtro aqui
+                  // provider.filterStudents(value);
+                },
               ),
 
-              // Barra de Busca
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Pesquisar modelo ou placa',
-                    suffixIcon: Icon(Icons.search, color: Colors.grey[600]),
-                    filled: true,
-                    fillColor: AppPalette.neutral70, // Cor do card
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Card que agrupa os itens da lista
               Card(
                 color: AppPalette.neutral70,
                 clipBehavior: Clip.antiAlias,
@@ -107,7 +81,7 @@ class VanPage extends StatelessWidget {
                   Navigator.pushNamed(context, '/add-van');
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0D47A1), // Azul escuro
+                  backgroundColor: AppPalette.primary800,
                   minimumSize: const Size(double.infinity, 52),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.0),
