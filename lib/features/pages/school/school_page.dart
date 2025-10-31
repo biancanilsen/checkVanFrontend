@@ -35,11 +35,12 @@ class SchoolPage extends StatelessWidget {
               // Header "Minhas escolas" (sem a seta de voltar)
               Padding(
                 padding: const EdgeInsets.only(top: 24.0, bottom: 24.0),
+                // TODO - Criar um estilo no theme para essas "AppBar"
                 child: Text(
                   'Minhas escolas',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: AppPalette.primary900,
                   ),
                   textAlign: TextAlign.center,
                 ),
