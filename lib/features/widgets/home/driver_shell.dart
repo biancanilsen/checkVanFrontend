@@ -1,9 +1,11 @@
 import 'package:check_van_frontend/features/pages/van/van_page.dart';
 import 'package:flutter/material.dart';
 import '../../pages/profile/my_profile.dart';
+import '../../pages/school/add_school_page.dart';
 import '../../pages/school/school_page.dart';
 import '../../pages/student/students_page.dart';
 import '../../pages/team/add_team_page.dart';
+import '../../pages/team/teams_page.dart';
 import '../../widgets/home/homeDriver/driver_main_bottom_nav_bar.dart';
 import '../menu/menu.dart';
 import 'home_driver_content.dart';
@@ -22,7 +24,7 @@ class _DriverShellState extends State<DriverShell> {
   // Lista de páginas do BottomNavBar
   static const List<Widget> _navBarPages = [
     HomeDriverContent(), // Antiga HomeDriver
-    AddTeamPage(),       // 'Turmas'
+    TeamsPage(),       // 'Turmas'
     VanPage(),           // 'Mensagens'
   ];
 

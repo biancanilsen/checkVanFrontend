@@ -21,7 +21,7 @@ import 'features/pages/student/add_student_page.dart';
 import 'features/pages/home/home_page.dart';
 import 'features/pages/login/login_page.dart';
 import 'features/pages/profile/my_profile.dart';
-import 'features/pages/school/school_page.dart';
+import 'features/pages/school/add_school_page.dart';
 import 'features/pages/login/signup_page.dart';
 import 'features/pages/student/students_page.dart';
 import 'features/pages/trip_page.dart';
@@ -76,7 +76,7 @@ class MyApp extends StatelessWidget {
         '/trips': (context) => const TripPage(),
         '/add-student': (context) => const AddStudentPage(),
         '/van': (context) => const VanPage(),
-        '/add-school': (context) => const SchoolPage(),
+        '/add-school': (context) => const AddSchoolPage(),
         '/route': (context) => const RoutePage(),
         '/active-route': (context) => const ActiveRoutePage(),
         '/add-team': (context) => const AddTeamPage(),

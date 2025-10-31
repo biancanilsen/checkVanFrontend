@@ -84,8 +84,6 @@ class DriverMenu extends StatelessWidget {
               ),
             ),
 
-            // --- 4. Botão Sair (Fim, Fixo) ---
-            Divider(height: 1, color: Colors.grey[200]),
             Padding(
               padding: const EdgeInsets.only(bottom: 20.0),
               child: ListTile(
@@ -125,8 +123,6 @@ class DriverMenu extends StatelessWidget {
           // Use o callback aqui
           onTap: () => onItemTapped(routeName),
         ),
-        // Adicionei o Divider de volta
-        Divider(height: 1, color: Colors.grey[200], indent: 24, endIndent: 24),
       ],
     );
   }
