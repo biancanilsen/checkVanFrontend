@@ -1,149 +1,122 @@
+import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../../../core/theme.dart';
-import '../../../provider/van_provider.dart';
-import '../../widgets/custom_text_field.dart';
+import '../../widgets/van/van_tile.dart';
 
-class VanPage extends StatefulWidget {
+final mockVans = [
+  {
+    'name': 'Ducato Wesley',
+    'model': 'Pegout Ducato',
+    'plate': 'CHYt56',
+  },
+  {
+    'name': 'Sprinter Branca',
+    'model': 'Mercedes Sprinter',
+    'plate': 'BRA2E19',
+  },
+];
+
+class VanPage extends StatelessWidget {
   const VanPage({super.key});
 
   @override
-  State<VanPage> createState() => _VanPageState();
-}
-
-class _VanPageState extends State<VanPage> {
-  final _formKey = GlobalKey<FormState>();
-
-  final _nicknameController = TextEditingController();
-  final _plateController = TextEditingController();
-  final _capacityController = TextEditingController();
-
-  @override
-  void dispose() {
-    _nicknameController.dispose();
-    _plateController.dispose();
-    _capacityController.dispose();
-    super.dispose();
-  }
-
-  void _submitVan() async {
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
-    }
-
-    final vanProvider = context.read<VanProvider>();
-
-    final success = await vanProvider.createVan(
-      nickname: _nicknameController.text,
-      plate: _plateController.text,
-      capacity: int.tryParse(_capacityController.text) ?? 0,
-    );
-
-    if (mounted) {
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Van cadastrada com sucesso!'),
-            backgroundColor: AppPalette.green500,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-        _nicknameController.clear();
-        _plateController.clear();
-        _capacityController.clear();
-
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(vanProvider.error ?? 'Ocorreu um erro desconhecido.'),
-            backgroundColor: AppPalette.red500,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final vanProvider = context.watch<VanProvider>();
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: AppPalette.primary900,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    // SEM SCAFFOLD
+    return SafeArea(
+      child: Stack( // Usamos Stack para o botão "+ Nova van" ficar fixo
+        children: [
+          // 1. Conteúdo que rola (Header, Busca, Lista)
+          ListView(
+            // Padding para o conteúdo não ser coberto pelo botão
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
             children: [
-              const SizedBox(height: 16),
-              const Text(
-                'Cadastro da Van',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Cadastre os dados da sua van',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: AppPalette.neutral600),
-              ),
-              const SizedBox(height: 32),
-
-              CustomTextField(
-                controller: _nicknameController,
-                label: 'Apelido da van',
-                hint: 'Ex: Van Branca',
-                isRequired: true,
-                validator: (value) => (value == null || value.isEmpty) ? 'Campo obrigatório' : null,
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _plateController,
-                label: 'Placa',
-                hint: 'Digite a placa',
-                isRequired: true,
-                validator: (value) => (value == null || value.isEmpty) ? 'Campo obrigatório' : null,
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _capacityController,
-                label: 'Passageiros',
-                hint: 'Digite a capacidade',
-                isRequired: true,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Campo obrigatório';
-                  if ((int.tryParse(value) ?? 0) <= 0) return 'A capacidade deve ser maior que zero';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 32),
-
-              ElevatedButton(
-                onPressed: vanProvider.isLoading ? null : _submitVan,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.primary800,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              // Header "Minhas vans" (sem a seta de voltar)
+              Padding(
+                padding: const EdgeInsets.only(top: 24.0, bottom: 24.0),
+                child: Text(
+                  'Minhas vans',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: AppPalette.primary900,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                child: vanProvider.isLoading
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Salvar Van'),
               ),
-              const SizedBox(height: 24),
+
+              // Barra de Busca
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Pesquisar modelo ou placa',
+                    suffixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                    filled: true,
+                    fillColor: AppPalette.neutral70, // Cor do card
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Card que agrupa os itens da lista
+              Card(
+                color: AppPalette.neutral70,
+                clipBehavior: Clip.antiAlias,
+                elevation: 2,
+                shadowColor: Colors.black.withOpacity(0.1),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Column(
+                  children: [
+                    // 2. USE O NOVO WIDGET AQUI
+                    VanTile(
+                      name: mockVans[0]['name']!,
+                      model: mockVans[0]['model']!,
+                      plate: mockVans[0]['plate']!,
+                      onTap: () { /* Ação "Ver detalhes da van" */ },
+                    ),
+                    Divider(height: 1, indent: 16, endIndent: 16, color: Colors.grey[200]),
+                    // E AQUI
+                    VanTile(
+                      name: mockVans[1]['name']!,
+                      model: mockVans[1]['model']!,
+                      plate: mockVans[1]['plate']!,
+                      onTap: () { /* Ação "Ver detalhes da van" */ },
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-        ),
+
+          // 2. Botão Fixo "+ Nova van"
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text('Nova van', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                onPressed: () {
+                  // Navega para a tela de formulário de van
+                  Navigator.pushNamed(context, '/add-van');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D47A1), // Azul escuro
+                  minimumSize: const Size(double.infinity, 52),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
