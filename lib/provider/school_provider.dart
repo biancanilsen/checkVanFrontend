@@ -84,6 +84,7 @@ class SchoolProvider extends ChangeNotifier {
       if (response.statusCode == 201) {
         _isLoading = false;
         notifyListeners();
+        await getSchools();
         return true;
       } else {
         _error = 'Falha ao cadastrar a escola.';

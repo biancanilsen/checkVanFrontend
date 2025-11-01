@@ -7,13 +7,21 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme.dart';
 import '../../../model/address_suggestion.dart';
+import '../../../model/student_model.dart';
 import '../../../provider/geocoding_provider.dart';
 import '../../../provider/school_provider.dart';
 import '../../../provider/student_provider.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/utils/address_field.dart';
+import '../../widgets/utils/custom_dropdown_field.dart';
 
 class AddStudentPage extends StatefulWidget {
-  const AddStudentPage({super.key});
+  final Student? student;
+
+  const AddStudentPage({
+    super.key,
+    this.student,
+  });
 
   @override
   State<AddStudentPage> createState() => _AddStudentPageState();
@@ -41,13 +49,84 @@ class _AddStudentPageState extends State<AddStudentPage> {
   XFile? _imageFile;
   final ImagePicker _picker = ImagePicker();
 
-  // NOVO: Crie uma função para selecionar a imagem da galeria
+  bool get isEditing => widget.student != null;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<SchoolProvider>(context, listen: false).getSchools();
+    });
+
+    // 3. PREENCHA OS CAMPOS SE ESTIVER EDITANDO
+    if (isEditing) {
+      final student = widget.student!;
+      _nameController.text = student.name;
+      _birthDate = student.birthDate;
+      _birthDateController.text = DateFormat('dd/MM/yyyy').format(student.birthDate);
+      _selectedGender = student.gender;
+      _selectedSchoolId = student.schoolId;
+      _selectedShiftGoing = student.shiftGoing;
+      _selectedShiftReturn = student.shiftReturn;
+
+      // --- LÓGICA DE ENDEREÇO CORRIGIDA ---
+      // TODO - rever isso do endereço pois o campo de numero fica vazio ao editar
+      final String fullAddress = student.address;
+      try {
+        int lastCommaIndex = fullAddress.lastIndexOf(',');
+        if (lastCommaIndex != -1) {
+          // Encontrou uma vírgula. Vamos verificar.
+          String potentialStreet = fullAddress.substring(0, lastCommaIndex).trim();
+          String potentialNumber = fullAddress.substring(lastCommaIndex + 1).trim();
+
+          // Tenta converter o 'potentialNumber' para um número.
+          if (int.tryParse(potentialNumber) != null) {
+            // SUCESSO! É um número. O formato é "Rua, Número"
+            _streetController.text = potentialStreet;
+            _numberController.text = potentialNumber;
+          } else {
+            // FALHA! Não é um número. (ex: "Blumen").
+            // Assumimos que é um endereço antigo. Coloque tudo na rua.
+            _streetController.text = fullAddress;
+            _numberController.text = ''; // Deixe o número em branco
+          }
+        } else {
+          // Não há vírgula. Coloque tudo no campo de rua.
+          _streetController.text = fullAddress;
+          _numberController.text = '';
+        }
+      } catch (e) {
+        // Fallback para qualquer outro erro
+        _streetController.text = fullAddress;
+        _numberController.text = '';
+      }
+      // --- FIM DA LÓGICA CORRIGIDA ---
+    }
+
+    // Adiciona os listeners DEPOIS que os valores iniciais foram definidos.
+    _streetController.addListener(_onAddressChanged);
+    _addressFocusNode.addListener(_onFocusChanged);
+  }
+
+  // ... (suas funções dispose, _pickImage, _submitForm, _pickDate, etc. permanecem iguais)
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _birthDateController.dispose();
+    _streetController.dispose();
+    _numberController.dispose();
+
+    _addressFocusNode.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
   Future<void> _pickImage() async {
     try {
       final XFile? selectedImage = await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 80, // Opcional: comprime a imagem para economizar dados
-        maxWidth: 800,   // Opcional: redimensiona a imagem
+        imageQuality: 80,
+        maxWidth: 800,
       );
       if (selectedImage != null) {
         setState(() {
@@ -61,35 +140,51 @@ class _AddStudentPageState extends State<AddStudentPage> {
     }
   }
 
-  // ATUALIZE o método _submitForm para passar o arquivo da imagem
   void _submitForm() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
     final fullAddress = '${_streetController.text}, ${_numberController.text}';
-
     final studentProvider = context.read<StudentProvider>();
-    final success = await studentProvider.addStudent(
-      name: _nameController.text,
-      birthDate: _birthDate!,
-      gender: _selectedGender!,
-      schoolId: _selectedSchoolId!,
-      address: fullAddress,
-      shiftGoing: _selectedShiftGoing!,
-      shiftReturn: _selectedShiftReturn!,
-      imageFile: _imageFile, // NOVO: Passe o arquivo da imagem para o provider
-    );
+
+    bool success;
+
+    if (isEditing) {
+      success = await studentProvider.updateStudent(
+        id: widget.student!.id,
+        name: _nameController.text,
+        birthDate: _birthDate!,
+        gender: _selectedGender!,
+        schoolId: _selectedSchoolId!,
+        address: fullAddress,
+        shiftGoing: _selectedShiftGoing!,
+        shiftReturn: _selectedShiftReturn!,
+        // TODO - Salvar a imagem quando atualiza o aluno
+        // imageProfile: _imageFile,
+      );
+    } else {
+      success = await studentProvider.addStudent(
+        name: _nameController.text,
+        birthDate: _birthDate!,
+        gender: _selectedGender!,
+        schoolId: _selectedSchoolId!,
+        address: fullAddress,
+        shiftGoing: _selectedShiftGoing!,
+        shiftReturn: _selectedShiftReturn!,
+        imageFile: _imageFile,
+      );
+    }
 
     if (mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Aluno cadastrado com sucesso!'),
+          SnackBar(
+            content: Text(isEditing ? 'Aluno atualizado com sucesso!' : 'Aluno cadastrado com sucesso!'),
             backgroundColor: AppPalette.green500,
           ),
         );
-        Navigator.pushReplacementNamed(context, '/students');
+        Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -99,29 +194,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
         );
       }
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<SchoolProvider>(context, listen: false).getSchools();
-    });
-
-    _streetController.addListener(_onAddressChanged);
-    _addressFocusNode.addListener(_onFocusChanged);
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _birthDateController.dispose();
-    _streetController.dispose();
-    _numberController.dispose();
-
-    _addressFocusNode.dispose();
-    _debounce?.cancel();
-    super.dispose();
   }
 
   void _onAddressChanged() {
@@ -172,14 +244,42 @@ class _AddStudentPageState extends State<AddStudentPage> {
     }
   }
 
+  // 2. CRIE A FUNÇÃO DE CALLBACK PARA O ADDRESS_FIELD
+  void _onSuggestionSelected(AddressSuggestion suggestion) {
+    _streetController.removeListener(_onAddressChanged);
+    setState(() {
+      _streetController.text = suggestion.fullDescription;
+      _showSuggestions = false;
+    });
+    _streetController.addListener(_onAddressChanged);
+    _addressFocusNode.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final schoolProvider = context.watch<SchoolProvider>();
     final studentProvider = context.watch<StudentProvider>();
-    const List<String> shiftOptions = ['Manhã', 'Tarde', 'Noite'];
+    final Map<String, String> shiftOptions = {
+      'morning': 'Manhã',
+      'afternoon': 'Tarde',
+      'night': 'Noite',
+    };
+
+    // --- CORREÇÃO APLICADA AQUI ---
+    // 1. Verificamos se a lista de escolas (do provider) já contém o ID
+    //    que temos no nosso estado (_selectedSchoolId).
+    final bool schoolListContainsValue = schoolProvider.schools.any(
+            (s) => s.id == _selectedSchoolId
+    );
+
+    // 2. Só passamos o ID para o Dropdown (value) se ele já existir na lista.
+    //    Caso contrário, passamos null para evitar o erro.
+    final int? effectiveSchoolId = schoolListContainsValue ? _selectedSchoolId : null;
+    // --- FIM DA CORREÇÃO ---
 
     return Scaffold(
       appBar: AppBar(
+        title: Text(isEditing ? 'Editar Aluno' : 'Cadastrar Aluno'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppPalette.primary800,
@@ -191,21 +291,31 @@ class _AddStudentPageState extends State<AddStudentPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // ... (Todo o seu layout de Título, Imagem, Nome, Data, Gênero, etc. continua igual)
               const SizedBox(height: 16),
-              const Text('Dados do aluno', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800)),
+              Text(
+                isEditing ? 'Editar Aluno' : 'Dados do aluno',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800),
+              ),
               const SizedBox(height: 8),
-              const Text('Preencha os dados para realizar o cadastro', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: AppPalette.neutral600)),
+              Text(
+                isEditing ? 'Altere os dados necessários' : 'Preencha os dados para realizar o cadastro',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16, color: AppPalette.neutral600),
+              ),
               const SizedBox(height: 32),
               Center(
                 child: GestureDetector(
-                  onTap: _pickImage, // Chama a função para escolher a imagem
+                  onTap: _pickImage,
                   child: CircleAvatar(
                     radius: 80,
                     backgroundColor: Colors.grey.shade200,
-                    // Mostra a imagem selecionada ou a imagem padrão
                     backgroundImage: _imageFile != null
                         ? FileImage(File(_imageFile!.path))
-                        : const AssetImage('assets/profile.png') as ImageProvider,
+                        : (isEditing && widget.student!.image_profile != null
+                        ? NetworkImage(widget.student!.image_profile!)
+                        : const AssetImage('assets/profile.png')) as ImageProvider,
                     child: _imageFile == null
                         ? Align(
                       alignment: Alignment.bottomRight,
@@ -226,7 +336,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
               CustomTextField(controller: _birthDateController, label: 'Data de nascimento', hint: 'dd/mm/aaaa', isRequired: true, onTap: _pickDate, suffixIcon: Icons.calendar_today, validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null),
               const SizedBox(height: 16),
 
-              _buildDropdownField(
+              CustomDropdownField<String>(
                 label: 'Gênero', hint: 'Selecione', value: _selectedGender,
                 items: ['Masculino', 'Feminino'].map((g) => DropdownMenuItem(value: g == 'Masculino' ? 'male' : 'female', child: Text(g))).toList(),
                 onChanged: (value) => setState(() => _selectedGender = value),
@@ -234,30 +344,55 @@ class _AddStudentPageState extends State<AddStudentPage> {
               ),
               const SizedBox(height: 16),
 
-              _buildAddressField(), // Campo de endereço com autocomplete
+              AddressField(
+                streetController: _streetController,
+                numberController: _numberController,
+                addressFocusNode: _addressFocusNode,
+                showSuggestions: _showSuggestions,
+                isAddressLoading: _isAddressLoading,
+                addressSuggestions: _addressSuggestions,
+                onSuggestionSelected: _onSuggestionSelected,
+                streetValidator: (value) => (value == null || value.isEmpty) ? 'Obrigatório' : null,
+                numberValidator: (value) => (value == null || value.isEmpty) ? 'Obrigatório' : null,
+              ),
               const SizedBox(height: 16),
 
-              _buildDropdownField(
+              // 3. USE O NOVO 'effectiveSchoolId' AQUI
+              CustomDropdownField<int>(
                 label: 'Escola',
                 hint: schoolProvider.isLoading ? 'Carregando...' : 'Selecione a escola',
-                value: _selectedSchoolId,
+                value: effectiveSchoolId, // Use a variável corrigida
                 items: schoolProvider.schools.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))).toList(),
                 onChanged: schoolProvider.isLoading ? null : (value) => setState(() => _selectedSchoolId = value as int?),
                 validator: (v) => v == null ? 'Campo obrigatório' : null,
               ),
               const SizedBox(height: 16),
 
-              _buildDropdownField(
-                label: 'Turno Ida', hint: 'Período da aula', value: _selectedShiftGoing,
-                items: shiftOptions.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+              CustomDropdownField<String>(
+                label: 'Turno Ida',
+                hint: 'Período da aula',
+                value: _selectedShiftGoing,
+                items: shiftOptions.entries.map((entry) {
+                  return DropdownMenuItem(
+                    value: entry.key, // "morning"
+                    child: Text(entry.value), // "Manhã"
+                  );
+                }).toList(),
                 onChanged: (value) => setState(() => _selectedShiftGoing = value),
                 validator: (v) => v == null ? 'Campo obrigatório' : null,
               ),
               const SizedBox(height: 16),
 
-              _buildDropdownField(
-                label: 'Turno Volta', hint: 'Período da aula', value: _selectedShiftReturn,
-                items: shiftOptions.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+              CustomDropdownField<String>(
+                label: 'Turno Volta',
+                hint: 'Período da aula',
+                value: _selectedShiftReturn,
+                items: shiftOptions.entries.map((entry) {
+                  return DropdownMenuItem(
+                    value: entry.key, // "morning"
+                    child: Text(entry.value), // "Manhã"
+                  );
+                }).toList(),
                 onChanged: (value) => setState(() => _selectedShiftReturn = value),
                 validator: (v) => v == null ? 'Campo obrigatório' : null,
               ),
@@ -272,126 +407,13 @@ class _AddStudentPageState extends State<AddStudentPage> {
                 ),
                 child: studentProvider.isLoading
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Cadastrar Aluno'),
+                    : Text(isEditing ? 'Salvar Alterações' : 'Cadastrar Aluno'),
               ),
               const SizedBox(height: 24),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  /// Constrói o campo de endereço com a funcionalidade de autocomplete.
-  Widget _buildAddressField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        RichText(
-          text: const TextSpan(
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppPalette.neutral900),
-            children: [
-              TextSpan(text: 'Endereço'),
-              TextSpan(text: ' *', style: TextStyle(color: AppPalette.red500)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 3,
-              child: TextFormField(
-                controller: _streetController,
-                focusNode: _addressFocusNode,
-                decoration: const InputDecoration(hintText: 'Logradouro'),
-                validator: (value) => (value == null || value.isEmpty) ? 'Obrigatório' : null,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 1,
-              child: TextFormField(
-                controller: _numberController,
-                decoration: const InputDecoration(hintText: 'Nº'),
-                keyboardType: TextInputType.number,
-                validator: (value) => (value == null || value.isEmpty) ? 'Obrigatório' : null,
-              ),
-            ),
-          ],
-        ),
-        // Container que exibe as sugestões de endereço
-        if (_showSuggestions)
-          Container(
-            height: 200,
-            margin: const EdgeInsets.only(top: 4.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 1, blurRadius: 8)],
-            ),
-            child: _isAddressLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              itemCount: _addressSuggestions.length,
-              itemBuilder: (context, index) {
-                final suggestion = _addressSuggestions[index];
-                return ListTile(
-                  title: Text(suggestion.displayName, style: const TextStyle(fontWeight: FontWeight.w500)),
-                  subtitle: Text(suggestion.addressDetails),
-                  onTap: () {
-                    // LÓGICA SIMPLIFICADA: Apenas preenche o campo de texto.
-                    _streetController.removeListener(_onAddressChanged);
-                    setState(() {
-                      // Usamos a descrição completa para o campo de rua.
-                      _streetController.text = suggestion.fullDescription;
-                      _showSuggestions = false;
-                    });
-                    _streetController.addListener(_onAddressChanged);
-                    _addressFocusNode.unfocus();
-                  },
-                );
-              },
-            ),
-          ),
-      ],
-    );
-  }
-
-  // Widget auxiliar para criar os dropdowns de forma consistente
-  Widget _buildDropdownField<T>({
-    required String label,
-    required String hint,
-    required T? value,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?>? onChanged,
-    String? Function(T?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        RichText(
-          text: TextSpan(
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 16),
-            children: [
-              TextSpan(text: label),
-              const TextSpan(text: ' *', style: TextStyle(color: AppPalette.red500, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<T>(
-          value: value,
-          hint: Text(hint, style: Theme.of(context).inputDecorationTheme.hintStyle),
-          decoration: const InputDecoration(),
-          borderRadius: BorderRadius.circular(12.0),
-          items: items,
-          onChanged: onChanged,
-          validator: validator,
-        ),
-      ],
     );
   }
 }

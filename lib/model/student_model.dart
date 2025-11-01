@@ -1,3 +1,5 @@
+import 'package:image_picker/image_picker.dart';
+
 class School {
   final int id;
   final String name;
@@ -26,6 +28,7 @@ class Student {
   final double latitude;
   final double longitude;
   final bool? isConfirmed;
+  final String? image_profile;
 
   Student({
     required this.id,
@@ -41,6 +44,7 @@ class Student {
     required this.latitude,
     required this.longitude,
     this.isConfirmed,
+    this.image_profile
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {

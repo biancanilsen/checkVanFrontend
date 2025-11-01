@@ -129,7 +129,7 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
         _afternoonLimitController.clear();
         _afternoonDepartureController.clear();
 
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
