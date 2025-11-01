@@ -72,6 +72,7 @@ class Student {
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       isConfirmed: isStudentConfirmed,
+      image_profile: json['image_profile'],
     );
   }
 

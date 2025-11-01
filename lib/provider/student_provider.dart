@@ -123,7 +123,7 @@ class StudentProvider extends ChangeNotifier {
         },
         body: jsonEncode({
           'name': name,
-          'birth_date': DateFormat('yyyy-MM-dd').format(birthDate),
+          'birth_date': birthDate.toIso8601String(),
           'gender': gender,
           'school_id': schoolId,
           'address': address,
@@ -200,7 +200,7 @@ class StudentProvider extends ChangeNotifier {
         },
         body: jsonEncode({
           'name': name,
-          'birth_date': DateFormat('yyyy-MM-dd').format(birthDate),
+          'birth_date': birthDate.toIso8601String(),
           'gender': gender,
           'school_id': schoolId,
           'address': address,

@@ -19,7 +19,6 @@ class StudentPage extends StatefulWidget {
 class _StudentPageState extends State<StudentPage> {
   final StudentProvider _studentProvider = StudentProvider();
 
-  // 2. Adicione variáveis de estado para a role
   String? _userRole;
   bool _isLoadingRole = true;
 
@@ -27,10 +26,9 @@ class _StudentPageState extends State<StudentPage> {
   void initState() {
     super.initState();
     _studentProvider.getStudents();
-    _loadUserRole(); // <-- 3. Chame a função para carregar a role
+    _loadUserRole();
   }
 
-  // 4. Crie a função para carregar a role
   Future<void> _loadUserRole() async {
     final user = await UserSession.getUser();
     if (mounted) {
@@ -43,7 +41,6 @@ class _StudentPageState extends State<StudentPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 5. Se estiver carregando a role, mostre um loading
     if (_isLoadingRole) {
       return const SafeArea(
         child: Center(child: CircularProgressIndicator()),
@@ -57,10 +54,8 @@ class _StudentPageState extends State<StudentPage> {
       child: SafeArea(
         child: Stack(
           children: [
-            // 6. Passe a role para o método que constrói a lista
             _buildStudentList(isGuardian),
 
-            // 7. Mostre o botão de adicionar APENAS se for guardian
             if (isGuardian)
               Align(
                 alignment: Alignment.bottomCenter,
@@ -102,17 +97,14 @@ class _StudentPageState extends State<StudentPage> {
     );
   }
 
-  // 8. Aceite a role como parâmetro
   Widget _buildStudentList(bool isGuardian) {
     return Consumer<StudentProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.students.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
-        // ... (outros 'if' de erro/vazio)
-
         return ListView.builder(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, isGuardian ? 90 : 16), // Padding dinâmico
+          padding: EdgeInsets.fromLTRB(16, 0, 16, isGuardian ? 90 : 16),
           itemCount: provider.students.length + 2,
           itemBuilder: (context, index) {
             if (index == 0) {
@@ -129,8 +121,9 @@ class _StudentPageState extends State<StudentPage> {
             return StudentTile(
               name: student.name,
               address: student.address,
-              isGuardian: isGuardian, // <-- 9. Passe a role para o tile
-              onActionPressed: () { // Ação é a mesma (abrir a página)
+              image_profile: student.image_profile,
+              isGuardian: isGuardian,
+              onActionPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
