@@ -1,8 +1,8 @@
+// /lib/features/pages/home/home_page.dart
 import 'package:flutter/material.dart';
 import '../../../utils/user_session.dart';
 import '../../widgets/home/driver_shell.dart';
-import 'home_guardian.dart';
-import 'home_driver.dart';
+import '../../widgets/home/guardian_shell.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -25,9 +25,10 @@ class HomePage extends StatelessWidget {
           final role = user.role;
 
           if (role == 'driver') {
-            return const DriverShell();
+            return const DriverShell(); // Continua usando o DriverShell
           } else if (role == 'guardian') {
-            return const HomeGuardian();
+            // ATUALIZE AQUI
+            return const GuardianShell(); // Use o novo GuardianShell
           } else {
             return const Scaffold(
               body: Center(child: Text('Tipo de usuário desconhecido')),

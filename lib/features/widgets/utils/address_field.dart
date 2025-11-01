@@ -12,6 +12,7 @@ class AddressField extends StatelessWidget {
   final Function(AddressSuggestion) onSuggestionSelected;
   final String? Function(String?) streetValidator;
   final String? Function(String?) numberValidator;
+  final bool readOnly;
 
   const AddressField({
     super.key,
@@ -24,6 +25,7 @@ class AddressField extends StatelessWidget {
     required this.onSuggestionSelected,
     required this.streetValidator,
     required this.numberValidator,
+    this.readOnly = false,
   });
 
   @override
@@ -48,9 +50,10 @@ class AddressField extends StatelessWidget {
               flex: 3,
               child: TextFormField(
                 controller: streetController,
-                focusNode: addressFocusNode,
+                focusNode: readOnly ? null : addressFocusNode,
                 decoration: const InputDecoration(hintText: 'Logradouro'),
                 validator: streetValidator,
+                readOnly: readOnly,
               ),
             ),
             const SizedBox(width: 12),
@@ -61,11 +64,11 @@ class AddressField extends StatelessWidget {
                 decoration: const InputDecoration(hintText: 'Nº'),
                 keyboardType: TextInputType.number,
                 validator: numberValidator,
+                readOnly: readOnly,
               ),
             ),
           ],
         ),
-        // Container que exibe as sugestões de endereço
         if (showSuggestions)
           Container(
             height: 200,
@@ -85,7 +88,7 @@ class AddressField extends StatelessWidget {
                 return ListTile(
                   title: Text(suggestion.displayName, style: const TextStyle(fontWeight: FontWeight.w500)),
                   subtitle: Text(suggestion.addressDetails),
-                  onTap: () => onSuggestionSelected(suggestion), // Chama o callback
+                  onTap: readOnly ? null : () => onSuggestionSelected(suggestion),
                 );
               },
             ),

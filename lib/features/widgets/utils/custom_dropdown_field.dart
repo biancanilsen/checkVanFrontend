@@ -1,3 +1,4 @@
+// /lib/widgets/utils/custom_dropdown_field.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 
@@ -8,6 +9,7 @@ class CustomDropdownField<T> extends StatelessWidget {
   final List<DropdownMenuItem<T>> items;
   final ValueChanged<T?>? onChanged;
   final String? Function(T?)? validator;
+  final bool readOnly;
 
   const CustomDropdownField({
     super.key,
@@ -17,6 +19,7 @@ class CustomDropdownField<T> extends StatelessWidget {
     required this.items,
     required this.onChanged,
     this.validator,
+    this.readOnly = false,
   });
 
   @override
@@ -40,7 +43,7 @@ class CustomDropdownField<T> extends StatelessWidget {
           decoration: const InputDecoration(),
           borderRadius: BorderRadius.circular(12.0),
           items: items,
-          onChanged: onChanged,
+          onChanged: readOnly ? null : onChanged,
           validator: validator,
         ),
       ],

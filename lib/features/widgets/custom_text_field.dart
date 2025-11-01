@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Importe para usar TextInputFormatter
+import 'package:flutter/services.dart';
 import '../../core/theme.dart';
 
 class CustomTextField extends StatelessWidget {
@@ -12,6 +12,7 @@ class CustomTextField extends StatelessWidget {
   final VoidCallback? onTap;
   final IconData? suffixIcon;
   final List<TextInputFormatter>? inputFormatters;
+  final bool readOnly;
 
   const CustomTextField({
     super.key,
@@ -24,6 +25,7 @@ class CustomTextField extends StatelessWidget {
     this.onTap,
     this.suffixIcon,
     this.inputFormatters,
+    this.readOnly = false,
   });
 
   @override
@@ -53,18 +55,19 @@ class CustomTextField extends StatelessWidget {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
-          readOnly: onTap != null,
-          onTap: onTap,
+          readOnly: (onTap != null) || readOnly,
+          onTap: readOnly ? null : onTap,
           keyboardType: keyboardType,
           validator: validator,
-          inputFormatters: inputFormatters, // Propriedade passada para o TextFormField
+          inputFormatters: inputFormatters,
           decoration: InputDecoration(
             hintText: hint,
             suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: AppPalette.neutral600) : null,
+            // filled: readOnly,
+            // fillColor: AppPalette.neutral100,
           ),
         ),
       ],
     );
   }
 }
-
