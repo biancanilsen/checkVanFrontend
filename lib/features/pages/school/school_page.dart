@@ -24,9 +24,11 @@ class _SchoolPageState extends State<SchoolPage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Stack(
-        children: [
+    return ColoredBox(
+      color: AppPalette.appBackground,
+      child: SafeArea(
+        child: Stack(
+          children: [
           Consumer<SchoolProvider>(
             builder: (context, provider, child) {
               return ListView(
@@ -71,7 +73,8 @@ class _SchoolPageState extends State<SchoolPage> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildSchoolList(SchoolProvider provider) {
