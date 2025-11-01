@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme.dart';
 import '../../utils/custom_nav_bar_item.dart';
 
 class DriverBottomNavBar extends StatelessWidget {
@@ -13,7 +14,7 @@ class DriverBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color selectedColor = const Color(0xFF0D47A1);
+    final Color selectedColor = AppPalette.primary800;
     final Color unselectedColor = Colors.grey[600]!;
 
     return Container(
@@ -47,15 +48,15 @@ class DriverBottomNavBar extends StatelessWidget {
               selectedColor: selectedColor,
               unselectedColor: unselectedColor,
             ),
-            CustomNavBarItem(
-              icon: Icons.chat_bubble_outline,
-              activeIcon: Icons.chat_bubble,
-              label: 'Mensagens',
-              isSelected: selectedIndex == 2,
-              onTap: () => onItemTapped(2),
-              selectedColor: selectedColor,
-              unselectedColor: unselectedColor,
-            ),
+            // CustomNavBarItem(
+            //   icon: Icons.chat_bubble_outline,
+            //   activeIcon: Icons.chat_bubble,
+            //   label: 'Mensagens',
+            //   isSelected: selectedIndex == 2,
+            //   onTap: () => onItemTapped(2),
+            //   selectedColor: selectedColor,
+            //   unselectedColor: unselectedColor,
+            // ),
             CustomNavBarItem(
               icon: Icons.menu,
               activeIcon: Icons.menu,

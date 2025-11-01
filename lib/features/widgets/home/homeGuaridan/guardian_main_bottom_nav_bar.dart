@@ -1,3 +1,4 @@
+import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 
 import '../../utils/custom_nav_bar_item.dart';
@@ -14,7 +15,7 @@ class GuardianBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color selectedColor = const Color(0xFF0D47A1);
+    final Color selectedColor = AppPalette.primary800;
     final Color unselectedColor = Colors.grey[600]!;
 
     return Container(
