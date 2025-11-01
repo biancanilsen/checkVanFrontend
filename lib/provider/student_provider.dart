@@ -257,4 +257,46 @@ class StudentProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> searchStudents(String name) async {
+    _isLoading = true;
+    _error = null;
+    // Notifica os ouvintes para mostrar o loading
+    notifyListeners();
+
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      // O backend já cuida da lógica de role (guardian/driver)
+      // O 'name' é enviado como um query parameter
+      final uri = Uri.parse('${Endpoints.searchStudents}?name=${Uri.encodeComponent(name)}');
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> studentListJson = data['students'];
+        _students = studentListJson.map((json) => Student.fromJson(json)).toList();
+        _students.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      } else if (response.statusCode == 404) {
+        _students = [];
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['message'] ?? 'Falha ao buscar alunos.');
+      }
+    } catch (e) {
+      _error = e.toString();
+      _students = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

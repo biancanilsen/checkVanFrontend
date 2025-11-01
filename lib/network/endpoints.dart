@@ -16,7 +16,7 @@ class Endpoints {
   static const String getStudents = '$baseUrl/student/getStudents';
   static const String getStudentsByTeamId = '$baseUrl/student/getByTeamId';
   static const String createStudent = '$baseUrl/student/create';
-
+  static const String searchStudents = '$baseUrl/student/search';
 
   // trip
   static const String tripRegistration = '$baseUrl/trip/registration';

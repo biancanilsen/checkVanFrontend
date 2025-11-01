@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,12 +23,19 @@ class _StudentPageState extends State<StudentPage> {
 
   String? _userRole;
   bool _isLoadingRole = true;
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     _studentProvider.getStudents();
     _loadUserRole();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadUserRole() async {
@@ -112,8 +121,13 @@ class _StudentPageState extends State<StudentPage> {
             }
             if (index == 1) {
               return PageSearchBar(
-                hintText: 'Pesquisar turma ou aluno',
-                onChanged: (value) { /* ... */ },
+                hintText: 'Pesquisar aluno',
+                onChanged: (value) {
+                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+                  _debounce = Timer(const Duration(milliseconds: 500), () {
+                    provider.searchStudents(value);
+                  });
+                },
               );
             }
 
