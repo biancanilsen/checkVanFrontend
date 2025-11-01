@@ -25,10 +25,9 @@ class HomePage extends StatelessWidget {
           final role = user.role;
 
           if (role == 'driver') {
-            return const DriverShell(); // Continua usando o DriverShell
+            return const DriverShell();
           } else if (role == 'guardian') {
-            // ATUALIZE AQUI
-            return const GuardianShell(); // Use o novo GuardianShell
+            return const GuardianShell();
           } else {
             return const Scaffold(
               body: Center(child: Text('Tipo de usuário desconhecido')),

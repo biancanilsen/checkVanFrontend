@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 class GuardianHomeHeader extends StatelessWidget {
   final String greeting;
   final String userName;
-  final String? imageUrl;
+  final String? imageProfile;
 
   const GuardianHomeHeader({
     super.key,
     required this.greeting,
     required this.userName,
-    this.imageUrl,
+    this.imageProfile,
   });
 
   @override
@@ -48,16 +48,15 @@ class GuardianHomeHeader extends StatelessWidget {
             ),
           ),
         ),
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: Colors.white,
-          child: ClipOval(
-            child: Image.asset(
-              'assets/retratoCrianca.webp', // TODO - trocar pela imagem do cadastro
-              fit: BoxFit.cover,
-              width: 44,
-              height: 44,
-            ),
+        GestureDetector(
+          onTap: () {
+            Navigator.pushNamed(context, '/my_profile');
+          },
+          child: CircleAvatar(
+            radius: 24,
+            backgroundImage: (imageProfile != null && imageProfile!.isNotEmpty)
+                ? NetworkImage(imageProfile!)
+                : const AssetImage('assets/profile.png') as ImageProvider,
           ),
         ),
       ],
