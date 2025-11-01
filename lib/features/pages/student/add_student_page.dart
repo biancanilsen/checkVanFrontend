@@ -160,7 +160,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
         address: fullAddress,
         shiftGoing: _selectedShiftGoing ?? '',
         shiftReturn: _selectedShiftReturn ?? '',
-        // imageFile: _imageFile, // TODO
+        imageFile: _imageFile,
       );
     } else {
       success = await studentProvider.addStudent(
@@ -276,7 +276,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
     final schoolProvider = context.watch<SchoolProvider>();
     final studentProvider = context.watch<StudentProvider>();
 
-    final Map<String, String> shiftOptions = {
+    final Map<String?, String> shiftOptions = {
+      null: 'Não informado',
       'morning': 'Manhã',
       'afternoon': 'Tarde',
       'night': 'Noite',
@@ -399,7 +400,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                     CustomDropdownField<String?>(
                       label: 'Turno Ida',
                       hint: 'Período da aula',
-                      value: effectiveShiftGoing, // Usa o valor validado
+                      value: effectiveShiftGoing,
                       items: shiftOptions.entries.map((entry) {
                         return DropdownMenuItem(
                           value: entry.key,
@@ -414,7 +415,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                     CustomDropdownField<String?>(
                       label: 'Turno Volta',
                       hint: 'Período da aula',
-                      value: effectiveShiftReturn, // Usa o valor validado
+                      value: effectiveShiftReturn,
                       items: shiftOptions.entries.map((entry) {
                         return DropdownMenuItem(
                           value: entry.key,

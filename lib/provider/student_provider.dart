@@ -183,6 +183,7 @@ class StudentProvider extends ChangeNotifier {
     required String address,
     required String shiftGoing,
     required String shiftReturn,
+    XFile? imageFile,
   }) async {
     _isLoading = true;
     _error = null;
@@ -209,13 +210,35 @@ class StudentProvider extends ChangeNotifier {
         }),
       );
 
-      if (response.statusCode == 200) {
-        await getStudents();
-        return true;
-      } else {
+      if (response.statusCode != 200) {
         final data = jsonDecode(response.body);
         throw Exception(data['message'] ?? 'Erro ao atualizar aluno.');
       }
+
+      if (imageFile != null) {
+        final uploadUrl = Uri.parse('${Endpoints.baseUrl}/student/$id/upload-image');
+        final request = http.MultipartRequest('POST', uploadUrl);
+        request.headers['Authorization'] = 'Bearer $token';
+
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image_profile',
+            imageFile.path,
+            contentType: MediaType('image', imageFile.path.split('.').last),
+          ),
+        );
+
+        final streamedResponse = await request.send();
+        final uploadResponse = await http.Response.fromStream(streamedResponse);
+
+        if (uploadResponse.statusCode != 200) {
+          print('Aluno atualizado, mas o upload da nova imagem falhou: ${uploadResponse.body}');
+        }
+      }
+
+      await getStudents();
+      return true;
+
     } catch (e) {
       _error = e.toString();
       return false;
