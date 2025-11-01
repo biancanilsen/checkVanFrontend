@@ -5,7 +5,7 @@ import 'package:check_van_frontend/core/theme.dart';
 import '../../../provider/student_provider.dart';
 import '../../../utils/user_session.dart';
 import '../../widgets/home/homeGuaridan/confirm_presence_callout.dart';
-import '../../widgets/home/homeGuaridan/guardian_home_header.dart';
+import '../../widgets/home/homeGuaridan/guardian_home_header.dart'; // Importe o header
 import '../../widgets/home/homeGuaridan/presence_student_card.dart';
 import '../attendance/confirm_attendance_page.dart';
 
@@ -19,14 +19,26 @@ class HomeGuardian extends StatefulWidget {
 class _HomeGuardianState extends State<HomeGuardian> {
   String _greeting = 'Olá,';
   String _userName = 'Usuário';
+  String? _profileImageUrl; // Para guardar a URL da imagem
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Usamos context.read() pois o provider é injetado pelo GuardianShell
       context.read<StudentProvider>().getPresenceSummary();
       _loadUserAndGreeting();
     });
+  }
+
+  // Função que navega e ESPERA o retorno da tela de perfil
+  Future<void> _navigateToProfile() async {
+    // Navega para a tela de perfil
+    await Navigator.pushNamed(context, '/my_profile');
+
+    // APÓS O RETORNO (Navigator.pop), recarregue os dados do usuário.
+    // O UserSession foi atualizado pela MyProfileForm.
+    _loadUserAndGreeting();
   }
 
   Future<void> _loadUserAndGreeting() async {
@@ -35,10 +47,15 @@ class _HomeGuardianState extends State<HomeGuardian> {
     final hour = DateTime.now().hour;
     final greeting =
     hour < 12 ? 'Bom dia,' : hour < 18 ? 'Boa tarde,' : 'Boa noite,';
+
+    // TODO: Adicione 'image_profile' ao seu UserModel e UserSession.getUser()
+    // final imageUrl = user?.image_profile;
+
     if (!mounted) return;
     setState(() {
       _greeting = greeting;
       _userName = name;
+      // _profileImageUrl = imageUrl; // Salve a URL da imagem
     });
   }
 
@@ -47,21 +64,24 @@ class _HomeGuardianState extends State<HomeGuardian> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
+    // Sem Scaffold, pois este é o 'body' do GuardianShell
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header atualizado com a nova função
             GuardianHomeHeader(
               greeting: _greeting,
               userName: _userName,
-              // TODO - aqui trazer a imagem salva no banco
-              imageProfile: null,
+              imageProfile: _profileImageUrl, // Passe a URL da imagem
+              onProfileTap: _navigateToProfile, // Passe a função de callback
             ),
 
             const SizedBox(height: 20),
 
+            // School Bus Image
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.asset(

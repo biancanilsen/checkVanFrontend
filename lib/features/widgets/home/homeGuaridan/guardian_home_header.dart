@@ -1,3 +1,4 @@
+// lib/widgets/home/homeGuaridan/guardian_home_header.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 
@@ -5,12 +6,14 @@ class GuardianHomeHeader extends StatelessWidget {
   final String greeting;
   final String userName;
   final String? imageProfile;
+  final VoidCallback onProfileTap;
 
   const GuardianHomeHeader({
     super.key,
     required this.greeting,
     required this.userName,
     this.imageProfile,
+    required this.onProfileTap,
   });
 
   @override
@@ -48,10 +51,9 @@ class GuardianHomeHeader extends StatelessWidget {
             ),
           ),
         ),
+
         GestureDetector(
-          onTap: () {
-            Navigator.pushNamed(context, '/my_profile');
-          },
+          onTap: onProfileTap,
           child: CircleAvatar(
             radius: 24,
             backgroundImage: (imageProfile != null && imageProfile!.isNotEmpty)

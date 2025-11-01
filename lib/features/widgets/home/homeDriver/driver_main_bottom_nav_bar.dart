@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../utils/custom_nav_bar_item.dart';
 
-class MainBottomNavBar extends StatelessWidget {
+class DriverBottomNavBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemTapped;
 
-  const MainBottomNavBar({
+  const DriverBottomNavBar({
     super.key,
     required this.selectedIndex,
     required this.onItemTapped,
@@ -12,35 +13,61 @@ class MainBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: Icon(Icons.route_outlined),
-          activeIcon: Icon(Icons.route),
-          label: 'Rotas',
+    final Color selectedColor = const Color(0xFF0D47A1);
+    final Color unselectedColor = Colors.grey[600]!;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Colors.grey[300]!, width: 0.5),
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.people_outline),
-          activeIcon: Icon(Icons.people),
-          label: 'Turmas',
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+      child: SafeArea(
+        bottom: true,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            CustomNavBarItem(
+              icon: Icons.route_outlined,
+              activeIcon: Icons.route,
+              label: 'Rotas',
+              isSelected: selectedIndex == 0,
+              onTap: () => onItemTapped(0),
+              selectedColor: selectedColor,
+              unselectedColor: unselectedColor,
+            ),
+            CustomNavBarItem(
+              icon: Icons.people_outlined,
+              activeIcon: Icons.people,
+              label: 'Turmas',
+              isSelected: selectedIndex == 1,
+              onTap: () => onItemTapped(1),
+              selectedColor: selectedColor,
+              unselectedColor: unselectedColor,
+            ),
+            CustomNavBarItem(
+              icon: Icons.chat_bubble_outline,
+              activeIcon: Icons.chat_bubble,
+              label: 'Mensagens',
+              isSelected: selectedIndex == 2,
+              onTap: () => onItemTapped(2),
+              selectedColor: selectedColor,
+              unselectedColor: unselectedColor,
+            ),
+            CustomNavBarItem(
+              icon: Icons.menu,
+              activeIcon: Icons.menu,
+              label: 'Menu',
+              isSelected: selectedIndex == 3,
+              onTap: () => onItemTapped(3),
+              selectedColor: selectedColor,
+              unselectedColor: unselectedColor,
+            ),
+          ],
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.chat_bubble_outline),
-          activeIcon: Icon(Icons.chat_bubble),
-          label: 'Mensagens',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu),
-          activeIcon: Icon(Icons.menu),
-          label: 'Menu',
-        ),
-      ],
-      currentIndex: selectedIndex,
-      onTap: onItemTapped,
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: const Color(0xFF0D47A1),
-      unselectedItemColor: Colors.grey[600],
-      showUnselectedLabels: true,
+      ),
     );
   }
 }

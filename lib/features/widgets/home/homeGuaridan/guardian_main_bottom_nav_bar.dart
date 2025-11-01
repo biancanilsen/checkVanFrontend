@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../utils/custom_nav_bar_item.dart';
+
 class GuardianBottomNavBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemTapped;
@@ -12,25 +14,43 @@ class GuardianBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: Icon(Icons.check_circle_outline),
-          activeIcon: Icon(Icons.check_circle),
-          label: 'Presença',
+    final Color selectedColor = const Color(0xFF0D47A1);
+    final Color unselectedColor = Colors.grey[600]!;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Colors.grey[300]!, width: 0.5),
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.people_outline),
-          activeIcon: Icon(Icons.people),
-          label: 'Alunos',
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+      child: SafeArea(
+        bottom: true,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            CustomNavBarItem(
+              icon: Icons.check_circle_outline,
+              activeIcon: Icons.check_circle,
+              label: 'Presença',
+              isSelected: selectedIndex == 0,
+              onTap: () => onItemTapped(0),
+              selectedColor: selectedColor,
+              unselectedColor: unselectedColor,
+            ),
+            CustomNavBarItem(
+              icon: Icons.people_outlined,
+              activeIcon: Icons.people,
+              label: 'Alunos',
+              isSelected: selectedIndex == 1,
+              onTap: () => onItemTapped(1),
+              selectedColor: selectedColor,
+              unselectedColor: unselectedColor,
+            ),
+          ],
         ),
-      ],
-      currentIndex: selectedIndex,
-      onTap: onItemTapped,
-      type: BottomNavigationBarType.fixed, // Para mostrar ambos os labels
-      selectedItemColor: const Color(0xFF0D47A1), // Cor do seu tema
-      unselectedItemColor: Colors.grey[600],
-      showUnselectedLabels: true,
+      ),
     );
   }
 }

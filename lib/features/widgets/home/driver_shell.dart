@@ -1,10 +1,7 @@
-import 'package:check_van_frontend/features/pages/van/add_van_page.dart';
 import 'package:flutter/material.dart';
 import '../../pages/profile/my_profile.dart';
-import '../../pages/school/add_school_page.dart';
 import '../../pages/school/school_page.dart';
 import '../../pages/student/students_page.dart';
-import '../../pages/team/add_team_page.dart';
 import '../../pages/team/teams_page.dart';
 import '../../pages/van/van_page.dart';
 import '../../widgets/home/homeDriver/driver_main_bottom_nav_bar.dart';
@@ -19,30 +16,27 @@ class DriverShell extends StatefulWidget {
 }
 
 class _DriverShellState extends State<DriverShell> {
-  int _selectedIndex = 0; // Para o BottomNavBar
+  int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Lista de páginas do BottomNavBar
   static const List<Widget> _navBarPages = [
     HomeDriverContent(), // Antiga HomeDriver
     TeamsPage(),       // 'Turmas'
     VanPage(),           // 'Mensagens'
   ];
 
-  // A página atual sendo exibida no Body
   late Widget _currentBody;
 
   @override
   void initState() {
     super.initState();
-    _currentBody = _navBarPages[0]; // Começa com a Home
+    _currentBody = _navBarPages[0];
   }
 
-  // Chamado pelo BottomNavBar
   void _onBottomNavItemTapped(int index) {
-    if (index == 3) { // Índice 3 é o botão 'Menu'
+    if (index == 3) {
       _scaffoldKey.currentState?.openEndDrawer();
-      return; // Não muda o índice
+      return;
     }
 
     setState(() {
@@ -51,13 +45,11 @@ class _DriverShellState extends State<DriverShell> {
     });
   }
 
-  // Chamado pelo Drawer (Menu Lateral)
   void _onDrawerItemTapped(String routeName) {
-    Navigator.pop(context); // Fecha o drawer
+    Navigator.pop(context);
     Widget newPage;
-    int newIndex = -1; // -1 = nenhuma aba do BottomNav selecionada
+    int newIndex = -1;
 
-    // Mapeia as rotas do drawer para os widgets
     switch (routeName) {
       case '/my_profile':
         newPage = const MyProfile();
@@ -69,19 +61,15 @@ class _DriverShellState extends State<DriverShell> {
         newPage = const SchoolPage();
         break;
       case '/vans':
-      // Se a VanPage também está no BottomNav, só selecionamos a aba
-        _onBottomNavItemTapped(2); // O índice 2 é 'Mensagens' (VanPage)
+        _onBottomNavItemTapped(2);
         return;
       default:
-        newPage = _navBarPages[0]; // Padrão
+        newPage = _navBarPages[0];
         newIndex = 0;
     }
 
     setState(() {
       _currentBody = newPage;
-      // Se abrimos algo que não está no BottomNav,
-      // podemos resetar o índice para 'Rotas' (0) ou -1.
-      // Vamos manter 'Rotas' selecionado.
       _selectedIndex = (newIndex == -1) ? 0 : newIndex;
     });
   }
@@ -90,13 +78,11 @@ class _DriverShellState extends State<DriverShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      // O Drawer agora recebe o callback
       endDrawer: DriverMenu(onItemTapped: _onDrawerItemTapped),
-      bottomNavigationBar: MainBottomNavBar(
+      bottomNavigationBar: DriverBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onBottomNavItemTapped,
       ),
-      // O body agora é dinâmico
       body: _currentBody,
     );
   }

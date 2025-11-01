@@ -14,6 +14,10 @@ class CustomTextField extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final bool readOnly;
 
+  final bool obscureText;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onSuffixIconTap;
+
   const CustomTextField({
     super.key,
     required this.controller,
@@ -26,6 +30,10 @@ class CustomTextField extends StatelessWidget {
     this.suffixIcon,
     this.inputFormatters,
     this.readOnly = false,
+
+    this.obscureText = false,
+    this.onChanged,
+    this.onSuffixIconTap,
   });
 
   @override
@@ -60,11 +68,17 @@ class CustomTextField extends StatelessWidget {
           keyboardType: keyboardType,
           validator: validator,
           inputFormatters: inputFormatters,
+
+          obscureText: obscureText,
+          onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
-            suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: AppPalette.neutral600) : null,
-            // filled: readOnly,
-            // fillColor: AppPalette.neutral100,
+            suffixIcon: suffixIcon != null
+                ? IconButton(
+              icon: Icon(suffixIcon, color: AppPalette.neutral600),
+              onPressed: onSuffixIconTap,
+            )
+                : null,
           ),
         ),
       ],
