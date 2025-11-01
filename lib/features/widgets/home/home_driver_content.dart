@@ -1,8 +1,9 @@
+// Salve como: /lib/features/widgets/home/homeDriver/home_driver_content.dart
 import 'package:flutter/material.dart';
 import '../../../utils/user_session.dart';
-import '../../widgets/home/homeDriver/home_header_driver.dart';
-import '../../widgets/route/nextRoute/next_route_card.dart';
-import '../../widgets/route/scheduledRoutes/scheduled_routes_list.dart';
+import '../route/nextRoute/next_route_card.dart';
+import '../route/scheduledRoutes/scheduled_routes_list.dart';
+import 'homeDriver/home_header_driver.dart';
 
 class HomeDriverContent extends StatefulWidget {
   const HomeDriverContent({super.key});
@@ -33,7 +34,7 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
 
   @override
   Widget build(BuildContext context) {
-    // Este é o 'body' da sua HomeDriver antiga
+    // Este é o conteúdo que estava antes no body do HomeDriver
     return SafeArea(
       child: SingleChildScrollView(
         child: Column(
@@ -51,7 +52,7 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
               ),
             ),
             NextRouteCard(
-              teamId: 1,
+              teamId: 1, // Você pode precisar tornar isso dinâmico
             ),
             const Padding(
               padding: EdgeInsets.fromLTRB(16, 24, 16, 8),

@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -19,17 +18,22 @@ class StudentPage extends StatefulWidget {
 }
 
 class _StudentPageState extends State<StudentPage> {
-  final StudentProvider _studentProvider = StudentProvider();
+  // 1. REMOVA a instância local do provider
+  // final StudentProvider _studentProvider = StudentProvider();
 
+  Timer? _debounce;
   String? _userRole;
   bool _isLoadingRole = true;
-  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    _studentProvider.getStudents();
-    _loadUserRole();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 2. LEIA o provider que foi injetado pelo Shell
+      // (DriverShell ou GuardianShell)
+      context.read<StudentProvider>().getStudents();
+      _loadUserRole();
+    });
   }
 
   @override
@@ -51,69 +55,85 @@ class _StudentPageState extends State<StudentPage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoadingRole) {
-      return const SafeArea(
-        child: Center(child: CircularProgressIndicator()),
+      // É seguro ter um Scaffold aqui para a tela de loading
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
     final bool isGuardian = _userRole == 'guardian';
 
-    return ChangeNotifierProvider.value(
-      value: _studentProvider,
+    // 3. REMOVA o 'ChangeNotifierProvider.value'
+    // O Consumer abaixo encontrará o provider injetado pelo Shell.
+    return ColoredBox(
+      color: AppPalette.appBackground,
       child: SafeArea(
         child: Stack(
           children: [
-            _buildStudentList(isGuardian),
+          _buildStudentList(isGuardian),
 
-            if (isGuardian)
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.add, color: Colors.white),
-                    label: const Text(
-                      'Adicionar aluno',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (newContext) => ChangeNotifierProvider.value(
-                            value: _studentProvider,
-                            child: const AddStudentPage(student: null),
-                          ),
+          if (isGuardian)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text(
+                    'Adicionar aluno',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (newContext) => ChangeNotifierProvider.value(
+                          // 4. PASSE o provider lido do context
+                          value: context.read<StudentProvider>(),
+                          child: const AddStudentPage(student: null),
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppPalette.primary800,
-                      minimumSize: const Size(double.infinity, 52),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
                       ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppPalette.primary800,
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildStudentList(bool isGuardian) {
+    // 5. O Consumer agora lê o provider do Shell
     return Consumer<StudentProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.students.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
+
+        if (provider.error != null) {
+          return Center(child: Text(provider.error!));
+        }
+
+        // Esta verificação agora funciona, pois 'provider' é a instância correta
+        if (provider.students.isEmpty && !provider.isLoading) {
+          return const Center(child: Text('Nenhum aluno cadastrado.'));
+        }
+
         return ListView.builder(
           padding: EdgeInsets.fromLTRB(16, 0, 16, isGuardian ? 90 : 16),
+          // +2 para Header e SearchBar
           itemCount: provider.students.length + 2,
           itemBuilder: (context, index) {
             if (index == 0) {
@@ -121,10 +141,11 @@ class _StudentPageState extends State<StudentPage> {
             }
             if (index == 1) {
               return PageSearchBar(
-                hintText: 'Pesquisar aluno',
+                hintText: 'Pesquisar turma ou aluno',
                 onChanged: (value) {
                   if (_debounce?.isActive ?? false) _debounce!.cancel();
                   _debounce = Timer(const Duration(milliseconds: 500), () {
+                    // Chama o search no provider correto
                     provider.searchStudents(value);
                   });
                 },
@@ -142,6 +163,7 @@ class _StudentPageState extends State<StudentPage> {
                   context,
                   MaterialPageRoute(
                     builder: (newContext) => ChangeNotifierProvider.value(
+                      // 6. PASSE o 'provider' do Consumer
                       value: provider,
                       child: AddStudentPage(student: student),
                     ),

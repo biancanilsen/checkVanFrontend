@@ -4,6 +4,7 @@ import '../../pages/van/van_page.dart';
 import '../../widgets/home/homeDriver/driver_main_bottom_nav_bar.dart';
 import '../menu/menu.dart';
 import 'home_driver_content.dart';
+import '../../pages/student/students_page.dart';
 
 class DriverShell extends StatefulWidget {
   const DriverShell({super.key});
@@ -16,11 +17,9 @@ class _DriverShellState extends State<DriverShell> {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // 1. Crie um PageController
   late PageController _pageController;
+  Widget? _overlayPage;
 
-  // 2. Defina as páginas que fazem parte do PageView
-  //    (O "Menu" não entra aqui)
   static const List<Widget> _pages = [
     HomeDriverContent(),
     TeamsPage(),
@@ -30,7 +29,6 @@ class _DriverShellState extends State<DriverShell> {
   @override
   void initState() {
     super.initState();
-    // 3. Inicialize o PageController
     _pageController = PageController(initialPage: _selectedIndex);
   }
 
@@ -40,22 +38,18 @@ class _DriverShellState extends State<DriverShell> {
     super.dispose();
   }
 
-  // 4. Atualize a lógica de toque na barra inferior
   void _onBottomNavItemTapped(int index) {
-    // Se clicar no "Menu", abra o Drawer
     if (index == 3) {
       _scaffoldKey.currentState?.openEndDrawer();
       return;
     }
 
-    // Se clicar em um item já selecionado, não faz nada
     if (index == _selectedIndex) return;
 
     setState(() {
       _selectedIndex = index;
     });
 
-    // 5. Anime para a página correspondente
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
@@ -67,16 +61,20 @@ class _DriverShellState extends State<DriverShell> {
   void _onDrawerItemTapped(String routeName) {
     Navigator.pop(context); // Fecha o drawer
 
-    // Itens do Drawer agora NAVEGAM para uma nova tela
-    // em vez de trocar o body.
+    // Navegue dentro do Shell quando possível para manter o BottomNavBar visível
     switch (routeName) {
       case '/vans':
-      // Se for 'vans', apenas mude a aba (já estamos no Shell)
+        // Se for 'vans', apenas mude a aba (já estamos no Shell)
         _onBottomNavItemTapped(2);
         break;
+      case '/students':
+        // Renderiza StudentsPage como overlay dentro do Shell mantendo o BottomNavBar
+        setState(() {
+          _overlayPage = const StudentPage();
+        });
+        break;
       default:
-      // Para 'MyProfile', 'Students', 'Schools', etc.,
-      // navegue para a tela (o BottomNavBar vai sumir)
+        // Para demais rotas, navegue normalmente (o BottomNavBar some)
         Navigator.pushNamed(context, routeName);
     }
   }
@@ -92,17 +90,33 @@ class _DriverShellState extends State<DriverShell> {
         onItemTapped: _onBottomNavItemTapped,
       ),
       // 7. SUBSTITUA O BODY POR UM PAGEVIEW
-      body: PageView(
-        controller: _pageController,
-        children: _pages,
-
-        // Atualiza o ícone selecionado se o usuário
-        // deslizar a tela com o dedo
-        onPageChanged: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
+      body: WillPopScope(
+        onWillPop: () async {
+          if (_overlayPage != null) {
+            setState(() {
+              _overlayPage = null;
+            });
+            return false;
+          }
+          return true;
         },
+        child: Stack(
+          children: [
+            PageView(
+              controller: _pageController,
+              children: _pages,
+
+              // Atualiza o ícone selecionado se o usuário
+              // deslizar a tela com o dedo
+              onPageChanged: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+            ),
+            if (_overlayPage != null) _overlayPage!,
+          ],
+        ),
       ),
     );
   }

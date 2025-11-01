@@ -18,54 +18,57 @@ class StudentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onActionPressed,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundImage: (image_profile != null && image_profile!.isNotEmpty)
-                  ? NetworkImage(image_profile!)
-                  : const AssetImage('assets/profile.png') as ImageProvider,
-            ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onActionPressed,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundImage: (image_profile != null && image_profile!.isNotEmpty)
+                    ? NetworkImage(image_profile!)
+                    : const AssetImage('assets/profile.png') as ImageProvider,
+              ),
 
-            const SizedBox(width: 16),
+              const SizedBox(width: 16),
 
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                      fontSize: 16,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    address,
-                    style: TextStyle(color: Colors.grey[700], fontSize: 14),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      address,
+                      style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(width: 8),
+              const SizedBox(width: 8),
 
-            // 3. TRAILING:
-            IconButton(
-              icon: Icon(
-                isGuardian ? Icons.edit_outlined : Icons.visibility_outlined,
-                color: Colors.grey[600],
-                size: 20,
+              // 3. TRAILING:
+              IconButton(
+                icon: Icon(
+                  isGuardian ? Icons.edit_outlined : Icons.visibility_outlined,
+                  color: Colors.grey[600],
+                  size: 20,
+                ),
+                onPressed: onActionPressed,
               ),
-              onPressed: onActionPressed,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

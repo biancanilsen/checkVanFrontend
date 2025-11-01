@@ -1,5 +1,6 @@
-// /lib/features/pages/home/home_page.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../provider/student_provider.dart';
 import '../../../utils/user_session.dart';
 import '../../widgets/home/driver_shell.dart';
 import '../../widgets/home/guardian_shell.dart';
@@ -25,7 +26,10 @@ class HomePage extends StatelessWidget {
           final role = user.role;
 
           if (role == 'driver') {
-            return const DriverShell();
+            return ChangeNotifierProvider(
+              create: (_) => StudentProvider(),
+              child: const DriverShell(),
+            );
           } else if (role == 'guardian') {
             return const GuardianShell();
           } else {

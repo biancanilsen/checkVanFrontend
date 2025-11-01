@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../utils/user_session.dart';
+import '../../widgets/home/home_driver_content.dart';
+import '../team/teams_page.dart';
+import '../van/van_page.dart';
+import '../student/students_page.dart';
+import '../school/school_page.dart';
+import '../profile/my_profile.dart';
+
 import '../../widgets/home/homeDriver/driver_main_bottom_nav_bar.dart';
-import '../../widgets/home/homeDriver/home_header_driver.dart';
 import '../../widgets/menu/menu.dart';
-import '../../widgets/route/nextRoute/next_route_card.dart';
-import '../../widgets/route/scheduledRoutes/scheduled_routes_list.dart';
 
 class HomeDriver extends StatelessWidget {
   const HomeDriver({super.key});
@@ -25,10 +28,23 @@ class _HomeDriverView extends StatefulWidget {
 class _HomeDriverViewState extends State<_HomeDriverView> {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  String? _userName;
-  bool _isLoadingUser = true;
 
-  void _onItemTapped(int index) {
+  static const List<Widget> _navBarPages = [
+    HomeDriverContent(),
+    TeamsPage(),
+    VanPage(),
+  ];
+
+  late Widget _currentBody;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentBody = _navBarPages[0];
+  }
+
+  void _onBottomNavItemTapped(int index) {
+    // Se for o botão 'Menu'
     if (index == 3) {
       _scaffoldKey.currentState?.openEndDrawer();
       return;
@@ -36,37 +52,41 @@ class _HomeDriverViewState extends State<_HomeDriverView> {
 
     if (index == _selectedIndex) return;
 
-    switch (index) {
-      case 0:
-        break;
-      case 1:
-        Navigator.pushNamed(context, '/add-team');
-        break;
-      case 2:
-        Navigator.pushNamed(context, '/van');
-        break;
-    }
+    setState(() {
+      _selectedIndex = index;
+      _currentBody = _navBarPages[index];
+    });
   }
 
   void _onDrawerItemTapped(String routeName) {
-    Navigator.pop(context); // Fecha o menu lateral (drawer)
-    Navigator.pushNamed(context, routeName); // Navega para a tela clicada
-  }
+    Navigator.pop(context); // Fecha o menu lateral
+    Widget newPage;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUserName();
-  }
+    int newIndex = -1;
 
-  Future<void> _loadUserName() async {
-    final user = await UserSession.getUser();
-    if (mounted) {
-      setState(() {
-        _userName = user?.name;
-        _isLoadingUser = false;
-      });
+    switch (routeName) {
+      case '/my_profile':
+        newPage = const MyProfile();
+        break;
+      case '/students':
+        newPage = const StudentPage();
+        break;
+      case '/schools':
+        newPage = const SchoolPage();
+        break;
+      case '/vans':
+        newPage = _navBarPages[2];
+        newIndex = 2;
+        break;
+      default:
+        newPage = _navBarPages[0];
+        newIndex = 0;
     }
+
+    setState(() {
+      _currentBody = newPage;
+      _selectedIndex = newIndex;
+    });
   }
 
   @override
@@ -74,46 +94,11 @@ class _HomeDriverViewState extends State<_HomeDriverView> {
     return Scaffold(
       key: _scaffoldKey,
       endDrawer: DriverMenu(onItemTapped: _onDrawerItemTapped),
-      bottomNavigationBar: MainBottomNavBar(
+      bottomNavigationBar: DriverBottomNavBar(
         selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
+        onItemTapped: _onBottomNavItemTapped,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              HomeHeader(
-                isLoading: _isLoadingUser,
-                userName: _userName,
-              ),
-
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  'Próxima Rota',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-              NextRouteCard(
-                teamId: 1,
-              ),
-
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-                child: Text(
-                  'Rotas programadas',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-              const ScheduledRoutesList(),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
+      body: _currentBody,
     );
   }
 }
