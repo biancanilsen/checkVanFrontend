@@ -5,6 +5,7 @@ import '../../widgets/home/homeDriver/driver_main_bottom_nav_bar.dart';
 import '../menu/menu.dart';
 import 'home_driver_content.dart';
 import '../../pages/student/students_page.dart';
+import '../../pages/school/school_page.dart';
 
 class DriverShell extends StatefulWidget {
   const DriverShell({super.key});
@@ -47,6 +48,7 @@ class _DriverShellState extends State<DriverShell> {
     if (index == _selectedIndex) return;
 
     setState(() {
+      _overlayPage = null;
       _selectedIndex = index;
     });
 
@@ -71,6 +73,12 @@ class _DriverShellState extends State<DriverShell> {
         // Renderiza StudentsPage como overlay dentro do Shell mantendo o BottomNavBar
         setState(() {
           _overlayPage = const StudentPage();
+        });
+        break;
+      case '/schools':
+        // Renderiza SchoolPage como overlay dentro do Shell mantendo o BottomNavBar
+        setState(() {
+          _overlayPage = const SchoolPage();
         });
         break;
       default:
