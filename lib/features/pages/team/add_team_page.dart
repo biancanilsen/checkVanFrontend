@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,9 +12,8 @@ import '../../../provider/team_provider.dart';
 import '../../../provider/van_provider.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/team/period_selector.dart';
-import '../../widgets/utils/address_field.dart';
 import '../../widgets/utils/custom_dropdown_field.dart';
-import '../../../utils/address_utils.dart'; // Importe o helper de endereço
+import '../../../utils/address_utils.dart';
 
 class AddTeamPage extends StatefulWidget {
   final Team? team;
@@ -44,11 +44,6 @@ class _AddTeamPageState extends State<AddTeamPage> {
   bool _showSuggestions = false;
   Timer? _debounce;
 
-  // --- REMOVIDOS ---
-  // bool _isFetchingCoords = false;
-  // double? _selectedLat;
-  // double? _selectedLon;
-
   bool get isEditing => widget.team != null;
 
   @override
@@ -71,12 +66,44 @@ class _AddTeamPageState extends State<AddTeamPage> {
         _selectedPeriod = Period.afternoon;
       }
 
-      // Use o AddressUtils para preencher o endereço
-      AddressUtils.splitAddressForEditing(
-        fullAddress: team.address, // <-- Assumindo que o modelo Team tem 'address'
-        streetController: _addressController,
-        numberController: _numberController,
-      );
+      // --- INÍCIO DA CORREÇÃO ---
+      // O endereço da turma (Team) está num formato complexo
+      // ex: "Rua, [NUMERO] - Bairro, Cidade"
+      // Precisamos extrair o [NUMERO] manualmente.
+
+      final String fullAddress = team.address ?? '';
+      bool addressParsed = false;
+
+      // 1. Tenta extrair o número de um formato "..., [NUMERO] - ..."
+      //    Ex: ", 60 -"
+      final RegExp complexAddressRegex = RegExp(r'(,\s*)(\d+)(\s*-\s*)');
+      final Match? complexMatch = complexAddressRegex.firstMatch(fullAddress);
+
+      if (complexMatch != null && complexMatch.group(2) != null) {
+        final String number = complexMatch.group(2)!;
+
+        // Remove o ", [NUMERO]" da string original para formar a rua
+        // Substitui ", 60 - " por " - " para manter o hífen
+        final String street = fullAddress.replaceFirst(
+            RegExp(r',\s*' + number + r'\s*-\s*'),
+            ' - '
+        );
+
+        _addressController.text = street;
+        _numberController.text = number;
+        addressParsed = true;
+      }
+
+      // 2. Se não encontrou o formato complexo, usa o AddressUtils padrão
+      //    (que espera "Rua..., [NUMERO]")
+      if (!addressParsed) {
+        AddressUtils.splitAddressForEditing(
+          fullAddress: fullAddress,
+          streetController: _addressController,
+          numberController: _numberController,
+        );
+      }
+      // --- FIM DA CORREÇÃO ---
     }
 
     _addressController.addListener(_onAddressChanged);
@@ -138,11 +165,10 @@ class _AddTeamPageState extends State<AddTeamPage> {
     });
   }
 
-  // --- LÓGICA DE SELEÇÃO SIMPLIFICADA ---
   Future<void> _selectSuggestion(AddressSuggestion suggestion) async {
     _addressController.removeListener(_onAddressChanged);
     setState(() {
-      _addressController.text = suggestion.fullDescription; // Apenas preenche o texto
+      _addressController.text = suggestion.fullDescription;
       _showSuggestions = false;
     });
     _addressController.addListener(_onAddressChanged);
@@ -170,6 +196,9 @@ class _AddTeamPageState extends State<AddTeamPage> {
         ? 'afternoon'
         : null;
 
+    // A lógica de salvar junta o endereço e o número novamente.
+    // Isso garante que, na próxima vez que for editar, o formato seja "Rua, Numero"
+    // e o AddressUtils padrão funcione.
     final fullAddress = '${_addressController.text}, ${_numberController.text}';
 
     if (isEditing) {
@@ -248,20 +277,9 @@ class _AddTeamPageState extends State<AddTeamPage> {
               ),
               const SizedBox(height: 24),
 
-              AddressField(
-                streetController: _addressController,
-                numberController: _numberController,
-                addressFocusNode: _addressFocusNode,
-                showSuggestions: _showSuggestions,
-                isAddressLoading: _isAddressLoading,
-                addressSuggestions: _addressSuggestions,
-                onSuggestionSelected: _selectSuggestion,
-                streetValidator: (value) { // Validação simplificada
-                  if (value == null || value.isEmpty) return 'Obrigatório';
-                  return null;
-                },
-                numberValidator: (value) => (value == null || value.isEmpty) ? 'Obrigatório' : null,
-              ),
+              // Usando o _buildAddressField (copiado do AddSchoolPage)
+              _buildAddressField(),
+
               const SizedBox(height: 16),
 
               CustomDropdownField<int?>(
@@ -291,13 +309,9 @@ class _AddTeamPageState extends State<AddTeamPage> {
                 onChanged: vanProvider.isLoading
                     ? null
                     : (value) => setState(() => _selectedVanId = value),
-                validator: null, // Não é obrigatório
+                validator: null,
               ),
               const SizedBox(height: 24),
-
-              // --- REMOVIDOS ---
-              // if (_isFetchingCoords) ...
-              // else if (_selectedLat != null) ...
 
               const SizedBox(height: 24),
               PeriodSelector(
@@ -338,5 +352,80 @@ class _AddTeamPageState extends State<AddTeamPage> {
     );
   }
 
-// A função _buildDropdownField foi removida (está no seu próprio componente)
+  // Método copiado de AddSchoolPage (como fizemos na última tentativa)
+  Widget _buildAddressField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: const TextSpan(
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppPalette.neutral900),
+            children: [
+              TextSpan(text: 'Endereço'),
+              TextSpan(text: ' *', style: TextStyle(color: AppPalette.red500)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: TextFormField(
+                controller: _addressController,
+                focusNode: _addressFocusNode,
+                decoration: const InputDecoration(hintText: 'Digite para buscar o endereço'),
+                validator: (value) => (value == null || value.isEmpty) ? 'Obrigatório' : null,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 1,
+              child: TextFormField(
+                controller: _numberController,
+                decoration: const InputDecoration(hintText: 'Nº'),
+                keyboardType: TextInputType.number,
+                validator: (value) => (value == null || value.isEmpty) ? 'Obrigatório' : null,
+              ),
+            ),
+          ],
+        ),
+        if (_showSuggestions)
+          Container(
+            height: 200,
+            margin: const EdgeInsets.only(top: 4.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 1,
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: _isAddressLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _addressSuggestions.isEmpty
+                ? const Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text('Nenhum endereço encontrado.')))
+                : ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              itemCount: _addressSuggestions.length,
+              itemBuilder: (context, index) {
+                final suggestion = _addressSuggestions[index];
+                return ListTile(
+                  title: Text(suggestion.fullDescription, style: const TextStyle(fontWeight: FontWeight.w500)),
+                  onTap: () {
+                    _selectSuggestion(suggestion);
+                  },
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
 }
