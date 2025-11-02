@@ -11,6 +11,7 @@ import '../../../model/student_model.dart';
 import '../../../provider/geocoding_provider.dart';
 import '../../../provider/school_provider.dart';
 import '../../../provider/student_provider.dart';
+import '../../../utils/address_utils.dart';
 import '../../../utils/user_session.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/utils/address_field.dart';
@@ -72,28 +73,11 @@ class _AddStudentPageState extends State<AddStudentPage> {
       _selectedShiftGoing = student.shiftGoing;
       _selectedShiftReturn = student.shiftReturn;
 
-      final String fullAddress = student.address;
-      try {
-        int lastCommaIndex = fullAddress.lastIndexOf(',');
-        if (lastCommaIndex != -1) {
-          String potentialStreet = fullAddress.substring(0, lastCommaIndex).trim();
-          String potentialNumber = fullAddress.substring(lastCommaIndex + 1).trim();
-
-          if (int.tryParse(potentialNumber) != null) {
-            _streetController.text = potentialStreet;
-            _numberController.text = potentialNumber;
-          } else {
-            _streetController.text = fullAddress;
-            _numberController.text = '';
-          }
-        } else {
-          _streetController.text = fullAddress;
-          _numberController.text = '';
-        }
-      } catch (e) {
-        _streetController.text = fullAddress;
-        _numberController.text = '';
-      }
+      AddressUtils.splitAddressForEditing(
+        fullAddress: student.address,
+        streetController: _streetController,
+        numberController: _numberController,
+      );
     }
 
     _streetController.addListener(_onAddressChanged);
@@ -298,9 +282,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isGuardian
-            ? (isEditing ? 'Editar Aluno' : 'Cadastrar Aluno')
-            : 'Ver Aluno'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppPalette.primary800,

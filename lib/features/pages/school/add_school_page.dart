@@ -7,6 +7,7 @@ import '../../../model/address_suggestion.dart';
 import '../../../model/school_model.dart';
 import '../../../provider/geocoding_provider.dart';
 import '../../../provider/school_provider.dart';
+import '../../../utils/address_utils.dart';
 import '../../widgets/custom_text_field.dart';
 
 class AddSchoolPage extends StatefulWidget {
@@ -47,25 +48,11 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
       final school = widget.school!;
       _nameController.text = school.name;
 
-      final String fullAddress = school.address ?? '';
-      try {
-        int lastCommaIndex = fullAddress.lastIndexOf(',');
-        if (lastCommaIndex != -1) {
-          String potentialStreet = fullAddress.substring(0, lastCommaIndex).trim();
-          String potentialNumber = fullAddress.substring(lastCommaIndex + 1).trim();
-
-          if (int.tryParse(potentialNumber) != null) {
-            _addressController.text = potentialStreet;
-            _numberController.text = potentialNumber;
-          } else {
-            _addressController.text = fullAddress;
-          }
-        } else {
-          _addressController.text = fullAddress;
-        }
-      } catch (e) {
-        _addressController.text = fullAddress;
-      }
+      AddressUtils.splitAddressForEditing(
+        fullAddress: school.address,
+        streetController: _addressController,
+        numberController: _numberController,
+      );
 
       _morningLimitController.text = school.morningLimit ?? '';
       _morningDepartureController.text = school.morningDeparture ?? '';
@@ -192,7 +179,6 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Editar Escola' : 'Nova Escola'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppPalette.primary900,

@@ -1,4 +1,3 @@
-// /lib/features/pages/school/escolas_page.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -26,7 +25,6 @@ class _SchoolPageState extends State<SchoolPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 2. Pegue o provider aqui para usar no botão de Adicionar
     final schoolProvider = context.watch<SchoolProvider>();
 
     return ColoredBox(
@@ -34,9 +32,6 @@ class _SchoolPageState extends State<SchoolPage> {
       child: SafeArea(
         child: Stack(
           children: [
-            // 3. Mude o Consumer para 'Selector' ou use o provider
-            //    que pegamos acima para construir a lista.
-            //    Vou manter o Consumer para simplicidade.
             Consumer<SchoolProvider>(
               builder: (context, provider, child) {
                 return ListView(
@@ -49,7 +44,7 @@ class _SchoolPageState extends State<SchoolPage> {
                         // provider.filterSchools(value);
                       },
                     ),
-                    _buildSchoolList(provider), // Passe o provider
+                    _buildSchoolList(provider),
                   ],
                 );
               },
@@ -66,12 +61,11 @@ class _SchoolPageState extends State<SchoolPage> {
                           fontSize: 16,
                           fontWeight: FontWeight.w600)),
                   onPressed: () {
-                    // 4. Navegue passando o provider (para o modo de CRIAR)
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => ChangeNotifierProvider.value(
-                          value: schoolProvider, // Use o provider existente
+                          value: schoolProvider,
                           child: const AddSchoolPage(school: null), // null = Criar
                         ),
                       ),
@@ -102,7 +96,6 @@ class _SchoolPageState extends State<SchoolPage> {
         ),
       );
     }
-    // ... (seus 'if' de error e 'isEmpty' continuam iguais)
     if (provider.error != null) {
       return Center(
         child: Padding(
@@ -138,13 +131,12 @@ class _SchoolPageState extends State<SchoolPage> {
             name: school.name,
             address: school.address ?? 'Endereço não cadastrado',
             onTap: () {
-              // 5. Navegue passando o provider (para o modo de EDITAR)
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => ChangeNotifierProvider.value(
-                    value: provider, // Use o provider existente
-                    child: AddSchoolPage(school: school), // Passe a escola
+                    value: provider,
+                    child: AddSchoolPage(school: school),
                   ),
                 ),
               );
