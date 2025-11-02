@@ -15,7 +15,6 @@ class PageSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // O Padding original está incluído aqui
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Material(
@@ -24,10 +23,10 @@ class PageSearchBar extends StatelessWidget {
           controller: controller,
           onChanged: onChanged,
           decoration: InputDecoration(
-            hintText: hintText, // Usa a label variável
+            hintText: hintText,
             suffixIcon: Icon(Icons.search, color: Colors.grey[600]),
             filled: true,
-            fillColor: AppPalette.neutral70, // Cor do card
+            fillColor: AppPalette.neutral70,
             contentPadding:
             const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
             border: OutlineInputBorder(

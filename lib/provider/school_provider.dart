@@ -149,5 +149,43 @@ class SchoolProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<void> searchSchools(String name) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      final uri = Uri.parse('${Endpoints.searchSchools}?name=${Uri.encodeComponent(name)}');
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> schoolListJson = data['schools'];
+        _schools = schoolListJson.map((json) => School.fromJson(json)).toList();
+      } else if (response.statusCode == 404) {
+        _schools = [];
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['message'] ?? 'Falha ao buscar escolas.');
+      }
+    } catch (e) {
+      _error = e.toString();
+      _schools = [];
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }
 

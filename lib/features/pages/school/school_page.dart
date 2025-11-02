@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,12 +17,20 @@ class SchoolPage extends StatefulWidget {
 }
 
 class _SchoolPageState extends State<SchoolPage> {
+  Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<SchoolProvider>(context, listen: false).getSchools();
     });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
   }
 
   @override
@@ -41,7 +51,11 @@ class _SchoolPageState extends State<SchoolPage> {
                     PageSearchBar(
                       hintText: 'Pesquisar escola',
                       onChanged: (value) {
-                        // provider.filterSchools(value);
+                        if (_debounce?.isActive ?? false) _debounce!.cancel();
+                        _debounce = Timer(const Duration(milliseconds: 500), () {
+                          // Chama o provider após 500ms
+                          provider.searchSchools(value);
+                        });
                       },
                     ),
                     _buildSchoolList(provider),
