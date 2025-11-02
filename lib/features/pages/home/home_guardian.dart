@@ -50,7 +50,7 @@ class _HomeGuardianState extends State<HomeGuardian> {
     setState(() {
       _greeting = greeting;
       _userName = name;
-      // _profileImageUrl = imageUrl; // Salve a URL da imagem
+      // TODO _profileImageUrl = imageUrl; // Salve a URL da imagem
     });
   }
 

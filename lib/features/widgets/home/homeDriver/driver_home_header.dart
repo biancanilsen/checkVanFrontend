@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
-class HomeHeader extends StatelessWidget {
+class DriverHomeHeader extends StatelessWidget {
   final bool isLoading;
   final String? userName;
+  final String? imageProfile;
+  final VoidCallback onProfileTap;
 
-  const HomeHeader({
+  const DriverHomeHeader({
     super.key,
     required this.isLoading,
     this.userName,
+    required this.imageProfile,
+    required this.onProfileTap,
   });
 
   @override
@@ -19,11 +23,13 @@ class HomeHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              const CircleAvatar(
-                radius: 30,
-                // TODO - Consumir imagem do cadastro do usuárop
-                backgroundImage: NetworkImage(
-                  'https://i.pravatar.cc/150?img=12',
+              GestureDetector(
+                onTap: onProfileTap,
+                child: CircleAvatar(
+                  radius: 24,
+                  backgroundImage: (imageProfile != null && imageProfile!.isNotEmpty)
+                      ? NetworkImage(imageProfile!)
+                      : const AssetImage('assets/profile.png') as ImageProvider,
                 ),
               ),
               const SizedBox(width: 16),
@@ -55,16 +61,16 @@ class HomeHeader extends StatelessWidget {
               ),
             ],
           ),
-          IconButton(
-            icon: Icon(
-              Icons.notifications_none_outlined,
-              color: Colors.grey[800],
-              size: 28,
-            ),
-            onPressed: () {
-              Navigator.pushNamed(context, '/add-school');
-            },
-          ),
+          // IconButton(
+          //   icon: Icon(
+          //     Icons.notifications_none_outlined,
+          //     color: Colors.grey[800],
+          //     size: 28,
+          //   ),
+          //   onPressed: () {
+          //     Navigator.pushNamed(context, '/add-school');
+          //   },
+          // ),
         ],
       ),
     );

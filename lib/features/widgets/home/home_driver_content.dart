@@ -1,9 +1,8 @@
-// Salve como: /lib/features/widgets/home/homeDriver/home_driver_content.dart
 import 'package:flutter/material.dart';
 import '../../../utils/user_session.dart';
 import '../route/nextRoute/next_route_card.dart';
 import '../route/scheduledRoutes/scheduled_routes_list.dart';
-import 'homeDriver/home_header_driver.dart';
+import 'homeDriver/driver_home_header.dart';
 
 class HomeDriverContent extends StatefulWidget {
   const HomeDriverContent({super.key});
@@ -15,6 +14,7 @@ class HomeDriverContent extends StatefulWidget {
 class _HomeDriverContentState extends State<HomeDriverContent> {
   String? _userName;
   bool _isLoadingUser = true;
+  String? _profileImageUrl;
 
   @override
   void initState() {
@@ -28,21 +28,27 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
       setState(() {
         _userName = user?.name;
         _isLoadingUser = false;
+        // TODO _profileImageUrl = imageUrl; // Salve a URL da imagem
       });
     }
   }
 
+  Future<void> _navigateToProfile() async {
+    await Navigator.pushNamed(context, '/my_profile');
+
+    _loadUserName();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Este é o conteúdo que estava antes no body do HomeDriver
     return SafeArea(
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            HomeHeader(
+            DriverHomeHeader(
               isLoading: _isLoadingUser,
-              userName: _userName,
+              userName: _userName, imageProfile: _profileImageUrl, onProfileTap: _navigateToProfile,
             ),
             const Padding(
               padding: EdgeInsets.fromLTRB(16, 16, 16, 8),

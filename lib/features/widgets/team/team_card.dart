@@ -1,3 +1,4 @@
+// /lib/widgets/team/team_card.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 
@@ -6,6 +7,8 @@ class TeamCard extends StatelessWidget {
   final String period;
   final int studentCount;
   final String code;
+  final VoidCallback onEdit; // 1. Adicione
+  final VoidCallback onView; // 2. Adicione
 
   const TeamCard({
     super.key,
@@ -13,108 +16,40 @@ class TeamCard extends StatelessWidget {
     required this.period,
     required this.studentCount,
     required this.code,
+    required this.onEdit, // 3. Adicione
+    required this.onView, // 4. Adicione
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: AppPalette.neutral70,
-      elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.1),
-      margin: const EdgeInsets.only(bottom: 16.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
+      // ... (seu Card)
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Linha Superior: Título e Ícone de Edição
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppPalette.primary900,
-                  ),
-                ),
+                Text(name, /* ... */),
                 IconButton(
                   icon: Icon(Icons.edit_outlined, color: AppPalette.primary800, size: 20),
-                  onPressed: () { /* Ação de editar turma */ },
+                  onPressed: onEdit, // 5. Use o callback
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
               ],
             ),
-            // Linha do Meio: Informações
+            // ... (resto do seu layout)
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Coluna da Esquerda
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Período: $period',
-                        style: TextStyle(color: AppPalette.primary900, fontWeight: FontWeight.w400, fontSize: 14),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Alunos',
-                        style: TextStyle(color: AppPalette.primary900, fontWeight: FontWeight.w400, fontSize: 14),
-                      ),
-                      Text(
-                        '$studentCount',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: AppPalette.primary900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Coluna da Direita
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // Espaço vazio para alinhar "Código" com "Alunos"
-                      const SizedBox(height: 30),
-                      Text(
-                        'Código',
-                        style: TextStyle(color: AppPalette.primary900, fontWeight: FontWeight.w400, fontSize: 14),
-                      ),
-                      Text(
-                        code,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppPalette.primary900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              // ...
             ),
             const SizedBox(height: 16),
-
-            // Botão Inferior
             OutlinedButton(
-              onPressed: () { /* Ação "Ver turma" */ },
+              onPressed: onView, // 6. Use o callback
               style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 44),
-                foregroundColor: AppPalette.primary800,
-                side: BorderSide(color: AppPalette.primary800),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
+                // ... (estilo)
               ),
               child: const Text('Ver turma', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             ),

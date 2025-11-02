@@ -1,57 +1,76 @@
+// /lib/features/pages/team/teams_page.dart
+import 'dart:async';
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../../provider/team_provider.dart';
 import '../../widgets/team/team_card.dart';
 import '../../widgets/utils/page_header.dart';
 import '../../widgets/utils/page_search_bar.dart';
+import 'add_team_page.dart';
 
-final mockTurmas = [
-  { 'name': 'Turma da manhã', 'period': 'manhã', 'students': 12, 'code': 'CHSGT5'},
-  { 'name': 'Turma da tarde', 'period': 'tarde', 'students': 14, 'code': 'AJSK29'},
-  { 'name': 'Turma da noite', 'period': 'noite', 'students': 10, 'code': 'PLQW77'},
-];
-
-class TeamsPage extends StatelessWidget {
+class TeamsPage extends StatefulWidget {
   const TeamsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // SEM SCAFFOLD, como conversamos
-    return SafeArea(
-      child: Stack( // Usamos Stack para o botão "+ Nova turma" ficar fixo
-        children: [
-          // 1. Conteúdo que rola (Header, Busca, Lista)
-          ListView.builder(
-            // Padding para o conteúdo não ser coberto pelo botão
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-            itemCount: mockTurmas.length + 2, // +2 para o Header e a Busca
-            itemBuilder: (context, index) {
-              // Item 0: Header "Minhas turmas"
-              if (index == 0) {
-                return PageHeader(title: 'Minhas turmas');
-              }
-              // Item 1: Barra de Busca
-              if (index == 1) {
-                return PageSearchBar(
-                  hintText: 'Pesquisar turma ou aluno',
-                  onChanged: (value) {
-                    // Você pode adicionar sua lógica de filtro aqui
-                    // provider.filterStudents(value);
-                  },
-                );
-              }
+  State<TeamsPage> createState() => _TeamsPageState();
+}
 
-              // Itens da Lista
-              final turma = mockTurmas[index - 2];
-              return TeamCard(
-                name: turma['name'].toString(),
-                period: turma['period'].toString(),
-                studentCount: turma['students'] as int,
-                code: turma['code'].toString(),
-              );
-            },
+class _TeamsPageState extends State<TeamsPage> {
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<TeamProvider>(context, listen: false).getTeams();
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Pegamos o provider com 'read' para usar no botão de Adicionar
+    final teamProvider = context.read<TeamProvider>();
+
+    return SafeArea(
+      child: Stack(
+        children: [
+          // 1. O CONTEÚDO QUE ROLA
+          ListView(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+            children: [
+              const PageHeader(title: 'Minhas turmas'),
+
+              PageSearchBar(
+                hintText: 'Pesquisar turma ou aluno',
+                onChanged: (value) {
+                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+                  _debounce = Timer(const Duration(milliseconds: 500), () {
+                    // Usamos context.read aqui
+                    context.read<TeamProvider>().searchTeams(value);
+                  });
+                },
+              ),
+
+              // 2. A LISTA DINÂMICA
+              // O Consumer escuta as mudanças (loading, error, empty, data)
+              Consumer<TeamProvider>(
+                builder: (context, provider, child) {
+                  // Chamamos o helper para construir o widget correto
+                  return _buildTeamList(context, provider);
+                },
+              ),
+            ],
           ),
 
-          // 2. Botão Fixo "+ Nova turma"
+          // 3. BOTÃO FIXO "+ Nova turma"
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -60,11 +79,17 @@ class TeamsPage extends StatelessWidget {
                 icon: const Icon(Icons.add, color: Colors.white),
                 label: const Text('Nova turma', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500)),
                 onPressed: () {
-                  // Navega para a tela de formulário
-                  Navigator.pushNamed(context, '/add-team');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider.value(
+                        value: teamProvider, // Passa o provider da lista
+                        child: const AddTeamPage(team: null), // null = Criar
+                      ),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
-                  // Cor azul escura do design
                   backgroundColor: AppPalette.primary800,
                   minimumSize: const Size(double.infinity, 52),
                   shape: RoundedRectangleBorder(
@@ -75,6 +100,85 @@ class TeamsPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Constrói o widget correto baseado no estado do Provider
+  Widget _buildTeamList(BuildContext context, TeamProvider provider) {
+    if (provider.isLoading && provider.teams.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 48.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (provider.error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text("Erro: ${provider.error}"),
+        ),
+      );
+    }
+
+    // --- ESTA É A CONDIÇÃO QUE VOCÊ PEDIU ---
+    if (provider.teams.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 48.0),
+          child: Text("Nenhuma turma encontrada."),
+        ),
+      );
+    }
+    // --- FIM DA CONDIÇÃO ---
+
+    // Se tiver dados, constrói a lista
+    return Card(
+      color: AppPalette.neutral70,
+      clipBehavior: Clip.antiAlias,
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: provider.teams.length,
+        itemBuilder: (context, index) {
+          final team = provider.teams[index];
+          return TeamCard(
+            name: team.name,
+            period: team.shift,
+            studentCount: team.students.length,
+            code: team.code ?? 'N/A',
+            onView: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChangeNotifierProvider.value(
+                    value: provider,
+                    child: AddTeamPage(team: team),
+                  ),
+                ),
+              );
+            },
+            onEdit: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChangeNotifierProvider.value(
+                    value: provider,
+                    child: AddTeamPage(team: team),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        separatorBuilder: (context, index) =>
+            Divider(height: 1, indent: 16, endIndent: 16, color: Colors.grey[200]),
       ),
     );
   }

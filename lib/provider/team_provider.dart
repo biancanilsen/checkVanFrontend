@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../model/student_model.dart';
-import '../model/team_model.dart';
+import '../model/team_model.dart'; // Importe o novo modelo
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 
@@ -15,6 +14,7 @@ class TeamProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  // Busca turmas do /getAllByDriver
   Future<void> getTeams() async {
     _isLoading = true;
     _error = null;
@@ -26,7 +26,10 @@ class TeamProvider extends ChangeNotifier {
 
       final response = await http.get(
         Uri.parse(Endpoints.getAllTeamsByDriver),
-        headers: {'Authorization': 'Bearer $token'},
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
@@ -34,10 +37,13 @@ class TeamProvider extends ChangeNotifier {
         final List<dynamic> teamListJson = data['teams'];
         _teams = teamListJson.map((json) => Team.fromJson(json)).toList();
       } else {
-        _error = 'Falha ao carregar turmas.';
+        final data = jsonDecode(response.body);
+        _error = data['message'] ?? 'Falha ao carregar turmas.';
+        _teams = [];
       }
     } catch (e) {
       _error = 'Erro de conexão: ${e.toString()}';
+      _teams = [];
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -47,220 +53,122 @@ class TeamProvider extends ChangeNotifier {
   Future<bool> addTeam({
     required String name,
     required int schoolId,
-    required double startingLat,
-    required double startingLon,
-    required String plate,
-    required String nickname,
-    required int capacity,
+    required String address, // <-- ALTERADO
+    int? vanId, // <-- ALTERADO
+    String? shift,
   }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
- 
+
     try {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
- 
-      final body = {
-        'name': name,
-        'school_id': schoolId,
-        'starting_lat': startingLat,
-        'starting_lon': startingLon,
-        'plate': plate,
-        'nickname': nickname,
-        'capacity': capacity,
-      };
- 
+
       final response = await http.post(
-        Uri.parse(Endpoints.teamRegistration),
+        Uri.parse(Endpoints.createTeam),
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
+          'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(body),
+        body: json.encode({
+          'name': name,
+          'school_id': schoolId,
+          'address': address,
+          'van_id': vanId,
+          'shift': shift,
+        }),
       );
- 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        await getTeams();
+
+      if (response.statusCode == 201) {
+        await getTeams(); // Recarrega a lista
         return true;
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao adicionar turma.';
+        _isLoading = false;
+        notifyListeners();
         return false;
       }
     } catch (e) {
-      _error = 'Erro de conexão: ${e.toString()}';
-      return false;
-    } finally {
+      _error = 'Ocorreu um erro: $e';
       _isLoading = false;
-      if (hasListeners) {
-        notifyListeners();
-      }
-    }
-  }
-
-  Future<void> deleteTeam(int teamId) async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      final token = await UserSession.getToken();
-      if (token == null) throw Exception('Usuário não autenticado.');
-
-      final response = await http.delete(
-        Uri.parse('${Endpoints.deleteTeam}/$teamId'),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        await getTeams();
-      } else {
-        final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Erro ao deletar turma.';
-        notifyListeners();
-      }
-    } catch (e) {
-      _error = 'Erro de conexão: ${e.toString()}';
       notifyListeners();
-    } finally {
-      _isLoading = false;
-      if (hasListeners) {
-        notifyListeners();
-      }
+      return false;
     }
   }
 
   Future<bool> updateTeam({
-    required int teamId,
+    required int id,
     required String name,
-    required int tripId,
+    required int schoolId,
+    required String address,
+    String? shift,
+    int? vanId,
   }) async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final body = {'name': name, 'trip_id': tripId};
-
       final response = await http.put(
-        Uri.parse('${Endpoints.updateTeam}/$teamId'),
+        Uri.parse('${Endpoints.updateTeam}/$id'),
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
+          'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(body),
+        body: json.encode({
+          'name': name,
+          'school_id': schoolId,
+          'address': address, // <-- ALTERADO
+          'van_id': vanId, // <-- ALTERADO
+          'shift': shift,
+          // 'code' foi removido
+        }),
       );
 
       if (response.statusCode == 200) {
-        await getTeams();
+        await getTeams(); // Recarrega a lista
         return true;
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao atualizar turma.';
+        _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _error = 'Erro de conexão: ${e.toString()}';
-      notifyListeners();
-      return false;
-    } finally {
+      _error = 'Ocorreu um erro: $e';
       _isLoading = false;
       notifyListeners();
-    }
-  }
-
-  // Método para atribuir um aluno a uma turma
-  Future<bool> assignStudentToTeam({required int studentId, required int teamId}) async {
-
-    try {
-      final token = await UserSession.getToken();
-      // if (token == null) throw Exception('Usuário não autenticado.');
-
-      final body = {'student_id': studentId, 'team_id': teamId};
-
-      final response = await http.post(
-        Uri.parse(Endpoints.assignStudentToTeam),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(body),
-      );
-
-      if (response.statusCode == 201) {
-        return true;
-      } else {
-        final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Erro ao atribuir aluno.';
-        notifyListeners();
-        return false;
-      }
-    } catch (e) {
-      _error = 'Erro de conexão: ${e.toString()}';
-      notifyListeners();
       return false;
     }
   }
 
-  Future<List<Student>> getStudentsForTeam(int teamId) async {
-    try {
-      final token = await UserSession.getToken();
-      if (token == null) throw Exception('Usuário não autenticado.');
-
-      final response = await http.get(
-        Uri.parse('${Endpoints.getStudentsByTeamId}/$teamId'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List<dynamic> studentListJson = data['students'] ?? [];
-        return studentListJson.map((json) => Student.fromJson(json)).toList();
-      }
-      return [];
-    } catch (e) {
-      print('Erro ao buscar alunos da turma: $e');
-      return [];
+  // Novo método para Buscar
+  Future<void> searchTeams(String name) async {
+    // TODO: Adicionar /team/search no backend e Endpoints.dart
+    // Por enquanto, filtra a lista local
+    if (name.isEmpty) {
+      await getTeams();
+      return;
     }
-  }
 
-  Future<bool> unassignStudentFromTeam({required int studentId, required int teamId}) async {
-    try {
-      final token = await UserSession.getToken();
-      if (token == null) throw Exception('Usuário não autenticado.');
+    _isLoading = true;
+    notifyListeners();
 
-      final body = {
-        'student_id': studentId,
-        'team_id': teamId,
-      };
+    // Filtro local (temporário)
+    final allTeams = _teams;
+    final filtered = allTeams.where((team) =>
+    team.name.toLowerCase().contains(name.toLowerCase()) ||
+        team.students.any((s) => s.name.toLowerCase().contains(name.toLowerCase()))
+    ).toList();
 
-      final response = await http.delete(
-        Uri.parse(Endpoints.unassignStudentFromTeam),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode(body),
-      );
-
-      if (response.statusCode == 200) {
-        return true;
-      } else {
-        final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Erro ao desvincular aluno.';
-        notifyListeners();
-        return false;
-      }
-    } catch (e) {
-      _error = 'Erro de conexão: ${e.toString()}';
-      notifyListeners();
-      return false;
-    }
+    _teams = filtered;
+    _isLoading = false;
+    notifyListeners();
   }
 }

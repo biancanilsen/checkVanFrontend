@@ -30,6 +30,7 @@ class Endpoints {
   static const String teamRegistration = '$baseUrl/team/registration';
   static const String deleteTeam = '$baseUrl/team/delete';
   static const String updateTeam = '$baseUrl/team/update';
+  static const String createTeam = '$baseUrl/team/create';
 
   // route
   static const generateRoute = '$baseUrl/routeGenerator/generate';
