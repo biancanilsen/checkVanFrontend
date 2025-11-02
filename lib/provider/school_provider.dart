@@ -99,5 +99,55 @@ class SchoolProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> updateSchool({
+    required int id,
+    required String name,
+    required String address,
+    String? morningLimit,
+    String? morningDeparture,
+    String? afternoonLimit,
+    String? afternoonDeparture,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final url = Uri.parse('${Endpoints.updateSchool}/$id');
+      final token = await UserSession.getToken();
+
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'name': name,
+          'address': address,
+          'morning_limit': morningLimit,
+          'morning_departure': morningDeparture,
+          'afternoon_limit': afternoonLimit,
+          'afternoon_departure': afternoonDeparture,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        await getSchools(); // Atualiza a lista
+        return true;
+      } else {
+        _error = 'Falha ao atualizar a escola.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = 'Ocorreu um erro: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }
 

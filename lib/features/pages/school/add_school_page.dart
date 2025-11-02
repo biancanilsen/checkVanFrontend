@@ -4,12 +4,18 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme.dart';
 import '../../../model/address_suggestion.dart';
+import '../../../model/school_model.dart';
 import '../../../provider/geocoding_provider.dart';
 import '../../../provider/school_provider.dart';
 import '../../widgets/custom_text_field.dart';
 
 class AddSchoolPage extends StatefulWidget {
-  const AddSchoolPage({super.key});
+  final School? school;
+
+  const AddSchoolPage({
+    super.key,
+    this.school,
+  });
 
   @override
   State<AddSchoolPage> createState() => _AddSchoolPageState();
@@ -31,9 +37,42 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
   bool _showSuggestions = false;
   Timer? _debounce;
 
+  bool get isEditing => widget.school != null;
+
   @override
   void initState() {
     super.initState();
+
+    if (isEditing) {
+      final school = widget.school!;
+      _nameController.text = school.name;
+
+      final String fullAddress = school.address ?? '';
+      try {
+        int lastCommaIndex = fullAddress.lastIndexOf(',');
+        if (lastCommaIndex != -1) {
+          String potentialStreet = fullAddress.substring(0, lastCommaIndex).trim();
+          String potentialNumber = fullAddress.substring(lastCommaIndex + 1).trim();
+
+          if (int.tryParse(potentialNumber) != null) {
+            _addressController.text = potentialStreet;
+            _numberController.text = potentialNumber;
+          } else {
+            _addressController.text = fullAddress;
+          }
+        } else {
+          _addressController.text = fullAddress;
+        }
+      } catch (e) {
+        _addressController.text = fullAddress;
+      }
+
+      _morningLimitController.text = school.morningLimit ?? '';
+      _morningDepartureController.text = school.morningDeparture ?? '';
+      _afternoonLimitController.text = school.afternoonLimit ?? '';
+      _afternoonDepartureController.text = school.afternoonDeparture ?? '';
+    }
+
     _addressController.addListener(_onAddressChanged);
     _addressFocusNode.addListener(_onFocusChanged);
   }
@@ -95,40 +134,46 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
     }
   }
 
+
   void _submitForm() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
     final fullAddress = '${_addressController.text}, ${_numberController.text}';
-
     final schoolProvider = context.read<SchoolProvider>();
-    final success = await schoolProvider.createSchool(
-      name: _nameController.text,
-      address: fullAddress,
-      morningLimit: _morningLimitController.text,
-      morningDeparture: _morningDepartureController.text,
-      afternoonLimit: _afternoonLimitController.text,
-      afternoonDeparture: _afternoonDepartureController.text,
-    );
+
+    bool success;
+
+    if (isEditing) {
+      success = await schoolProvider.updateSchool(
+        id: widget.school!.id,
+        name: _nameController.text,
+        address: fullAddress,
+        morningLimit: _morningLimitController.text,
+        morningDeparture: _morningDepartureController.text,
+        afternoonLimit: _afternoonLimitController.text,
+        afternoonDeparture: _afternoonDepartureController.text,
+      );
+    } else {
+      success = await schoolProvider.createSchool(
+        name: _nameController.text,
+        address: fullAddress,
+        morningLimit: _morningLimitController.text,
+        morningDeparture: _morningDepartureController.text,
+        afternoonLimit: _afternoonLimitController.text,
+        afternoonDeparture: _afternoonDepartureController.text,
+      );
+    }
 
     if (mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Escola cadastrada com sucesso!'),
+          SnackBar(
+            content: Text(isEditing ? 'Escola atualizada com sucesso!' : 'Escola cadastrada com sucesso!'),
             backgroundColor: AppPalette.green500,
           ),
         );
-        _formKey.currentState?.reset();
-        _nameController.clear();
-        _addressController.clear();
-        _numberController.clear();
-        _morningLimitController.clear();
-        _morningDepartureController.clear();
-        _afternoonLimitController.clear();
-        _afternoonDepartureController.clear();
-
         Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -147,6 +192,7 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
 
     return Scaffold(
       appBar: AppBar(
+        title: Text(isEditing ? 'Editar Escola' : 'Nova Escola'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppPalette.primary900,
@@ -158,18 +204,19 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Dados da Escola',
+              Text(
+                isEditing ? 'Editar Escola' : 'Dados da Escola',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800),
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Preencha as informações para cadastrar uma nova escola.',
+              Text(
+                isEditing ? 'Atualize as informações da escola.' : 'Preencha as informações para cadastrar uma nova escola.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: AppPalette.neutral600),
+                style: const TextStyle(fontSize: 16, color: AppPalette.neutral600),
               ),
               const SizedBox(height: 32),
+
               CustomTextField(
                 controller: _nameController,
                 label: 'Nome da Escola',
@@ -245,7 +292,7 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
                   width: 24,
                   child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white),
                 )
-                    : const Text('Salvar Escola'),
+                    : Text(isEditing ? 'Salvar Alterações' : 'Salvar Escola'),
               ),
               const SizedBox(height: 24),
             ],
@@ -255,7 +302,7 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
     );
   }
 
-  /// Constrói o campo de endereço com a funcionalidade de autocomplete.
+  // ... (seu _buildAddressField continua igual)
   Widget _buildAddressField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,12 +317,11 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
           ),
         ),
         const SizedBox(height: 8),
-        // --- AJUSTE: Adicionada uma Row para logradouro e número ---
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 3, // Ocupa mais espaço
+              flex: 3,
               child: TextFormField(
                 controller: _addressController,
                 focusNode: _addressFocusNode,
@@ -285,7 +331,7 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              flex: 1, // Ocupa menos espaço
+              flex: 1,
               child: TextFormField(
                 controller: _numberController,
                 decoration: const InputDecoration(hintText: 'Nº'),

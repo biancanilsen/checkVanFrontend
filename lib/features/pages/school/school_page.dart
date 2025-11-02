@@ -1,3 +1,4 @@
+// /lib/features/pages/school/escolas_page.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +6,7 @@ import '../../../provider/school_provider.dart';
 import '../../widgets/school/school_tile.dart';
 import '../../widgets/utils/page_header.dart';
 import '../../widgets/utils/page_search_bar.dart';
+import 'add_school_page.dart';
 
 class SchoolPage extends StatefulWidget {
   const SchoolPage({super.key});
@@ -24,57 +26,71 @@ class _SchoolPageState extends State<SchoolPage> {
 
   @override
   Widget build(BuildContext context) {
+    // 2. Pegue o provider aqui para usar no botão de Adicionar
+    final schoolProvider = context.watch<SchoolProvider>();
+
     return ColoredBox(
       color: AppPalette.appBackground,
       child: SafeArea(
         child: Stack(
           children: [
-          Consumer<SchoolProvider>(
-            builder: (context, provider, child) {
-              return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-                children: [
-                  const PageHeader(title: 'Minhas escolas'),
-                  PageSearchBar(
-                    hintText: 'Pesquisar escola',
-                    onChanged: (value) {
-                      // TODO: Implementar lógica de filtro no provider
-                      // provider.filterSchools(value);
-                    },
-                  ),
-                  _buildSchoolList(provider),
-                ],
-              );
-            },
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Nova escola',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600)),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/add-school');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.primary800,
-                  minimumSize: const Size(double.infinity, 52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.0),
+            // 3. Mude o Consumer para 'Selector' ou use o provider
+            //    que pegamos acima para construir a lista.
+            //    Vou manter o Consumer para simplicidade.
+            Consumer<SchoolProvider>(
+              builder: (context, provider, child) {
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+                  children: [
+                    const PageHeader(title: 'Minhas escolas'),
+                    PageSearchBar(
+                      hintText: 'Pesquisar escola',
+                      onChanged: (value) {
+                        // provider.filterSchools(value);
+                      },
+                    ),
+                    _buildSchoolList(provider), // Passe o provider
+                  ],
+                );
+              },
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text('Nova escola',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600)),
+                  onPressed: () {
+                    // 4. Navegue passando o provider (para o modo de CRIAR)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChangeNotifierProvider.value(
+                          value: schoolProvider, // Use o provider existente
+                          child: const AddSchoolPage(school: null), // null = Criar
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppPalette.primary800,
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildSchoolList(SchoolProvider provider) {
@@ -86,7 +102,7 @@ class _SchoolPageState extends State<SchoolPage> {
         ),
       );
     }
-
+    // ... (seus 'if' de error e 'isEmpty' continuam iguais)
     if (provider.error != null) {
       return Center(
         child: Padding(
@@ -99,11 +115,12 @@ class _SchoolPageState extends State<SchoolPage> {
     if (provider.schools.isEmpty) {
       return const Center(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Text("Nenhuma escola cadastrada."),
         ),
       );
     }
+
 
     return Card(
       color: AppPalette.neutral70,
@@ -121,7 +138,16 @@ class _SchoolPageState extends State<SchoolPage> {
             name: school.name,
             address: school.address ?? 'Endereço não cadastrado',
             onTap: () {
-              /* Ação "Ver detalhes da escola" */
+              // 5. Navegue passando o provider (para o modo de EDITAR)
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChangeNotifierProvider.value(
+                    value: provider, // Use o provider existente
+                    child: AddSchoolPage(school: school), // Passe a escola
+                  ),
+                ),
+              );
             },
           );
         },

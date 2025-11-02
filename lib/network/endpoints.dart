@@ -48,6 +48,9 @@ class Endpoints {
   // School
   static const String getAllSchools = '$baseUrl/school/getAll';
   static const String createSchool = '$baseUrl/school/create';
+  static const String getSchool = '$baseUrl/school/get';
+  static const String updateSchool = '$baseUrl/school/update';
+  static const String deleteSchool = '$baseUrl/school/delete';
 
   // presence
   static String updatePresence(int studentId) => '$baseUrl/student/$studentId/presence';
