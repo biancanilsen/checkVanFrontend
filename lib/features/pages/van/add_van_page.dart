@@ -1,3 +1,4 @@
+import 'package:check_van_frontend/model/van_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +7,12 @@ import '../../../provider/van_provider.dart';
 import '../../widgets/custom_text_field.dart';
 
 class AddVanPage extends StatefulWidget {
-  const AddVanPage({super.key});
+  final Van? van;
+
+  const AddVanPage({
+    super.key,
+    this.van,
+  });
 
   @override
   State<AddVanPage> createState() => _AddVanPageState();
@@ -18,6 +24,20 @@ class _AddVanPageState extends State<AddVanPage> {
   final _nicknameController = TextEditingController();
   final _plateController = TextEditingController();
   final _capacityController = TextEditingController();
+
+  // 3. Getter para modo de edição
+  bool get isEditing => widget.van != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (isEditing) {
+      final van = widget.van!;
+      _nicknameController.text = van.nickname;
+      _plateController.text = van.plate;
+      _capacityController.text = van.capacity.toString();
+    }
+  }
 
   @override
   void dispose() {
@@ -33,33 +53,37 @@ class _AddVanPageState extends State<AddVanPage> {
     }
 
     final vanProvider = context.read<VanProvider>();
+    bool success;
 
-    final success = await vanProvider.createVan(
-      nickname: _nicknameController.text,
-      plate: _plateController.text,
-      capacity: int.tryParse(_capacityController.text) ?? 0,
-    );
+    if (isEditing) {
+      success = await vanProvider.updateVan(
+        id: widget.van!.id,
+        nickname: _nicknameController.text,
+        plate: _plateController.text,
+        capacity: int.tryParse(_capacityController.text) ?? 0,
+      );
+    } else {
+      success = await vanProvider.createVan(
+        nickname: _nicknameController.text,
+        plate: _plateController.text,
+        capacity: int.tryParse(_capacityController.text) ?? 0,
+      );
+    }
 
     if (mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Van cadastrada com sucesso!'),
+          SnackBar(
+            content: Text(isEditing ? 'Van atualizada com sucesso!' : 'Van cadastrada com sucesso!'),
             backgroundColor: AppPalette.green500,
-            duration: const Duration(seconds: 3),
           ),
         );
-        _nicknameController.clear();
-        _plateController.clear();
-        _capacityController.clear();
-
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(vanProvider.error ?? 'Ocorreu um erro desconhecido.'),
             backgroundColor: AppPalette.red500,
-            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -72,6 +96,7 @@ class _AddVanPageState extends State<AddVanPage> {
 
     return Scaffold(
       appBar: AppBar(
+        title: Text(isEditing ? 'Editar Van' : 'Nova Van'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppPalette.primary900,
@@ -84,16 +109,16 @@ class _AddVanPageState extends State<AddVanPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
-              const Text(
-                'Cadastro da Van',
+              Text(
+                isEditing ? 'Editar Van' : 'Cadastro da Van',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800),
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Cadastre os dados da sua van',
+              Text(
+                isEditing ? 'Atualize os dados da van' : 'Cadastre os dados da sua van',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: AppPalette.neutral600),
+                style: const TextStyle(fontSize: 16, color: AppPalette.neutral600),
               ),
               const SizedBox(height: 32),
 
@@ -138,7 +163,7 @@ class _AddVanPageState extends State<AddVanPage> {
                 ),
                 child: vanProvider.isLoading
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Salvar Van'),
+                    : Text(isEditing ? 'Salvar Alterações' : 'Salvar Van'),
               ),
               const SizedBox(height: 24),
             ],
