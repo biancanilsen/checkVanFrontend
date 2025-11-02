@@ -1,4 +1,3 @@
-// lib/widgets/home/homeGuaridan/guardian_home_header.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 
@@ -7,6 +6,7 @@ class GuardianHomeHeader extends StatelessWidget {
   final String userName;
   final String? imageProfile;
   final VoidCallback onProfileTap;
+  final VoidCallback onLogoutTap; // 1. ADICIONE O NOVO CALLBACK
 
   const GuardianHomeHeader({
     super.key,
@@ -14,6 +14,7 @@ class GuardianHomeHeader extends StatelessWidget {
     required this.userName,
     this.imageProfile,
     required this.onProfileTap,
+    required this.onLogoutTap, // 2. ADICIONE AO CONSTRUTOR
   });
 
   @override
@@ -23,6 +24,7 @@ class GuardianHomeHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // Texto de saudação
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 8, right: 12),
@@ -52,6 +54,17 @@ class GuardianHomeHeader extends StatelessWidget {
           ),
         ),
 
+        // 3. ADICIONE O BOTÃO DE LOGOUT AQUI
+        IconButton(
+          icon: Icon(Icons.logout, color: Colors.grey[700]),
+          onPressed: onLogoutTap, // Chama o callback
+          tooltip: 'Sair', // Texto de acessibilidade
+        ),
+
+        // Mantém um pequeno espaço
+        const SizedBox(width: 8),
+
+        // Avatar de Perfil
         GestureDetector(
           onTap: onProfileTap,
           child: CircleAvatar(

@@ -29,7 +29,7 @@ class CustomNavBarItem extends StatelessWidget {
       borderRadius: BorderRadius.circular(30),
       child: Container(
         width: itemWidth,
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         decoration: isSelected
             ? BoxDecoration(
           color: selectedColor,
