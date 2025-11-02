@@ -1,4 +1,3 @@
-// /lib/widgets/team/team_card.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 
@@ -22,6 +21,14 @@ class TeamCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, String> shiftOptions = {
+      'morning': 'Manhã',
+      'afternoon': 'Tarde',
+      'night': 'Noite',
+    };
+
+    final String displayPeriod = shiftOptions[period] ?? (period.isEmpty ? 'Não informado' : period);
+
     return Card(
       color: AppPalette.neutral70,
       elevation: 2,
@@ -35,7 +42,6 @@ class TeamCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Linha Superior: Título e Ícone de Edição
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -58,7 +64,7 @@ class TeamCard extends StatelessWidget {
             const SizedBox(height: 4),
 
             Text(
-              'Período: $period',
+              'Período: $displayPeriod',
               style: TextStyle(color: AppPalette.primary900, fontWeight: FontWeight.w400, fontSize: 14),
             ),
             const SizedBox(height: 12),
@@ -101,7 +107,6 @@ class TeamCard extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
-                  // O padding interno foi removido
                 ),
                 child: const Text('Ver turma', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
               ),
