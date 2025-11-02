@@ -2,7 +2,7 @@ import 'package:check_van_frontend/features/pages/home/home_guardian.dart';
 import 'package:flutter/material.dart';
 
 import '../../pages/student/students_page.dart';
-import '../../widgets/home/homeGuaridan/guardian_bottom_nav_bar.dart';
+import 'homeGuaridan/guardian_main_bottom_nav_bar.dart';
 
 class GuardianShell extends StatefulWidget {
   const GuardianShell({super.key});
