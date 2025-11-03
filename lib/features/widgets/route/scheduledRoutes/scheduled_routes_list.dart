@@ -1,12 +1,19 @@
+// lib/features/pages/home/route/scheduledRoutes/scheduled_routes_list.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:check_van_frontend/features/widgets/route/scheduledRoutes/scheduled_route_card.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../model/trip_model.dart'; // Import o novo model
 import '../../home/page_indicator.dart';
 
-
 class ScheduledRoutesList extends StatefulWidget {
-  const ScheduledRoutesList({super.key});
+  // Recebe a lista de viagens
+  final List<Trip> scheduledTrips;
+
+  const ScheduledRoutesList({
+    super.key,
+    required this.scheduledTrips, // <--- Parâmetro 'scheduledTrips'
+  });
 
   @override
   State<ScheduledRoutesList> createState() => _ScheduledRoutesListState();
@@ -15,25 +22,6 @@ class ScheduledRoutesList extends StatefulWidget {
 class _ScheduledRoutesListState extends State<ScheduledRoutesList> {
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 0;
-
-  final List<ScheduledRouteCard> _cards = [
-    ScheduledRouteCard(
-      routeName: 'Rota da tarde',
-      studentCount: '14',
-      startTime: 'Às 11h',
-      icon: Icons.brightness_6_outlined,
-      chipBgColor: AppPalette.primary50,
-      chipTextColor: AppPalette.primary900,
-    ),
-    ScheduledRouteCard(
-      routeName: 'Rota da noite',
-      studentCount: '9',
-      startTime: 'Às 18h',
-      icon: Icons.dark_mode_outlined,
-      chipBgColor: AppPalette.primary50,
-      chipTextColor: AppPalette.primary900,
-    ),
-  ];
 
   final double _cardWidthFraction = 0.75;
   final double _cardSpacing = 12.0;
@@ -67,30 +55,64 @@ class _ScheduledRoutesListState extends State<ScheduledRoutesList> {
 
   @override
   Widget build(BuildContext context) {
+    // --- LÓGICA DE DADOS ---
+    final List<Trip> trips = widget.scheduledTrips;
+
+    // Se não houver viagens, mostra uma mensagem
+    if (trips.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.0),
+        child: Center(
+          child: Text(
+            'Nenhuma outra rota programada para hoje.',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
     return Column(
       children: [
-        // A lista de scroll (sem alterações)
         SingleChildScrollView(
           controller: _scrollController,
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.only(left: 16, right: 8),
           child: Row(
-            children: List.generate(_cards.length, (index) {
+            // Mapeia a lista de Trips para os Widgets
+            children: List.generate(trips.length, (index) {
+              final trip = trips[index];
+
+              // Define o ícone e cores com base no tipo
+              final IconData icon = trip.tipo == 'Ida'
+                  ? Icons.wb_sunny_outlined
+                  : Icons.brightness_6_outlined;
+              final Color chipBgColor = trip.tipo == 'Ida'
+                  ? AppPalette.orange100
+                  : AppPalette.primary50;
+              final Color chipTextColor = trip.tipo == 'Ida'
+                  ? AppPalette.orange700
+                  : AppPalette.primary900;
+
               return Padding(
                 padding: EdgeInsets.only(
-                  right: (index == _cards.length - 1) ? 0 : _cardSpacing,
+                  right: (index == trips.length - 1) ? 0 : _cardSpacing,
                 ),
-                child: _cards[index],
+                // Constrói o card com os dados da viagem
+                child: ScheduledRouteCard(
+                  routeName: trip.rota,
+                  studentCount: trip.quantidadeAlunos.toString(),
+                  startTime: trip.horarioInicio,
+                  icon: icon,
+                  chipBgColor: chipBgColor,
+                  chipTextColor: chipTextColor,
+                ),
               );
             }),
           ),
         ),
-
         const SizedBox(height: 16),
-
-        // 3. Substitua a Row de bolinhas pelo novo Widget
         PageIndicator(
-          itemCount: _cards.length,
+          itemCount: trips.length,
           currentIndex: _currentPage,
         ),
       ],

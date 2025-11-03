@@ -10,6 +10,7 @@ import 'package:check_van_frontend/provider/route_provider.dart';
 import 'package:check_van_frontend/provider/school_provider.dart';
 import 'package:check_van_frontend/provider/student_provider.dart';
 import 'package:check_van_frontend/provider/team_provider.dart';
+import 'package:check_van_frontend/provider/tripProvider.dart';
 import 'package:check_van_frontend/provider/van_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -36,6 +37,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => VanProvider()),
         ChangeNotifierProvider(create: (_) => RouteProvider()),
         ChangeNotifierProvider(create: (_) => PresenceProvider()),
+        ChangeNotifierProvider(create: (_) => TripProvider()),
       ],
       child: const MyApp(),
     ),

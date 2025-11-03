@@ -1,5 +1,5 @@
 class Endpoints {
-  static const String baseUrl = 'http://192.168.0.183:3200';
+  static const String baseUrl = 'http://192.168.0.179:3200';
 
   // user
   static const String login = '$baseUrl/user/login';
@@ -23,6 +23,7 @@ class Endpoints {
   static const String getAllTrips = '$baseUrl/trip/getAll';
   static const String updateTrip = '$baseUrl/trip/update';
   static const String deleteTrip = '$baseUrl/trip/delete';
+  static const String getNextTrips = '$baseUrl/trip/next-trips';
 
   //team
   static const String getTeamsByTripId = '$baseUrl/trip/getBytripId';

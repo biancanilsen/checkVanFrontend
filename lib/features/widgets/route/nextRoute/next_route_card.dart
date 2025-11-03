@@ -1,27 +1,47 @@
-// lib/widgets/next_route_card.dart
-
+// lib/features/pages/home/route/nextRoute/next_route_card.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 
-// 1. ADICIONE OS IMPORTS NECESSÁRIOS
 import 'package:provider/provider.dart';
 import 'package:check_van_frontend/provider/route_provider.dart';
-// (O import do route_provider.dart pode precisar de ajuste no caminho)
+
+import '../../../../../model/trip_model.dart'; // Import o novo model
 
 class NextRouteCard extends StatelessWidget {
-  final int teamId;
+  // Recebe o objeto Trip, que pode ser nulo se não houver próxima viagem
+  final Trip? nextTrip;
 
   const NextRouteCard({
     super.key,
-    required this.teamId,
+    this.nextTrip, // <--- Parâmetro 'nextTrip'
   });
 
   @override
   Widget build(BuildContext context) {
-    final routeProvider = context.watch<RouteProvider>();
+    // Lê o RouteProvider (para o botão de Iniciar)
+    final routeProvider = context.read<RouteProvider>();
+    // Observa o RouteProvider (para o estado de loading do botão)
+    final routeProviderLoading = context.watch<RouteProvider>().isLoading;
 
     const double cardHeight = 265;
     const double mapVisibilityRatio = 0.3;
+
+    // --- LÓGICA DE DADOS ---
+    final bool hasTrip = nextTrip != null;
+    final int? teamId = nextTrip?.teamId;
+    final String rota = nextTrip?.rota ?? 'Nenhuma rota futura';
+    final String alunos = nextTrip?.quantidadeAlunos.toString() ?? '0';
+    final String comecaEm = nextTrip?.comecaEm ?? '--';
+    final String horario = nextTrip?.horarioInicio ?? '--';
+    final IconData icon = nextTrip?.tipo == 'Ida'
+        ? Icons.wb_sunny_outlined
+        : Icons.brightness_6_outlined;
+    final Color chipBgColor = nextTrip?.tipo == 'Ida'
+        ? AppPalette.orange100
+        : AppPalette.primary50;
+    final Color chipTextColor = nextTrip?.tipo == 'Ida'
+        ? AppPalette.orange700
+        : AppPalette.primary900;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -41,10 +61,8 @@ class NextRouteCard extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Camada 2: O CONTEÚDO (título, infos, botão)
             Container(
-              height: cardHeight, // Ocupa a altura total do Card
+              height: cardHeight,
               padding: EdgeInsets.fromLTRB(
                 12,
                 (cardHeight * mapVisibilityRatio) + 12,
@@ -53,20 +71,20 @@ class NextRouteCard extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  // Título da Rota (Topo, Centralizado)
                   Container(
                     width: double.infinity,
                     padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.wb_sunny_outlined,
-                            size: 18, color: Colors.black87),
-                        SizedBox(width: 8),
+                        if (hasTrip) ...[
+                          Icon(icon, size: 18, color: Colors.black87),
+                          const SizedBox(width: 8),
+                        ],
                         Text(
-                          'Rota da manhã',
-                          style: TextStyle(
+                          rota,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                             color: Colors.black87,
@@ -75,8 +93,6 @@ class NextRouteCard extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  // Linha de informações: Alunos (esq) / Início + chip (dir)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -95,12 +111,9 @@ class NextRouteCard extends StatelessWidget {
                           const SizedBox(height: 4),
                           Container(
                             padding: const EdgeInsets.only(bottom: 6),
-                            child: const Text(
-                              // Como não temos mais routeData,
-                              // voltamos ao valor estático
-                              // (ou você pode buscar isso de outro lugar)
-                              '12',
-                              style: TextStyle(
+                            child: Text(
+                              alunos,
+                              style: const TextStyle(
                                 fontSize: 24,
                                 color: Colors.black87,
                                 fontWeight: FontWeight.w700,
@@ -112,9 +125,9 @@ class NextRouteCard extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text(
-                            'Início',
-                            style: TextStyle(
+                          Text(
+                            hasTrip ? 'Início ($horario)' : 'Início',
+                            style: const TextStyle(
                               fontSize: 16,
                               color: Colors.black87,
                               fontWeight: FontWeight.w400,
@@ -125,15 +138,18 @@ class NextRouteCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: AppPalette.orange100,
+                              color:
+                              hasTrip ? chipBgColor : Colors.grey.shade200,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text(
-                              'Em 5 min',
+                            child: Text(
+                              comecaEm,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
-                                color: AppPalette.orange700,
+                                color: hasTrip
+                                    ? chipTextColor
+                                    : Colors.grey.shade700,
                               ),
                             ),
                           ),
@@ -141,19 +157,18 @@ class NextRouteCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const Spacer(),
-
-                  // Botão "Iniciar rota"
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: routeProvider.isLoading
-                          ? null // Desabilita o botão se estiver carregando
+                      // Desabilita se estiver carregando OU se não houver viagem
+                      onPressed: (routeProviderLoading || !hasTrip)
+                          ? null
                           : () async {
+                        // teamId é pego do nextTrip
                         final success = await routeProvider.generateRoute(
-                          teamId: teamId,
+                          teamId: teamId!,
                         );
                         if (success && context.mounted) {
                           Navigator.pushNamed(
@@ -174,6 +189,7 @@ class NextRouteCard extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppPalette.primary800,
                         foregroundColor: AppPalette.white,
+                        disabledBackgroundColor: Colors.grey.shade300,
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -181,7 +197,7 @@ class NextRouteCard extends StatelessWidget {
                         textStyle: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
-                      child: routeProvider.isLoading
+                      child: routeProviderLoading
                           ? const SizedBox(
                         height: 24,
                         width: 24,
