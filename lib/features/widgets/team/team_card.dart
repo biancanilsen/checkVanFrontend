@@ -29,6 +29,8 @@ class TeamCard extends StatelessWidget {
 
     final String displayPeriod = shiftOptions[period] ?? (period.isEmpty ? 'Não informado' : period);
 
+    final bool isEnabled = studentCount > 0;
+
     return Card(
       color: AppPalette.neutral70,
       elevation: 2,
@@ -99,15 +101,32 @@ class TeamCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: OutlinedButton(
-                onPressed: onView,
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 44),
-                  foregroundColor: AppPalette.primary800,
-                  side: BorderSide(color: AppPalette.primary800),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
+                onPressed: isEnabled ? onView : null,
+
+                style: ButtonStyle(
+                  minimumSize: MaterialStateProperty.all(const Size(double.infinity, 44)),
+
+                  foregroundColor: MaterialStateProperty.resolveWith<Color>((states) {
+                    if (states.contains(MaterialState.disabled)) {
+                      return Colors.grey.shade500;
+                    }
+                    return AppPalette.primary800;
+                  }),
+
+                  side: MaterialStateProperty.resolveWith<BorderSide>((states) {
+                    if (states.contains(MaterialState.disabled)) {
+                      return BorderSide(color: Colors.grey.shade300);
+                    }
+                    return BorderSide(color: AppPalette.primary800);
+                  }),
+
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
                   ),
                 ),
+
                 child: const Text('Ver turma', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
               ),
             ),

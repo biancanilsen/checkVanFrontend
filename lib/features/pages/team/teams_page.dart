@@ -1,4 +1,3 @@
-// /lib/features/pages/team/teams_page.dart
 import 'dart:async';
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import '../../widgets/team/team_card.dart';
 import '../../widgets/utils/page_header.dart';
 import '../../widgets/utils/page_search_bar.dart';
 import 'add_team_page.dart';
+import 'team_detail_page.dart'; // <-- 1. IMPORTE A NOVA PÁGINA
 
 class TeamsPage extends StatefulWidget {
   const TeamsPage({super.key});
@@ -36,7 +36,6 @@ class _TeamsPageState extends State<TeamsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Pegamos o provider com 'read' para usar no botão de Adicionar
     final teamProvider = context.read<TeamProvider>();
 
     return SafeArea(
@@ -53,17 +52,14 @@ class _TeamsPageState extends State<TeamsPage> {
                 onChanged: (value) {
                   if (_debounce?.isActive ?? false) _debounce!.cancel();
                   _debounce = Timer(const Duration(milliseconds: 500), () {
-                    // Usamos context.read aqui
                     context.read<TeamProvider>().searchTeams(value);
                   });
                 },
               ),
 
               // 2. A LISTA DINÂMICA
-              // O Consumer escuta as mudanças (loading, error, empty, data)
               Consumer<TeamProvider>(
                 builder: (context, provider, child) {
-                  // Chamamos o helper para construir o widget correto
                   return _buildTeamList(context, provider);
                 },
               ),
@@ -83,8 +79,8 @@ class _TeamsPageState extends State<TeamsPage> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => ChangeNotifierProvider.value(
-                        value: teamProvider, // Passa o provider da lista
-                        child: const AddTeamPage(team: null), // null = Criar
+                        value: teamProvider,
+                        child: const AddTeamPage(team: null),
                       ),
                     ),
                   );
@@ -104,7 +100,6 @@ class _TeamsPageState extends State<TeamsPage> {
     );
   }
 
-  /// Constrói o widget correto baseado no estado do Provider
   Widget _buildTeamList(BuildContext context, TeamProvider provider) {
     if (provider.isLoading && provider.teams.isEmpty) {
       return const Center(
@@ -124,7 +119,6 @@ class _TeamsPageState extends State<TeamsPage> {
       );
     }
 
-    // --- ESTA É A CONDIÇÃO QUE VOCÊ PEDIU ---
     if (provider.teams.isEmpty) {
       return const Center(
         child: Padding(
@@ -133,9 +127,7 @@ class _TeamsPageState extends State<TeamsPage> {
         ),
       );
     }
-    // --- FIM DA CONDIÇÃO ---
 
-    // Se tiver dados, constrói a lista
     return Card(
       color: AppPalette.neutral70,
       clipBehavior: Clip.antiAlias,
@@ -153,17 +145,19 @@ class _TeamsPageState extends State<TeamsPage> {
             period: team.shift,
             studentCount: team.students.length,
             code: team.code ?? 'N/A',
+
+            // --- 2. ATUALIZE O 'onView' ---
             onView: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => ChangeNotifierProvider.value(
-                    value: provider,
-                    child: AddTeamPage(team: team),
-                  ),
+                  // Envia o objeto 'team' completo para a nova página
+                  builder: (_) => TeamDetailPage(team: team),
                 ),
               );
             },
+
+            // 'onEdit' continua o mesmo
             onEdit: () {
               Navigator.push(
                 context,
