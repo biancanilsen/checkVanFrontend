@@ -8,7 +8,7 @@ import '../../widgets/team/team_card.dart';
 import '../../widgets/utils/page_header.dart';
 import '../../widgets/utils/page_search_bar.dart';
 import 'add_team_page.dart';
-import 'team_detail_page.dart'; // <-- 1. IMPORTE A NOVA PÁGINA
+import 'team_detail_page.dart'; // Import da nova tela
 
 class TeamsPage extends StatefulWidget {
   const TeamsPage({super.key});
@@ -41,7 +41,6 @@ class _TeamsPageState extends State<TeamsPage> {
     return SafeArea(
       child: Stack(
         children: [
-          // 1. O CONTEÚDO QUE ROLA
           ListView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
             children: [
@@ -57,7 +56,6 @@ class _TeamsPageState extends State<TeamsPage> {
                 },
               ),
 
-              // 2. A LISTA DINÂMICA
               Consumer<TeamProvider>(
                 builder: (context, provider, child) {
                   return _buildTeamList(context, provider);
@@ -66,7 +64,6 @@ class _TeamsPageState extends State<TeamsPage> {
             ],
           ),
 
-          // 3. BOTÃO FIXO "+ Nova turma"
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -100,6 +97,7 @@ class _TeamsPageState extends State<TeamsPage> {
     );
   }
 
+  /// Constrói o widget correto baseado no estado do Provider
   Widget _buildTeamList(BuildContext context, TeamProvider provider) {
     if (provider.isLoading && provider.teams.isEmpty) {
       return const Center(
@@ -128,52 +126,40 @@ class _TeamsPageState extends State<TeamsPage> {
       );
     }
 
-    return Card(
-      color: AppPalette.neutral70,
-      clipBehavior: Clip.antiAlias,
-      elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.1),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: provider.teams.length,
-        itemBuilder: (context, index) {
-          final team = provider.teams[index];
-          return TeamCard(
-            name: team.name,
-            period: team.shift,
-            studentCount: team.students.length,
-            code: team.code ?? 'N/A',
-
-            // --- 2. ATUALIZE O 'onView' ---
-            onView: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  // Envia o objeto 'team' completo para a nova página
-                  builder: (_) => TeamDetailPage(team: team),
+    // --- INÍCIO DA CORREÇÃO ---
+    // Removemos o Card() e o ListView.separated()
+    // Retornamos uma Column, pois ela já está dentro de um ListView
+    return Column(
+      children: provider.teams.map((team) {
+        // O TeamCard já é um Card e já tem a margem (bottom: 16.0)
+        // Isso vai criar o espaçamento desejado.
+        return TeamCard(
+          name: team.name,
+          period: team.shift,
+          studentCount: team.students.length,
+          code: team.code ?? 'N/A',
+          onView: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                // Navega para a TeamDetailPage
+                builder: (_) => TeamDetailPage(team: team),
+              ),
+            );
+          },
+          onEdit: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChangeNotifierProvider.value(
+                  value: provider,
+                  child: AddTeamPage(team: team),
                 ),
-              );
-            },
-
-            // 'onEdit' continua o mesmo
-            onEdit: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ChangeNotifierProvider.value(
-                    value: provider,
-                    child: AddTeamPage(team: team),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-        separatorBuilder: (context, index) =>
-            Divider(height: 1, indent: 16, endIndent: 16, color: Colors.grey[200]),
-      ),
+              ),
+            );
+          },
+        );
+      }).toList(),
     );
   }
 }
