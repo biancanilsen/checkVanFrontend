@@ -1,3 +1,4 @@
+import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -32,12 +33,13 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
   String? _selectedTransportOption;
   final DateFormat _dateFormatter = DateFormat('EEEE, dd MMM yyyy', 'pt_BR');
 
+  bool _isOptionInitialized = false;
+
   @override
   void initState() {
     super.initState();
     initializeDateFormatting('pt_BR');
 
-    // Lógica para pular fins de semana (permanece no controlador)
     DateTime now = DateTime.now();
     if (now.weekday == DateTime.saturday) {
       _selectedDay = now.add(const Duration(days: 2));
@@ -49,11 +51,10 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PresenceProvider>(context, listen: false)
-          .getMonthlyPresence(widget.studentId, _selectedDay); // Passa a data
+          .getMonthlyPresence(widget.studentId, _selectedDay);
     });
   }
 
-  /// Formata a string de data (permanece no controlador)
   String _getFormattedDateString(DateTime date) {
     String formattedDate = _dateFormatter.format(date);
     String cleanedDate = formattedDate.replaceAll('-feira', '');
@@ -68,7 +69,6 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
     return parts.join(' ');
   }
 
-  /// Mapeia opção para status (lógica de negócio, permanece no controlador)
   String _mapOptionToStatus(String? option) {
     switch (option) {
       case 'Ida e volta':
@@ -84,20 +84,41 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
     }
   }
 
-  /// Confirma presença (lógica de negócio, permanece no controlador)
+  String? _mapStatusToOption(String? status) {
+    switch (status) {
+      case 'BOTH':
+        return 'Ida e volta';
+      case 'GOING':
+        return 'Somente Ida';
+      case 'RETURNING':
+        return 'Somente Volta';
+      case 'NONE':
+        return 'Não utilizará o transporte';
+      default:
+        return null;
+    }
+  }
+
   Future<void> _confirmPresence() async {
-    if (_selectedTransportOption == null) {
+    final presenceMap = context.read<PresenceProvider>().monthlyPresence;
+    final isoDate = DateFormat('yyyy-MM-dd').format(_selectedDay);
+    final statusFromBackend = presenceMap[isoDate];
+    final optionFromBackend = _mapStatusToOption(statusFromBackend);
+
+    final optionToConfirm = _selectedTransportOption ?? optionFromBackend;
+
+    if (optionToConfirm == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor, selecione uma opção de transporte.'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppPalette.red700,
         ),
       );
       return;
     }
 
     final presenceProvider = Provider.of<PresenceProvider>(context, listen: false);
-    final status = _mapOptionToStatus(_selectedTransportOption);
+    final status = _mapOptionToStatus(optionToConfirm);
 
     final success = await presenceProvider.updatePresence(
       studentId: widget.studentId,
@@ -120,7 +141,7 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Erro: ${presenceProvider.error ?? "Ocorreu um problema."}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppPalette.red700,
         ),
       );
     }
@@ -130,6 +151,21 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
   Widget build(BuildContext context) {
     final isConfirming = context.watch<PresenceProvider>().isConfirming;
     final presenceMap = context.watch<PresenceProvider>().monthlyPresence;
+
+    String? currentOptionToShow;
+
+    final isoDate = DateFormat('yyyy-MM-dd').format(_selectedDay);
+    final statusFromBackend = presenceMap[isoDate];
+
+    final optionFromBackend = _mapStatusToOption(statusFromBackend);
+
+    currentOptionToShow = _selectedTransportOption ?? optionFromBackend;
+
+    if (!_isOptionInitialized && presenceMap.isNotEmpty) {
+      _selectedTransportOption = optionFromBackend;
+      currentOptionToShow = optionFromBackend;
+      _isOptionInitialized = true;
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -141,7 +177,6 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Column(
           children: [
-            // Texto da data selecionada
             Text(
               _getFormattedDateString(_selectedDay),
               style: const TextStyle(
@@ -152,17 +187,19 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
             ),
             const SizedBox(height: 16),
 
-            // Componente 1: Seletor de Semana
             WeekSelector(
               initialSelectedDay: _selectedDay,
               onDaySelected: (newSelectedDay) {
+                final newIsoDate = DateFormat('yyyy-MM-dd').format(newSelectedDay);
+                final newStatus = presenceMap[newIsoDate];
+                final newOption = _mapStatusToOption(newStatus);
+
                 setState(() {
                   _selectedDay = newSelectedDay;
+                  _selectedTransportOption = newOption;
                 });
               },
-              // ATUALIZADO: Passa o mapa de presença
               presenceStatusMap: presenceMap,
-              // ADICIONADO: O callback para buscar novos meses
               onMonthChanged: (newDate) {
                 Provider.of<PresenceProvider>(context, listen: false)
                     .getMonthlyPresence(widget.studentId, newDate);
@@ -170,9 +207,8 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
             ),
             const SizedBox(height: 24),
 
-            // Componente 2: Opções de Presença
             PresenceOptions(
-              selectedOption: _selectedTransportOption,
+              selectedOption: currentOptionToShow,
               onChanged: (newOption) {
                 setState(() {
                   _selectedTransportOption = newOption;
@@ -181,7 +217,6 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
             ),
             const SizedBox(height: 24),
 
-            // Componente 3: Botão de Confirmação
             ConfirmButton(
               isLoading: isConfirming,
               onPressed: _confirmPresence,

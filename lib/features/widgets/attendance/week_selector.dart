@@ -123,17 +123,17 @@ class _WeekSelectorState extends State<WeekSelector> {
       case 'BOTH':
       case 'GOING':
       case 'RETURNING':
-        iconData = Icons.check_circle_outline; // Check (vazado)
-        iconColor = AppPalette.green600; // Verde
+        iconData = Icons.check_circle_outline;
+        iconColor = AppPalette.green600;
         break;
       case 'NONE':
-        iconData = Icons.cancel_outlined; // Ícone X
-        iconColor = Colors.red.shade700; // Vermelho
+        iconData = Icons.cancel_outlined;
+        iconColor = AppPalette.red700;
         break;
-      case null: // "Não tem registro" (veio null do backend)
+      case null:
       default:
-        iconData = Icons.watch_later_outlined; // Relógio
-        iconColor = Colors.orange.shade700; // Laranja
+        iconData = Icons.watch_later_outlined;
+        iconColor = AppPalette.orange700;
     }
 
     return GestureDetector(
