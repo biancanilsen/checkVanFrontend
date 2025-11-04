@@ -61,4 +61,5 @@ class Endpoints {
   // presence
   static String updatePresence(int studentId) => '$baseUrl/student/$studentId/presence';
   static const String getPresenceSummary = '$baseUrl/student/presence-summary';
+  static String getMonthlyPresence(int studentId) => '$baseUrl/student/$studentId/presences/current-month';
 }
