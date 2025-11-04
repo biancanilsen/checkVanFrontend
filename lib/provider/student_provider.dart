@@ -15,6 +15,11 @@ class StudentProvider extends ChangeNotifier {
   List<StudentPresenceSummary> _presenceSummaryStudents = [];
   bool _isLoading = false;
   String? _error;
+  String? _tripStatus;
+  bool _isStatusLoading = false;
+
+  String? get tripStatus => _tripStatus;
+  bool get isStatusLoading => _isStatusLoading;
 
   List<Student> get students => _students;
   bool get isLoading => _isLoading;
@@ -319,6 +324,53 @@ class StudentProvider extends ChangeNotifier {
       _students = [];
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchNextTripStatus() async {
+    _isStatusLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      if (_students.isEmpty) {
+        await getStudents();
+      }
+
+      if (_students.isEmpty) {
+        _tripStatus = 'NAO_VAI';
+        _isStatusLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      final studentIds = _students.map((s) => s.id).toList();
+
+      final response = await http.post(
+        Uri.parse(Endpoints.getNextTripStatusBulk),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'studentIds': studentIds}),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        _tripStatus = data['status'];
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['message'] ?? 'Falha ao carregar status da viagem.');
+      }
+    } catch (e) {
+      _error = e.toString();
+      _tripStatus = 'NAO_VAI';
+    } finally {
+      _isStatusLoading = false;
       notifyListeners();
     }
   }

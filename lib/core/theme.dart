@@ -26,6 +26,7 @@ class AppPalette {
   static const Color red500 = Color(0xFFD32F2F); // #D32F2F
   static const Color red700 = Color(0xFFBF360C); // #BF360C
 
+  static const Color green75 = Color(0xFFE0E6E0); // #E0E6E0
   static const Color green500 = Color(0xFF037D2C); // #037D2C
   static const Color green600 = Color(0xFF206820); // #206820
 

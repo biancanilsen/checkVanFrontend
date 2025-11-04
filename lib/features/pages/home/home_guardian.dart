@@ -1,3 +1,4 @@
+import 'package:check_van_frontend/features/widgets/home/homeGuaridan/next_trip_status/next_trip_status.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:check_van_frontend/core/theme.dart';
@@ -102,19 +103,7 @@ class _HomeGuardianState extends State<HomeGuardian> {
 
             const SizedBox(height: 20),
 
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                'assets/school_bus.png',
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.contain,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            const ConfirmPresenceCallout(),
+            const NextTripStatus(),
 
             const SizedBox(height: 24),
 

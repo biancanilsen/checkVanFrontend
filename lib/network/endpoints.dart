@@ -69,4 +69,5 @@ class Endpoints {
     // Note que a rota mudou para '/presences' e usa query parameters
     return '$baseUrl/student/$studentId/presences?year=$year&month=$jsMonth';
   }
+  static const String getNextTripStatusBulk = '$baseUrl/user/guardian/next-trip-status-bulk';
 }
