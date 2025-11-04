@@ -1,3 +1,4 @@
+import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 
 class PresenceOptions extends StatelessWidget {
@@ -30,6 +31,12 @@ class PresenceOptions extends StatelessWidget {
               groupValue: selectedOption,
               onChanged: onChanged,
               activeColor: Colors.black87,
+              fillColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+                if (states.contains(MaterialState.selected)) {
+                  return AppPalette.neutral800;
+                }
+                return AppPalette.neutral600;
+              }),
             ),
           ),
         ),
