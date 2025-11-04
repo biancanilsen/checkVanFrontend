@@ -15,7 +15,7 @@ class ConfirmPresenceCallout extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFF8E1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppPalette.secondary500, width: 1.5),
+        border: Border.all(color: AppPalette.yellow200, width: 1.5),
       ),
       child: Row(
         children: [

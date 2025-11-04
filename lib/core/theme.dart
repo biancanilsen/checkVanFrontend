@@ -6,7 +6,6 @@ class AppPalette {
   static const Color primary800 = Color(0xFF03467D); // #03467D
   static const Color primary100 = Color(0xFFD2E0EC); // #D2E0EC
   static const Color primary50 = Color(0xFFDBE9F4); // #DBE9F4
-  static const Color secondary500 = Color(0xFFFFC532); // #FFC532
 
   static const Color neutral50 = Color(0xFFFAFAFA); // #FAFAFA
   static const Color neutral60 = Color(0xFFFEFEFE); // #FEFEFE
@@ -33,6 +32,9 @@ class AppPalette {
   static const Color orange700 = Color(0xFFC45F00); // #C45F00
   static const Color orange100 = Color(0xFFFFE0C3); // #FFE0C3
 
+  static const Color yellow100 = Color(0xFFFFF2C0); // #FFF2C0
+  static const Color yellow200 = Color(0xFFFFC532); // #FFC532
+
   static const Color white = Color(0xFFFFFFFF); // #FFFFFF
   static const Color black = Color(0xFF000000); // #000000
 
@@ -50,7 +52,7 @@ class AppTheme {
         brightness: Brightness.light,
         primary: AppPalette.primary900,
         onPrimary: AppPalette.white,
-        secondary: AppPalette.secondary500,
+        secondary: AppPalette.yellow200,
         onSecondary: AppPalette.black,
         error: AppPalette.red500,
         onError: AppPalette.white,

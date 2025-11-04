@@ -171,7 +171,7 @@ class _StudentFormState extends State<StudentForm> {
 
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppPalette.secondary500,
+              backgroundColor: AppPalette.yellow200,
               foregroundColor: AppPalette.primary800,
             ),
             onPressed: studentProvider.isLoading ? null : _addStudent,

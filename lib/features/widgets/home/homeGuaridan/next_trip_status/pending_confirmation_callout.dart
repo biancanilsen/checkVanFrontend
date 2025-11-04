@@ -9,62 +9,60 @@ class PendingConfirmationCallout extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppPalette.secondary500, width: 1.5),
-      ),
-      child: Column(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(16.0),
-            ),
-            child: Image.asset(
-              'assets/school_bus.png',
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
+    // O widget principal agora é uma Column
+    return Column(
+      children: [
+        // 1. A IMAGEM
+        // Fica fora do container de aviso
+        Image.asset(
+          'assets/school_bus.png', // Imagem da captura de tela
+          height: 200, // Você pode ajustar esta altura
+          width: double.infinity,
+          // BoxFit.contain garante que a ilustração inteira apareça
+          fit: BoxFit.contain,
+        ),
+
+        const SizedBox(height: 16), // Espaço entre a imagem e o card
+
+        // 2. O CARD DE AVISO
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF8E1),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppPalette.yellow200, // Cor da borda
+              width: 1.5, // Largura da borda
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          Padding(
-            padding: const EdgeInsets.only(
-              left: 16.0,
-              right: 16.0,
-              bottom: 14.0,
-            ),
-            child: Row(
-              children: [
-                SvgPicture.asset(
-                  'assets/icons/warning_icon.svg',
-                  width: 24,
-                  height: 24,
-                  colorFilter: ColorFilter.mode(
-                    Colors.amber.shade700,
-                    BlendMode.srcIn,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center, // Alinha verticalmente
+            children: [
+              SvgPicture.asset(
+                'assets/icons/warning_icon.svg',
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  AppPalette.yellow200,
+                  BlendMode.srcIn,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Confirme a presença da rota de amanhã!',
+                  style: textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppPalette.neutral900,
+                    fontSize: 14,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Confirme a presença da rota de amanhã!',
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppPalette.neutral900,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -15,11 +15,9 @@ class TripProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // Propriedades para a UI
   Trip? get nextTrip => _trips.isEmpty ? null : _trips.first;
   List<Trip> get scheduledTrips => _trips.isEmpty ? [] : _trips.skip(1).toList();
 
-  // Busca viagens do /trip/next-trips
   Future<void> fetchNextTrips() async {
     _isLoading = true;
     _error = null;
@@ -30,7 +28,7 @@ class TripProvider extends ChangeNotifier {
       if (token == null) throw Exception('Usuário não autenticado.');
 
       final response = await http.get(
-        Uri.parse(Endpoints.getNextTrips), // <-- Adicione este endpoint
+        Uri.parse(Endpoints.getNextTrips),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
@@ -43,7 +41,6 @@ class TripProvider extends ChangeNotifier {
         _trips = tripListJson.map((json) => Trip.fromJson(json)).toList();
       } else {
         final data = jsonDecode(response.body);
-        // Trata "Nenhuma viagem" como sucesso (lista vazia), não como erro
         if (data['message'] == 'Nenhuma viagem futura encontrada.') {
           _trips = [];
         } else {
