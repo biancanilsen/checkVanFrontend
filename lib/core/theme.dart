@@ -19,7 +19,7 @@ class AppPalette {
   static const Color neutral400 = Color(0xFFAEB9BB); // #AEB9BB
   static const Color neutral500 = Color(0xFFA1A1AA); // #A1A1AA
   static const Color neutral600 = Color(0xFF7B8591); // #7B8591
-  static const Color neutral7De00 = Color(0xFF515151); // #515151
+  static const Color neutral700 = Color(0xFF515151); // #515151
   static const Color neutral800 = Color(0xFF313131); // #313131
   static const Color neutral900 = Color(0xFF212121); // #212121
 

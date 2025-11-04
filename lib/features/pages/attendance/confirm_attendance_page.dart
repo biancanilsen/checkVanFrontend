@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -26,8 +25,8 @@ class ConfirmAttendancePage extends StatefulWidget {
 
 class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
   late DateTime _selectedDay;
-  late DateTime _focusedDay;
-  late CalendarFormat _calendarFormat;
+  late DateTime _focusedDay; // Usado como âncora para a semana
+  List<DateTime> _currentWeekDays = [];
   String? _selectedTransportOption;
   final DateFormat _dateFormatter = DateFormat('EEEE, dd MMM yyyy', 'pt_BR');
   bool _isLoading = false;
@@ -36,43 +35,87 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
   void initState() {
     super.initState();
     initializeDateFormatting('pt_BR');
-    _selectedDay = DateTime.now();
-    _focusedDay = DateTime.now();
-    _calendarFormat = CalendarFormat.month;
+
+    DateTime now = DateTime.now();
+    _focusedDay = now;
+
+    // [MODIFICADO] Lógica para pular fins de semana
+    // Se for Sábado (6), avança para Segunda (adiciona 2 dias)
+    if (now.weekday == DateTime.saturday) {
+      _selectedDay = now.add(const Duration(days: 2));
+    }
+    // Se for Domingo (7), avança para Segunda (adiciona 1 dia)
+    else if (now.weekday == DateTime.sunday) {
+      _selectedDay = now.add(const Duration(days: 1));
+    }
+    // Se for um dia de semana, é o dia selecionado
+    else {
+      _selectedDay = now;
+    }
+
+    // O _focusedDay também deve ser atualizado para a nova data selecionada
+    // para que a semana correta seja exibida
+    _focusedDay = _selectedDay;
+
+    _updateCurrentWeek(_focusedDay);
   }
 
-  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+  /// Adiciona um helper local já que TableCalendar foi removido
+  bool isSameDay(DateTime? a, DateTime? b) {
+    if (a == null || b == null) return false;
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  /// [MODIFICADO] Calcula os 5 dias da semana (Seg-Sex) com base em um dia âncora
+  void _updateCurrentWeek(DateTime anchorDay) {
+    // 1 = Segunda, 7 = Domingo.
+    // Subtrai os dias para encontrar a Segunda-feira
+    DateTime startOfWeek = anchorDay.subtract(Duration(days: anchorDay.weekday - 1));
+    setState(() {
+      // Alterado de 7 para 5 dias (Seg-Sex)
+      _currentWeekDays = List.generate(5, (index) => startOfWeek.add(Duration(days: index)));
+    });
+  }
+
+  void _onDayCardSelected(DateTime selectedDay) {
     setState(() {
       _selectedDay = selectedDay;
-      _focusedDay = focusedDay;
+      _focusedDay = selectedDay; // Foca no dia selecionado
+    });
+  }
+
+  void _goToPreviousWeek() {
+    setState(() {
+      // Pula 7 dias para cair na mesma semana (Seg-Sex)
+      _focusedDay = _focusedDay.subtract(const Duration(days: 7));
+      _updateCurrentWeek(_focusedDay);
+    });
+  }
+
+  void _goToNextWeek() {
+    setState(() {
+      // Pula 7 dias para cair na mesma semana (Seg-Sex)
+      _focusedDay = _focusedDay.add(const Duration(days: 7));
+      _updateCurrentWeek(_focusedDay);
     });
   }
 
   /// Formata a string de data para capitalizar e remover o "-feira".
   String _getFormattedDateString(DateTime date) {
     String formattedDate = _dateFormatter.format(date);
-    // Ex: "segunda-feira, 08 out. 2025"
-
-    // Remove o "-feira" da string
     String cleanedDate = formattedDate.replaceAll('-feira', '');
-
     List<String> parts = cleanedDate.split(' ');
 
-    // Capitaliza o dia da semana (primeira parte)
     if (parts.isNotEmpty) {
       String dayOfWeek = parts[0];
       parts[0] = '${dayOfWeek[0].toUpperCase()}${dayOfWeek.substring(1)}';
     }
-
-    // Capitaliza o mês (terceira parte)
     if (parts.length > 2) {
       String month = parts[2];
-      // A abreviação já vem com ponto, então apenas capitalizamos
       if (month.isNotEmpty) {
         parts[2] = '${month[0].toUpperCase()}${month.substring(1)}';
       }
     }
-
     return parts.join(' ');
   }
 
@@ -102,7 +145,6 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
       return;
     }
 
-    // Acessa o provider sem ouvir mudanças, pois estamos apenas chamando um método
     final presenceProvider = Provider.of<PresenceProvider>(context, listen: false);
     final status = _mapOptionToStatus(_selectedTransportOption);
 
@@ -112,7 +154,6 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
       status: status,
     );
 
-    // Garante que o widget ainda está na árvore antes de mostrar a SnackBar
     if (!mounted) return;
 
     if (success) {
@@ -122,7 +163,6 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
           backgroundColor: Colors.green,
         ),
       );
-      // Atualiza o resumo de presença ao confirmar
       await context.read<StudentProvider>().getPresenceSummary();
       Navigator.of(context).pop();
     } else {
@@ -138,136 +178,111 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
   @override
   Widget build(BuildContext context) {
     final presenceProvider = context.watch<PresenceProvider>();
-    final isLoading = presenceProvider.isLoading;
+    _isLoading = presenceProvider.isLoading;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        // TODO - aumentar o tamanho dessa appBar para deixar a imagem do aluno com raidus 40
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              radius: 25,
-              backgroundColor: Colors.grey.shade200,
-              child: ClipOval(
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundImage: (widget.studentImageUrl != null && widget.studentImageUrl!.isNotEmpty)
-                      ? NetworkImage(widget.studentImageUrl!)
-                      : const AssetImage('assets/profile.png') as ImageProvider,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              widget.studentName, // Use o nome recebido
-              style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TableCalendar(
-                  locale: 'pt_BR',
-                  firstDay: DateTime.utc(2024, 1, 1),
-                  lastDay: DateTime.utc(2025, 12, 31),
-                  focusedDay: _focusedDay,
-                  calendarFormat: _calendarFormat,
-                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                  onDaySelected: _onDaySelected,
-                  headerVisible: true,
-                  headerStyle: HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
-                    titleTextFormatter: (date, locale) {
-                      String formatted = DateFormat.yMMMM(locale).format(date);
-                      return '${formatted[0].toUpperCase()}${formatted.substring(1)}';
-                    },
-                  ),
-                  // Builder para customizar os dias da semana
-                  calendarBuilders: CalendarBuilders(
-                    dowBuilder: (context, day) {
-                      final text = DateFormat.E('pt_BR').format(day);
-                      final dayName = text.replaceAll('.', '');
-                      return Center(
-                        child: Text(
-                          '${dayName[0].toUpperCase()}${dayName.substring(1)}',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                      );
-                    },
-                  ),
-                  calendarStyle: CalendarStyle(
-                    selectedDecoration: BoxDecoration(
-                      color: Colors.black87,
-                      shape: BoxShape.circle,
-                    ),
-                    todayDecoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.3),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight + 40),
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          title: Padding(
+            padding: const EdgeInsets.all(0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left, size: 32),
-                  onPressed: () {
-                    setState(() {
-                      _focusedDay = DateTime(_focusedDay.year, _focusedDay.month - 1);
-                      _selectedDay = _focusedDay;
-                    });
-                  },
-                ),
-                Text(
-                  _getFormattedDateString(_selectedDay),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.grey.shade200,
+                  child: ClipOval(
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundImage: (widget.studentImageUrl != null && widget.studentImageUrl!.isNotEmpty)
+                          ? NetworkImage(widget.studentImageUrl!)
+                          : const AssetImage('assets/profile.png') as ImageProvider,
+                    ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right, size: 32),
-                  onPressed: () {
-                    setState(() {
-                      _focusedDay = DateTime(_focusedDay.year, _focusedDay.month + 1);
-                      _selectedDay = _focusedDay;
-                    });
-                  },
+                const SizedBox(width: 12),
+                Text(
+                  widget.studentName,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
               ],
             ),
+          ),
+          leading: Padding(
+            padding: const EdgeInsets.only(top: 16.0),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        child: Column(
+          children: [
+            // Texto da data selecionada
+            Text(
+              _getFormattedDateString(_selectedDay),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppPalette.neutral900,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Novo Seletor de Semana
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Botão de semana anterior
+                IconButton(
+                  icon: const Icon(Icons.chevron_left, size: 30, color: Colors.black54),
+                  onPressed: _goToPreviousWeek,
+                ),
+
+                // Container para os dias da semana (agora com 5 dias)
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: _currentWeekDays.map((day) {
+                      return Flexible(
+                        child: _buildDayCard(day),
+                      );
+                    }).toList(),
+                  ),
+                ),
+
+                // Botão de próxima semana
+                IconButton(
+                  icon: const Icon(Icons.chevron_right, size: 30, color: Colors.black54),
+                  onPressed: _goToNextWeek,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Opções de Rádio
             ...['Ida e volta', 'Somente Ida', 'Somente Volta', 'Não utilizará o transporte']
                 .map(
                   (option) => Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 child: Card(
+                  elevation: 0, // Remove a sombra
+                  color: Colors.white,
                   shape: RoundedRectangleBorder(
+                    // Adiciona a borda cinza clara
+                    side: BorderSide(color: Colors.grey.shade300, width: 1.0),
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: RadioListTile<String>(
@@ -279,18 +294,26 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
                         _selectedTransportOption = value;
                       });
                     },
-                    activeColor: Colors.black87,
+                    activeColor: AppPalette.neutral700,
+                    fillColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+                      if (states.contains(MaterialState.selected)) {
+                        return AppPalette.neutral700;
+                      }
+                      return AppPalette.neutral500;
+                    }),
                   ),
                 ),
               ),
             )
                 .toList(),
             const SizedBox(height: 24),
+
+            // Botão Confirmar
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: isLoading ? null : _confirmPresence,
+                onPressed: _isLoading ? null : _confirmPresence,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppPalette.green600,
                   foregroundColor: AppPalette.white,
@@ -299,7 +322,7 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                child: isLoading
+                child: _isLoading
                     ? const SizedBox(
                   height: 24,
                   width: 24,
@@ -319,5 +342,62 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
       ),
     );
   }
-}
 
+  /// Widget para construir cada card de dia no seletor de semana
+  Widget _buildDayCard(DateTime day) {
+    final isSelected = isSameDay(day, _selectedDay);
+    final dayFormat = DateFormat.E('pt_BR').format(day);
+    final dayAbbreviation = '${dayFormat[0].toUpperCase()}${dayFormat.substring(1)}'.replaceAll('.', '');
+    final dayNumber = DateFormat.d('pt_BR').format(day);
+
+    return GestureDetector(
+      onTap: () => _onDayCardSelected(day),
+      child: Container(
+        // Ajuste o tamanho/padding conforme necessário para caber 5 na tela
+        width: 50, // Aumentei um pouco a largura para preencher melhor
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: isSelected
+              ? Border.all(color: AppPalette.green600, width: 2)
+              : Border.all(color: Colors.transparent),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 3,
+            )
+          ],
+        ),
+        child: Column(
+          children: [
+            Text(
+              dayAbbreviation,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? AppPalette.green600 : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              dayNumber,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? AppPalette.green600 : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Icon(
+              isSelected ? Icons.check_circle : Icons.watch_later_outlined,
+              color: isSelected ? AppPalette.green600 : Colors.orange.shade700,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
