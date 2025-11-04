@@ -136,7 +136,7 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
         ),
       );
       await context.read<StudentProvider>().getPresenceSummary();
-      Navigator.of(context).pop();
+      //Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
