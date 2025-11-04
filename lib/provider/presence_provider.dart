@@ -7,27 +7,40 @@ import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 
 class PresenceProvider extends ChangeNotifier {
-  bool isLoading = false;
+  // ATUALIZADO: Renomeado para ser específico
+  bool _isConfirming = false;
+  bool get isConfirming => _isConfirming; // Usar isso no botão 'Confirmar'
+
   String? error;
 
-  // ADICIONADO: Mapa para guardar os status do mês
   Map<String, String?> _monthlyPresence = {};
   Map<String, String?> get monthlyPresence => _monthlyPresence;
 
-  // ADICIONADO: Método para buscar os status do mês para um aluno
-  Future<void> getMonthlyPresence(int studentId) async {
-    isLoading = true;
-    error = null;
-    notifyListeners();
+  // ADICIONADO: "Cache" para saber quais meses já buscamos (Ex: "2025-11", "2025-12")
+  final Set<String> _fetchedMonths = {};
+
+  // ATUALIZADO: Agora aceita um DateTime para saber qual mês buscar
+  Future<void> getMonthlyPresence(int studentId, DateTime date) async {
+    // Cria uma chave única para o mês/ano (Ex: "2025-11")
+    final monthKey = DateFormat('yyyy-MM').format(date);
+
+    // 1. VERIFICA O CACHE: Se já buscamos, não faz nada.
+    if (_fetchedMonths.contains(monthKey)) {
+      return;
+    }
+
+    // 2. Não ativa o 'isLoading' global. A busca é silenciosa.
+    //    A UI vai mostrar "relógio" até os dados chegarem.
 
     try {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // Certifique-se de que este endpoint exista no seu arquivo 'endpoints.dart'
-      // Ex: static String getMonthlyPresence(int id) => '$baseUrl/student/$id/presences/current-month';
+      // 3. ATUALIZADO: Chama o endpoint com ano e mês
+      //    Lembre-se da correção do backend (passo 1 da resposta anterior)
+      //    e do endpoint.dart (passo 2)
       final response = await http.get(
-        Uri.parse(Endpoints.getMonthlyPresence(studentId)),
+        Uri.parse(Endpoints.getMonthlyPresence(studentId, date.year, date.month)),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
@@ -35,34 +48,39 @@ class PresenceProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        // 4. Marca o mês como buscado (em caso de sucesso)
+        _fetchedMonths.add(monthKey);
+
         final List<dynamic> data = jsonDecode(response.body);
 
-        // Limpa o mapa antigo e preenche com os novos dados
-        _monthlyPresence.clear();
+        // 5. ATUALIZADO: Adiciona ao mapa, NÃO limpa o mapa antigo
         for (var item in data) {
-          // Ex: {"2025-11-04": "GOING", "2025-11-05": "NONE", "2025-11-06": null}
           _monthlyPresence[item['date']] = item['status'];
         }
+
+        // 6. Notifica a UI para atualizar os ícones
+        notifyListeners();
+
       } else {
-        final data = jsonDecode(response.body);
-        throw Exception(data['message'] ?? 'Falha ao carregar presença do mês.');
+        // Não define um 'error' global para não quebrar a tela de confirmação
+        print('Falha ao carregar presença do mês $monthKey.');
       }
     } catch (e) {
       error = e.toString();
-      _monthlyPresence = {}; // Limpa o mapa em caso de erro
-    } finally {
-      isLoading = false;
-      notifyListeners();
+      _monthlyPresence = {};
+      print('Erro em getMonthlyPresence: $e');
     }
+    // 7. SEM 'finally' e SEM 'notifyListeners()' aqui
+    //    A notificação só acontece em caso de SUCESSO.
   }
 
-  // Seu método existente para ATUALIZAR a presença
+  // ATUALIZADO: Usa o _isConfirming
   Future<bool> updatePresence({
     required int studentId,
     required DateTime date,
     required String status,
   }) async {
-    isLoading = true;
+    _isConfirming = true; // ATUALIZADO
     error = null;
     notifyListeners();
 
@@ -73,11 +91,9 @@ class PresenceProvider extends ChangeNotifier {
         return false;
       }
 
-      // Formata a data para o padrão YYYY-MM-DD esperado pelo backend
       final formattedDate = DateFormat('yyyy-MM-dd').format(date);
 
       final response = await http.put(
-        // Supondo que você tenha um endpoint dinâmico
         Uri.parse(Endpoints.updatePresence(studentId)),
         headers: {
           'Content-Type': 'application/json',
@@ -90,8 +106,12 @@ class PresenceProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        // ADICIONADO: Atualiza o mapa local após o sucesso
         _monthlyPresence[formattedDate] = status;
+
+        // ADICIONADO: Se atualizou o status, força o mês como "buscado"
+        // para não sobrescrever a mudança local.
+        final monthKey = DateFormat('yyyy-MM').format(date);
+        _fetchedMonths.add(monthKey);
 
         return true;
       } else {
@@ -103,7 +123,7 @@ class PresenceProvider extends ChangeNotifier {
       error = 'Erro de conexão. Verifique sua internet.';
       return false;
     } finally {
-      isLoading = false;
+      _isConfirming = false; // ATUALIZADO
       notifyListeners();
     }
   }

@@ -61,5 +61,12 @@ class Endpoints {
   // presence
   static String updatePresence(int studentId) => '$baseUrl/student/$studentId/presence';
   static const String getPresenceSummary = '$baseUrl/student/presence-summary';
-  static String getMonthlyPresence(int studentId) => '$baseUrl/student/$studentId/presences/current-month';
+  static String getMonthlyPresence(int studentId, int year, int month) {
+    // O backend em JS usa mês 0-11, o Dart usa 1-12.
+    // Ajustamos aqui, enviando o mês no formato que o JS espera (0-11).
+    final jsMonth = month - 1;
+
+    // Note que a rota mudou para '/presences' e usa query parameters
+    return '$baseUrl/student/$studentId/presences?year=$year&month=$jsMonth';
+  }
 }

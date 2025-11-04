@@ -31,7 +31,6 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
   late DateTime _selectedDay;
   String? _selectedTransportOption;
   final DateFormat _dateFormatter = DateFormat('EEEE, dd MMM yyyy', 'pt_BR');
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -50,7 +49,7 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PresenceProvider>(context, listen: false)
-          .getMonthlyPresence(widget.studentId);
+          .getMonthlyPresence(widget.studentId, _selectedDay); // Passa a data
     });
   }
 
@@ -129,8 +128,7 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Pega o estado de loading do provider
-    _isLoading = context.watch<PresenceProvider>().isLoading;
+    final isConfirming = context.watch<PresenceProvider>().isConfirming;
     final presenceMap = context.watch<PresenceProvider>().monthlyPresence;
 
     return Scaffold(
@@ -162,7 +160,13 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
                   _selectedDay = newSelectedDay;
                 });
               },
+              // ATUALIZADO: Passa o mapa de presença
               presenceStatusMap: presenceMap,
+              // ADICIONADO: O callback para buscar novos meses
+              onMonthChanged: (newDate) {
+                Provider.of<PresenceProvider>(context, listen: false)
+                    .getMonthlyPresence(widget.studentId, newDate);
+              },
             ),
             const SizedBox(height: 24),
 
@@ -179,7 +183,7 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
 
             // Componente 3: Botão de Confirmação
             ConfirmButton(
-              isLoading: _isLoading,
+              isLoading: isConfirming,
               onPressed: _confirmPresence,
             ),
           ],

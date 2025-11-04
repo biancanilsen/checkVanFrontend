@@ -8,11 +8,14 @@ class WeekSelector extends StatefulWidget {
   final Function(DateTime) onDaySelected;
   final Map<String, String?> presenceStatusMap;
 
+  final Function(DateTime newDate)? onMonthChanged;
+
   const WeekSelector({
     Key? key,
     required this.initialSelectedDay,
     required this.onDaySelected,
     required this.presenceStatusMap,
+    this.onMonthChanged,
   }) : super(key: key);
 
   @override
@@ -49,22 +52,33 @@ class _WeekSelectorState extends State<WeekSelector> {
       _selectedDay = selectedDay;
       _focusedDay = selectedDay;
     });
-    // Notifica o widget pai sobre a mudança
     widget.onDaySelected(selectedDay);
   }
 
   void _goToPreviousWeek() {
+    final int oldMonth = _focusedDay.month;
+
     setState(() {
       _focusedDay = _focusedDay.subtract(const Duration(days: 7));
       _updateCurrentWeek(_focusedDay);
     });
+
+    if (_focusedDay.month != oldMonth && widget.onMonthChanged != null) {
+      widget.onMonthChanged!(_focusedDay);
+    }
   }
 
   void _goToNextWeek() {
+    final int oldMonth = _focusedDay.month;
+
     setState(() {
       _focusedDay = _focusedDay.add(const Duration(days: 7));
       _updateCurrentWeek(_focusedDay);
     });
+
+    if (_focusedDay.month != oldMonth && widget.onMonthChanged != null) {
+      widget.onMonthChanged!(_focusedDay);
+    }
   }
 
   @override
@@ -79,17 +93,12 @@ class _WeekSelectorState extends State<WeekSelector> {
         Expanded(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: _currentWeekDays.map((day) {
-                // ADICIONAR LÓGICA:
-                // 1. Formata a data do card para "YYYY-MM-DD" para ser a chave do mapa
-                final isoDate = DateFormat('yyyy-MM-dd').format(day);
+            children: _currentWeekDays.map((day) {
+              final isoDate = DateFormat('yyyy-MM-dd').format(day);
+              final status = widget.presenceStatusMap[isoDate];
 
-                // 2. Busca o status no mapa
-                final status = widget.presenceStatusMap[isoDate]; // Ex: "GOING", "NONE", ou null
-
-                // 3. Passa o status para o _buildDayCard
-                return _buildDayCard(day, status);
-              }).toList(),
+              return _buildDayCard(day, status);
+            }).toList(),
           ),
         ),
         IconButton(
@@ -107,38 +116,30 @@ class _WeekSelectorState extends State<WeekSelector> {
         '${dayFormat[0].toUpperCase()}${dayFormat.substring(1)}';
     final dayNumber = DateFormat.d('pt_BR').format(day);
 
-    // ADICIONAR LÓGICA DO ÍCONE:
     IconData iconData;
     Color iconColor;
 
-    // if (isSelected) {
-    //   // Se está selecionado, o ícone é sempre o check verde (feedback de seleção)
-    //   //iconData = Icons.check_circle;
-    //   //iconColor = AppPalette.green600;
-    // }
-      // Se não está selecionado, usa a lógica de status
-      switch (status) {
-        case 'BOTH':
-        case 'GOING':
-        case 'RETURNING':
-          iconData = Icons.check_circle_outline; // Ícone de check (pode ser o preenchido também)
-          iconColor = AppPalette.green600; // Verde
-          break;
-        case 'NONE':
-          iconData = Icons.cancel_outlined; // Ícone X (ou Icons.close)
-          iconColor = Colors.red.shade700; // Vermelho
-          break;
-        case null: // "Não tem registro" (veio null do backend)
-        default:
-          iconData = Icons.watch_later_outlined;
-          iconColor = Colors.orange.shade700; // Laranja
-
+    switch (status) {
+      case 'BOTH':
+      case 'GOING':
+      case 'RETURNING':
+        iconData = Icons.check_circle_outline; // Check (vazado)
+        iconColor = AppPalette.green600; // Verde
+        break;
+      case 'NONE':
+        iconData = Icons.cancel_outlined; // Ícone X
+        iconColor = Colors.red.shade700; // Vermelho
+        break;
+      case null: // "Não tem registro" (veio null do backend)
+      default:
+        iconData = Icons.watch_later_outlined; // Relógio
+        iconColor = Colors.orange.shade700; // Laranja
     }
 
     return GestureDetector(
       onTap: () => _onDayCardSelected(day),
       child: Container(
-        // Reduzi o padding como na sua pergunta anterior
+        // Padding reduzido para evitar overflow
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.grey.shade50,
@@ -167,7 +168,6 @@ class _WeekSelectorState extends State<WeekSelector> {
               ),
             ),
             const SizedBox(height: 4),
-            // USAR O ÍCONE DINÂMICO
             Icon(
               iconData,
               color: iconColor,
