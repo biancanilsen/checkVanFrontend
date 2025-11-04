@@ -203,6 +203,7 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
               ),
               const SizedBox(height: 32),
 
+              // TODO - Não tem como escrever assentos
               CustomTextField(
                 controller: _nameController,
                 label: 'Nome da Escola',

@@ -167,6 +167,7 @@ class _SignUpFormState extends State<SignUpForm> {
               isRequired: true,
               validator: (v) => v == null || v.isEmpty ? 'Campo obrigatório' : null,
             ),
+            // TODO - Adicionar mascara
             const SizedBox(height: 16),
             _buildCustomTextField(
               controller: _phoneController,

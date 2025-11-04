@@ -352,6 +352,7 @@ class _AddTeamPageState extends State<AddTeamPage> {
     );
   }
 
+  // TODO - esse componente de endereço está diferente dos outros
   // Método copiado de AddSchoolPage (como fizemos na última tentativa)
   Widget _buildAddressField() {
     return Column(
@@ -361,7 +362,7 @@ class _AddTeamPageState extends State<AddTeamPage> {
           text: const TextSpan(
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppPalette.neutral900),
             children: [
-              TextSpan(text: 'Endereço'),
+              TextSpan(text: 'Endereço de partida'),
               TextSpan(text: ' *', style: TextStyle(color: AppPalette.red500)),
             ],
           ),

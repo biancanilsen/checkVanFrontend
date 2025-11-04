@@ -238,6 +238,7 @@ class _MyProfileState extends State<MyProfile> {
                 validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
               ),
               const SizedBox(height: 16),
+              // TODO - Adicionar máscara
               CustomTextField(
                 controller: _phoneController,
                 label: 'Telefone',
