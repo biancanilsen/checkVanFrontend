@@ -10,6 +10,7 @@ import '../../../provider/geocoding_provider.dart';
 import '../../../provider/school_provider.dart';
 import '../../../provider/team_provider.dart';
 import '../../../provider/van_provider.dart';
+import '../../widgets/button/primary_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/team/period_selector.dart';
 import '../../widgets/utils/custom_dropdown_field.dart';
@@ -322,27 +323,10 @@ class _AddTeamPageState extends State<AddTeamPage> {
               ),
               const SizedBox(height: 40),
 
-              ElevatedButton(
+              PrimaryButton(
+                text: isEditing ? 'Salvar Alterações' : 'Adicionar turma',
                 onPressed: (teamProvider.isLoading) ? null : _submitForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.primary800,
-                  foregroundColor: AppPalette.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                child: teamProvider.isLoading
-                    ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                )
-                    : Text(isEditing ? 'Salvar Alterações' : 'Adicionar turma'),
+                isLoading: teamProvider.isLoading,
               ),
               const SizedBox(height: 24),
             ],

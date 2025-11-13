@@ -10,6 +10,7 @@ import '../../../provider/geocoding_provider.dart';
 import '../../../provider/school_provider.dart';
 import '../../../utils/address_utils.dart';
 import '../../widgets/button/danger_outline_button.dart';
+import '../../widgets/button/primary_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/dialog/delete_school_dialog.dart';
 import '../../widgets/van/custom_snackbar.dart';
@@ -336,22 +337,10 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
                 ],
               ),
               const SizedBox(height: 32),
-              ElevatedButton(
+              PrimaryButton(
+                text: isEditing ? 'Salvar Alterações' : 'Cadastrar Escola',
                 onPressed: schoolProvider.isLoading ? null : _submitForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.primary800,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: schoolProvider.isLoading
-                    ? const SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white),
-                )
-                    : Text(isEditing ? 'Salvar Alterações' : 'Salvar Escola'),
+                isLoading: schoolProvider.isLoading,
               ),
               const SizedBox(height: 24),
 

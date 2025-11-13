@@ -6,6 +6,7 @@ import '../../../core/theme.dart';
 import '../../../enum/snack_bar_type.dart';
 import '../../../provider/van_provider.dart';
 import '../../widgets/button/danger_outline_button.dart';
+import '../../widgets/button/primary_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/dialog/delete_van_dialog.dart';
 import '../../widgets/van/custom_snackbar.dart';
@@ -110,10 +111,10 @@ class _AddVanPageState extends State<AddVanPage> {
     }
 
     if (mounted) {
-      Navigator.pop(context); // Fecha o dialog
+      Navigator.pop(context);
 
       if (success) {
-        Navigator.pop(context); // Fecha a AddVanPage
+        Navigator.pop(context);
         CustomSnackBar.show(
           context: context,
           label: 'Van excluída com sucesso.',
@@ -167,7 +168,6 @@ class _AddVanPageState extends State<AddVanPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Editar Van' : 'Nova Van'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppPalette.primary900,
@@ -224,17 +224,10 @@ class _AddVanPageState extends State<AddVanPage> {
               ),
               const SizedBox(height: 32),
 
-              ElevatedButton(
+              PrimaryButton(
+                text: isEditing ? 'Salvar Alterações' : 'Cadastrar Van',
                 onPressed: vanProvider.isLoading ? null : _submitVan,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.primary800,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                ),
-                child: vanProvider.isLoading
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text(isEditing ? 'Salvar Alterações' : 'Salvar Van'),
+                isLoading: vanProvider.isLoading,
               ),
               const SizedBox(height: 24),
               if (isEditing)
