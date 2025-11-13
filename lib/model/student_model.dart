@@ -1,5 +1,7 @@
 import 'package:image_picker/image_picker.dart';
 
+import 'guardian_info.dart';
+
 class School {
   final int id;
   final String name;
@@ -29,6 +31,8 @@ class Student {
   final double longitude;
   final bool? isConfirmed;
   final String? image_profile;
+  final int? teamId;
+  final GuardianInfo? guardian;
 
   Student({
     required this.id,
@@ -44,7 +48,9 @@ class Student {
     required this.latitude,
     required this.longitude,
     this.isConfirmed,
-    this.image_profile
+    this.image_profile,
+    this.teamId,
+    this.guardian,
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
@@ -54,6 +60,11 @@ class Student {
       final status = json['presences'][0]['status'];
       // O aluno está confirmado se o status for qualquer coisa diferente de 'NONE'
       isStudentConfirmed = (status != 'NONE');
+    }
+    int? teamIdResult;
+    if (json['student_team'] != null && (json['student_team'] as List).isNotEmpty) {
+      // Pega o ID da turma do primeiro (e único) registro
+      teamIdResult = json['student_team'][0]['team_id'];
     }
 
     return Student(
@@ -73,6 +84,8 @@ class Student {
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       isConfirmed: isStudentConfirmed,
       image_profile: json['image_profile'],
+      teamId: teamIdResult,
+      guardian: json['user'] != null ? GuardianInfo.fromJson(json['user']) : null,
     );
   }
 
@@ -86,5 +99,6 @@ class Student {
     'school_id': schoolId,
     'shift_going': shiftGoing,
     'shift_return': shiftReturn,
+    
   };
 }

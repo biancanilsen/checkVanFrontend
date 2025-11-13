@@ -11,19 +11,19 @@ import '../../../model/student_model.dart';
 import '../../../provider/geocoding_provider.dart';
 import '../../../provider/school_provider.dart';
 import '../../../provider/student_provider.dart';
+import '../../../provider/team_provider.dart';
 import '../../../utils/address_utils.dart';
+import '../../../utils/launcher_utils.dart';
 import '../../../utils/user_session.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/student/guardian_card.dart';
 import '../../widgets/utils/address_field.dart';
 import '../../widgets/utils/custom_dropdown_field.dart';
 
 class AddStudentPage extends StatefulWidget {
   final Student? student;
 
-  const AddStudentPage({
-    super.key,
-    this.student,
-  });
+  const AddStudentPage({super.key, this.student});
 
   @override
   State<AddStudentPage> createState() => _AddStudentPageState();
@@ -48,6 +48,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
   String? _selectedShiftGoing;
   String? _selectedShiftReturn;
 
+  int? _selectedTeamId;
+
   XFile? _imageFile;
   final ImagePicker _picker = ImagePicker();
   String? _userRole;
@@ -61,17 +63,24 @@ class _AddStudentPageState extends State<AddStudentPage> {
     _loadUserRole();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<SchoolProvider>(context, listen: false).getSchools();
+      Provider.of<TeamProvider>(context, listen: false).getTeams();
     });
 
     if (isEditing) {
       final student = widget.student!;
       _nameController.text = student.name;
       _birthDate = student.birthDate;
-      _birthDateController.text = DateFormat('dd/MM/yyyy').format(student.birthDate);
+      _birthDateController.text = DateFormat(
+        'dd/MM/yyyy',
+      ).format(student.birthDate);
       _selectedGender = student.gender;
       _selectedSchoolId = student.schoolId;
       _selectedShiftGoing = student.shiftGoing;
       _selectedShiftReturn = student.shiftReturn;
+      // 4. Preencha a turma (se o aluno tiver uma)
+      // Você precisará atualizar seu StudentModel para incluir o 'team_id' ou 'teams'
+      // Assumindo que student.teamId ou student.teams.first.id exista
+      _selectedTeamId = student.teamId;
 
       AddressUtils.splitAddressForEditing(
         fullAddress: student.address,
@@ -118,9 +127,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao selecionar imagem: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro ao selecionar imagem: $e')));
     }
   }
 
@@ -145,6 +154,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
         shiftGoing: _selectedShiftGoing ?? '',
         shiftReturn: _selectedShiftReturn ?? '',
         imageFile: _imageFile,
+        teamId: _selectedTeamId,
       );
     } else {
       success = await studentProvider.addStudent(
@@ -163,7 +173,11 @@ class _AddStudentPageState extends State<AddStudentPage> {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEditing ? 'Aluno atualizado com sucesso!' : 'Aluno cadastrado com sucesso!'),
+            content: Text(
+              isEditing
+                  ? 'Aluno atualizado com sucesso!'
+                  : 'Aluno cadastrado com sucesso!',
+            ),
             backgroundColor: AppPalette.green500,
           ),
         );
@@ -191,7 +205,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
         _isAddressLoading = true;
         _showSuggestions = true;
       });
-      final suggestions = await context.read<GeocodingProvider>().fetchSuggestions(pattern);
+      final suggestions = await context
+          .read<GeocodingProvider>()
+          .fetchSuggestions(pattern);
       if (mounted) {
         setState(() {
           _addressSuggestions = suggestions;
@@ -256,9 +272,13 @@ class _AddStudentPageState extends State<AddStudentPage> {
       );
     }
     final bool isGuardian = _userRole == 'guardian';
+    final bool isDriver = _userRole == 'driver';
+    final bool canEditSensitive = isGuardian;
+    final bool canEditLogistic = isDriver;
     final bool readOnly = !isGuardian;
     final schoolProvider = context.watch<SchoolProvider>();
     final studentProvider = context.watch<StudentProvider>();
+    final teamProvider = context.watch<TeamProvider>();
 
     final Map<String?, String> shiftOptions = {
       null: 'Não informado',
@@ -268,17 +288,25 @@ class _AddStudentPageState extends State<AddStudentPage> {
     };
 
     final bool schoolListContainsValue = schoolProvider.schools.any(
-            (s) => s.id == _selectedSchoolId
+      (s) => s.id == _selectedSchoolId,
     );
-    final int? effectiveSchoolId = schoolListContainsValue ? _selectedSchoolId : null;
+    final int? effectiveSchoolId =
+        schoolListContainsValue ? _selectedSchoolId : null;
 
-    final String? effectiveShiftGoing = shiftOptions.containsKey(_selectedShiftGoing)
-        ? _selectedShiftGoing
-        : null;
+    final bool teamListContainsValue = teamProvider.teams.any(
+      (t) => t.id == _selectedTeamId,
+    );
+    final int? effectiveTeamId = teamListContainsValue ? _selectedTeamId : null;
 
-    final String? effectiveShiftReturn = shiftOptions.containsKey(_selectedShiftReturn)
-        ? _selectedShiftReturn
-        : null;
+    final String? effectiveShiftGoing =
+        shiftOptions.containsKey(_selectedShiftGoing)
+            ? _selectedShiftGoing
+            : null;
+
+    final String? effectiveShiftReturn =
+        shiftOptions.containsKey(_selectedShiftReturn)
+            ? _selectedShiftReturn
+            : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -296,133 +324,261 @@ class _AddStudentPageState extends State<AddStudentPage> {
               const SizedBox(height: 16),
               Text(
                 isGuardian
-                    ? (isEditing ? 'Editar Aluno' : 'Dados do aluno')
-                    : 'Ver Aluno',
+                    ? (isEditing ? 'Editar Aluno' : 'Cadastrar Aluno')
+                    : 'Editar Aluno',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppPalette.primary800,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 isGuardian
-                    ? (isEditing ? 'Altere os dados necessários' : 'Preencha os dados para realizar o cadastro')
+                    ? (isEditing
+                        ? 'Altere os dados necessários'
+                        : 'Preencha os dados para realizar o cadastro')
                     : 'Visulize as informações do aluno',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, color: AppPalette.neutral600),
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppPalette.neutral600,
+                ),
               ),
               const SizedBox(height: 32),
               Center(
                 child: GestureDetector(
-                  onTap: isGuardian ? _pickImage : null,
+                  onTap:
+                      canEditSensitive || _pickImage == null
+                          ? _pickImage
+                          : null,
                   child: CircleAvatar(
                     radius: 80,
                     backgroundColor: Colors.grey.shade200,
-                    backgroundImage: _imageFile != null
-                        ? FileImage(File(_imageFile!.path))
-                        : (isEditing && widget.student!.image_profile != null
-                        ? NetworkImage(widget.student!.image_profile!)
-                        : const AssetImage('assets/profile.png')) as ImageProvider,
-                    child: (_imageFile == null && isGuardian)
-                        ? Align(
-                      alignment: Alignment.bottomRight,
-                      child: CircleAvatar(
-                        radius: 24,
-                        backgroundColor: AppPalette.primary900,
-                        child: Icon(Icons.edit, color: Colors.white),
-                      ),
-                    )
-                        : null,
+                    backgroundImage:
+                        _imageFile != null
+                            ? FileImage(File(_imageFile!.path))
+                            : (isEditing &&
+                                        widget.student!.image_profile != null
+                                    ? NetworkImage(
+                                      widget.student!.image_profile!,
+                                    )
+                                    : const AssetImage('assets/profile.png'))
+                                as ImageProvider,
+                    child:
+                        (_imageFile == null || canEditSensitive)
+                            ? Align(
+                              alignment: Alignment.bottomRight,
+                              child: CircleAvatar(
+                                radius: 24,
+                                backgroundColor: AppPalette.primary900,
+                                child: Icon(Icons.edit, color: Colors.white),
+                              ),
+                            )
+                            : null,
                   ),
                 ),
               ),
               const SizedBox(height: 32),
 
-              IgnorePointer(
-                ignoring: readOnly,
-                child: Column(
-                  children: [
-                    CustomTextField(controller: _nameController, label: 'Nome', hint: 'Nome do aluno', isRequired: true, validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null, readOnly: readOnly),
-                    const SizedBox(height: 16),
-                    CustomTextField(controller: _birthDateController, label: 'Data de nascimento', hint: 'dd/mm/aaaa', isRequired: true, onTap: _pickDate, suffixIcon: Icons.calendar_today, validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null, readOnly: readOnly),
-                    const SizedBox(height: 16),
-
-                    CustomDropdownField<String?>(
-                      label: 'Gênero', hint: 'Selecione', value: _selectedGender,
-                      items: ['Masculino', 'Feminino'].map((g) => DropdownMenuItem(value: g == 'Masculino' ? 'male' : 'female', child: Text(g))).toList(),
-                      onChanged: (value) => setState(() => _selectedGender = value),
-                      validator: (v) => v == null ? 'Campo obrigatório' : null,
-                      readOnly: readOnly,
-                    ),
-                    const SizedBox(height: 16),
-                    AddressField(
-                      streetController: _streetController,
-                      numberController: _numberController,
-                      addressFocusNode: _addressFocusNode,
-                      showSuggestions: _showSuggestions,
-                      isAddressLoading: _isAddressLoading,
-                      addressSuggestions: _addressSuggestions,
-                      onSuggestionSelected: _onSuggestionSelected,
-                      streetValidator: (value) => (value == null || value.isEmpty) ? 'Obrigatório' : null,
-                      numberValidator: (value) => (value == null || value.isEmpty) ? 'Obrigatório' : null,
-                      readOnly: readOnly,
-                    ),
-                    const SizedBox(height: 16),
-
-                    CustomDropdownField<int?>(
-                      label: 'Escola',
-                      hint: schoolProvider.isLoading ? 'Carregando...' : 'Selecione a escola',
-                      value: effectiveSchoolId,
-                      items: schoolProvider.schools.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name))).toList(),
-                      onChanged: schoolProvider.isLoading ? null : (value) => setState(() => _selectedSchoolId = value as int?),
-                      validator: (v) => v == null ? 'Campo obrigatório' : null,
-                      readOnly: readOnly,
-                    ),
-                    const SizedBox(height: 16),
-
-                    CustomDropdownField<String?>(
-                      label: 'Turno Ida',
-                      hint: 'Período da aula',
-                      value: effectiveShiftGoing,
-                      items: shiftOptions.entries.map((entry) {
-                        return DropdownMenuItem(
-                          value: entry.key,
-                          child: Text(entry.value),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() => _selectedShiftGoing = value),
-                      validator: (v) => (v == null && isGuardian) ? 'Campo obrigatório' : null,
-                      readOnly: readOnly,
-                    ),
-                    const SizedBox(height: 16),
-                    CustomDropdownField<String?>(
-                      label: 'Turno Volta',
-                      hint: 'Período da aula',
-                      value: effectiveShiftReturn,
-                      items: shiftOptions.entries.map((entry) {
-                        return DropdownMenuItem(
-                          value: entry.key,
-                          child: Text(entry.value),
-                        );
-                      }).toList(),
-                      onChanged: (value) => setState(() => _selectedShiftReturn = value),
-                      validator: (v) => (v == null && isGuardian) ? 'Campo obrigatório' : null,
-                      readOnly: readOnly,
-                    ),
-                  ],
-                ),
+              CustomTextField(
+                controller: _nameController,
+                label: 'Nome',
+                hint: 'Nome do aluno',
+                isRequired: true,
+                validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
+                readOnly: !canEditSensitive,
               ),
+              const SizedBox(height: 16),
+              CustomTextField(
+                controller: _birthDateController,
+                label: 'Data de nascimento',
+                hint: 'dd/mm/aaaa',
+                isRequired: true,
+                onTap: _pickDate,
+                suffixIcon: Icons.calendar_today,
+                validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
+                readOnly: !canEditSensitive,
+              ),
+              const SizedBox(height: 16),
+
+              CustomDropdownField<String?>(
+                label: 'Gênero',
+                hint: 'Selecione',
+                value: _selectedGender,
+                items:
+                    ['Masculino', 'Feminino']
+                        .map(
+                          (g) => DropdownMenuItem(
+                            value: g == 'Masculino' ? 'male' : 'female',
+                            child: Text(g),
+                          ),
+                        )
+                        .toList(),
+                onChanged: (value) => setState(() => _selectedGender = value),
+                validator: (v) => v == null ? 'Campo obrigatório' : null,
+                readOnly: !canEditSensitive,
+              ),
+              const SizedBox(height: 16),
+              AddressField(
+                streetController: _streetController,
+                numberController: _numberController,
+                addressFocusNode: _addressFocusNode,
+                showSuggestions: _showSuggestions,
+                isAddressLoading: _isAddressLoading,
+                addressSuggestions: _addressSuggestions,
+                onSuggestionSelected: _onSuggestionSelected,
+                streetValidator:
+                    (value) =>
+                        (value == null || value.isEmpty) ? 'Obrigatório' : null,
+                numberValidator:
+                    (value) =>
+                        (value == null || value.isEmpty) ? 'Obrigatório' : null,
+                readOnly: false,
+              ),
+              const SizedBox(height: 16),
+
+              CustomDropdownField<int?>(
+                label: 'Escola',
+                hint:
+                    schoolProvider.isLoading
+                        ? 'Carregando...'
+                        : 'Selecione a escola',
+                value: effectiveSchoolId,
+                items:
+                    schoolProvider.schools
+                        .map(
+                          (s) => DropdownMenuItem(
+                            value: s.id,
+                            child: Text(s.name),
+                          ),
+                        )
+                        .toList(),
+                onChanged:
+                    schoolProvider.isLoading
+                        ? null
+                        : (value) =>
+                            setState(() => _selectedSchoolId = value as int?),
+                validator: (v) => v == null ? 'Campo obrigatório' : null,
+                readOnly: false,
+              ),
+
+              const SizedBox(height: 16),
+
+              CustomDropdownField<String?>(
+                label: 'Turno Ida',
+                hint: 'Período da aula',
+                value: effectiveShiftGoing,
+                items:
+                    shiftOptions.entries.map((entry) {
+                      return DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      );
+                    }).toList(),
+                onChanged:
+                    (value) => setState(() => _selectedShiftGoing = value),
+                validator:
+                    (v) =>
+                        (v == null && isGuardian) ? 'Campo obrigatório' : null,
+                readOnly: false,
+              ),
+              const SizedBox(height: 16),
+              CustomDropdownField<String?>(
+                label: 'Turno Volta',
+                hint: 'Período da aula',
+                value: effectiveShiftReturn,
+                items:
+                    shiftOptions.entries.map((entry) {
+                      return DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      );
+                    }).toList(),
+                onChanged:
+                    (value) => setState(() => _selectedShiftReturn = value),
+                validator:
+                    (v) =>
+                        (v == null && isGuardian) ? 'Campo obrigatório' : null,
+                readOnly: false,
+              ),
+
+              const SizedBox(height: 16),
+
+              if(isDriver)
+              CustomDropdownField<int?>(
+                label: 'Turma',
+                hint:
+                teamProvider.isLoading
+                    ? 'Carregando turmas...'
+                    : 'Selecione a turma',
+                value: effectiveTeamId,
+                // Usa o ID da turma validado
+                items:
+                teamProvider.teams
+                    .map(
+                      (t) => DropdownMenuItem<int>(
+                    value: t.id,
+                    child: Text(t.name),
+                  ),
+                )
+                    .toList(),
+                onChanged:
+                teamProvider.isLoading
+                    ? null
+                    : (value) => setState(() => _selectedTeamId = value),
+                validator: null,
+                readOnly: !canEditLogistic,
+              ),
+
+              if (isDriver) ...[
+                const SizedBox(height: 32),
+                const Text(
+                  'Responsáveis',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppPalette.primary800),
+                ),
+                const SizedBox(height: 16),
+                GuardianCard(
+                  name: widget.student!.guardian!.name,
+                  phone: widget.student!.guardian!.phone,
+
+                  onCallPressed: () {
+                    LauncherUtils.makePhoneCall(context, widget.student!.guardian!.phone);
+                  },
+                  onChatPressed: () {
+                    LauncherUtils.openWhatsApp(context, widget.student!.guardian!.phone);
+                  },
+                ),
+              ],
+
               const SizedBox(height: 32),
 
-              if (isGuardian)
+              if (isGuardian || isDriver)
                 ElevatedButton(
                   onPressed: studentProvider.isLoading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppPalette.primary800, foregroundColor: Colors.white,
+                    backgroundColor: AppPalette.primary800,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  child: studentProvider.isLoading
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text(isEditing ? 'Salvar Alterações' : 'Cadastrar Aluno'),
+                  child:
+                      studentProvider.isLoading
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                          : Text(
+                            isEditing ? 'Salvar Alterações' : 'Cadastrar Aluno',
+                          ),
                 ),
               const SizedBox(height: 24),
             ],
