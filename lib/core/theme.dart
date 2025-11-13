@@ -132,7 +132,23 @@ class AppTheme {
           minimumSize: const Size.fromHeight(40),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(34)),
+            borderRadius: BorderRadius.all(Radius.circular(8)),
+          ),
+        ),
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
+          ),
+        ),
+      ),
+
+      filledButtonTheme: FilledButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
           ),
         ),
       ),

@@ -15,7 +15,10 @@ import '../../../provider/team_provider.dart';
 import '../../../utils/address_utils.dart';
 import '../../../utils/launcher_utils.dart';
 import '../../../utils/user_session.dart';
+import '../../widgets/button/danger_outline_button.dart';
+import '../../widgets/button/primary_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/dialog/delete_student_dialog.dart';
 import '../../widgets/student/guardian_card.dart';
 import '../../widgets/utils/address_field.dart';
 import '../../widgets/utils/custom_dropdown_field.dart';
@@ -56,6 +59,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
   String? _userRole;
   bool _isLoadingRole = true;
 
+  bool _isDeleting = false;
   bool get isEditing => widget.student != null;
 
   @override
@@ -192,6 +196,83 @@ class _AddStudentPageState extends State<AddStudentPage> {
         );
       }
     }
+  }
+
+  Future<void> _handleDeleteStudent() async {
+    if (!isEditing) return;
+
+    setState(() {
+      _isDeleting = true; // Ativa o loading
+    });
+
+    final studentProvider = context.read<StudentProvider>();
+    bool success = false;
+
+    try {
+      success = await studentProvider.deleteStudent(widget.student!.id);
+    } catch (e) {
+      success = false;
+    }
+
+    if (mounted) {
+      Navigator.pop(context); // Fecha o dialog de qualquer forma
+
+      if (success) {
+        // Sucesso
+        Navigator.pop(context); // Fecha a AddStudentPage
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Aluno excluído com sucesso.'),
+            backgroundColor: AppPalette.green500,
+          ),
+        );
+      } else {
+        // Erro
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(studentProvider.error ?? 'Erro ao excluir aluno.'),
+            backgroundColor: AppPalette.red500,
+          ),
+        );
+      }
+    }
+
+    // Garante que o estado de loading seja desativado
+    if (mounted) {
+      setState(() {
+        _isDeleting = false;
+      });
+    }
+  }
+
+  void _showDeleteConfirmationDialog() {
+    if (!isEditing || widget.student == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Não deixa fechar clicando fora
+      builder: (BuildContext dialogContext) {
+        // Usa StatefulBuilder para que o dialog possa
+        // mostrar o loading sem ser reconstruído
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return DeleteStudentDialog(
+              studentName: widget.student!.name,
+              isLoading: _isDeleting, // Usa a variável de estado da página
+              onConfirm: _handleDeleteStudent,
+            );
+          },
+        );
+      },
+    ).then((_) {
+      // Se o dialog for dispensado (ex: "Cancelar")
+      // garanta que o loading de exclusão seja resetado.
+      if (_isDeleting) {
+        setState(() {
+          _isDeleting = false;
+        });
+      }
+    });
   }
 
   void _onAddressChanged() {
@@ -556,30 +637,46 @@ class _AddStudentPageState extends State<AddStudentPage> {
               const SizedBox(height: 32),
 
               if (!isReadOnlyMode)
-                ElevatedButton(
-                  onPressed: studentProvider.isLoading ? null : _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppPalette.primary800,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  child:
-                      studentProvider.isLoading
-                          ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                          : Text(
-                            isEditing ? 'Salvar Alterações' : 'Cadastrar Aluno',
-                          ),
+                // ElevatedButton(
+                //   onPressed: studentProvider.isLoading ? null : _submitForm,
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: AppPalette.primary800,
+                //     foregroundColor: Colors.white,
+                //     padding: const EdgeInsets.symmetric(vertical: 16),
+                //     textStyle: const TextStyle(
+                //       fontSize: 18,
+                //       fontWeight: FontWeight.w600,
+                //     ),
+                //   ),
+                //   child:
+                //       studentProvider.isLoading
+                //           ? const SizedBox(
+                //             height: 20,
+                //             width: 20,
+                //             child: CircularProgressIndicator(
+                //               color: Colors.white,
+                //               strokeWidth: 2,
+                //             ),
+                //           )
+                //           : Text(
+                //             isEditing ? 'Salvar Alterações' : 'Cadastrar Aluno',
+                //           ),
+                // ),
+
+              if (!isReadOnlyMode && (isGuardian || isDriver))
+                PrimaryButton(
+                  text: isEditing ? 'Salvar Alterações' : 'Cadastrar Aluno',
+                  onPressed: _submitForm,
+                  isLoading: studentProvider.isLoading,
+                ),
+
+              const SizedBox(height: 16), // Espaçamento entre os botões
+
+              if (isEditing && !isReadOnlyMode)
+                DangerOutlineButton(
+                  text: 'Excluir aluno',
+                  onPressed: _showDeleteConfirmationDialog,
+                  isLoading: _isDeleting,
                 ),
               const SizedBox(height: 24),
             ],
