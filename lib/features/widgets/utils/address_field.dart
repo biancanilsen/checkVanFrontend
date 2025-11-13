@@ -69,7 +69,7 @@ class AddressField extends StatelessWidget {
             ),
           ],
         ),
-        if (showSuggestions)
+        if (showSuggestions && !readOnly)
           Container(
             height: 200,
             margin: const EdgeInsets.only(top: 4.0),

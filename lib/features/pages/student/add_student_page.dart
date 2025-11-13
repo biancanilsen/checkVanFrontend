@@ -22,8 +22,9 @@ import '../../widgets/utils/custom_dropdown_field.dart';
 
 class AddStudentPage extends StatefulWidget {
   final Student? student;
+  final bool isJustViewState;
 
-  const AddStudentPage({super.key, this.student});
+  const AddStudentPage({super.key, this.student, this.isJustViewState = false});
 
   @override
   State<AddStudentPage> createState() => _AddStudentPageState();
@@ -275,7 +276,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
     final bool isDriver = _userRole == 'driver';
     final bool canEditSensitive = isGuardian;
     final bool canEditLogistic = isDriver;
-    final bool readOnly = !isGuardian;
+    final bool isReadOnlyMode = widget.isJustViewState;
     final schoolProvider = context.watch<SchoolProvider>();
     final studentProvider = context.watch<StudentProvider>();
     final teamProvider = context.watch<TeamProvider>();
@@ -324,8 +325,8 @@ class _AddStudentPageState extends State<AddStudentPage> {
               const SizedBox(height: 16),
               Text(
                 isGuardian
-                    ? (isEditing ? 'Editar Aluno' : 'Cadastrar Aluno')
-                    : 'Editar Aluno',
+                    ? (isEditing && !isReadOnlyMode ? 'Editar Aluno' : 'Cadastrar Aluno')
+                    : 'Visulizar Aluno',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 28,
@@ -367,7 +368,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                                     : const AssetImage('assets/profile.png'))
                                 as ImageProvider,
                     child:
-                        (_imageFile == null || canEditSensitive)
+                        ((_imageFile == null || canEditSensitive) && !isReadOnlyMode)
                             ? Align(
                               alignment: Alignment.bottomRight,
                               child: CircleAvatar(
@@ -388,7 +389,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                 hint: 'Nome do aluno',
                 isRequired: true,
                 validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
-                readOnly: !canEditSensitive,
+                readOnly: !canEditSensitive || isReadOnlyMode,
               ),
               const SizedBox(height: 16),
               CustomTextField(
@@ -399,7 +400,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                 onTap: _pickDate,
                 suffixIcon: Icons.calendar_today,
                 validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
-                readOnly: !canEditSensitive,
+                readOnly: !canEditSensitive || isReadOnlyMode,
               ),
               const SizedBox(height: 16),
 
@@ -418,7 +419,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                         .toList(),
                 onChanged: (value) => setState(() => _selectedGender = value),
                 validator: (v) => v == null ? 'Campo obrigatório' : null,
-                readOnly: !canEditSensitive,
+                readOnly: !canEditSensitive || isReadOnlyMode,
               ),
               const SizedBox(height: 16),
               AddressField(
@@ -435,7 +436,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                 numberValidator:
                     (value) =>
                         (value == null || value.isEmpty) ? 'Obrigatório' : null,
-                readOnly: false,
+                readOnly: isReadOnlyMode,
               ),
               const SizedBox(height: 16),
 
@@ -461,7 +462,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                         : (value) =>
                             setState(() => _selectedSchoolId = value as int?),
                 validator: (v) => v == null ? 'Campo obrigatório' : null,
-                readOnly: false,
+                readOnly: isReadOnlyMode,
               ),
 
               const SizedBox(height: 16),
@@ -482,7 +483,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                 validator:
                     (v) =>
                         (v == null && isGuardian) ? 'Campo obrigatório' : null,
-                readOnly: false,
+                readOnly: isReadOnlyMode,
               ),
               const SizedBox(height: 16),
               CustomDropdownField<String?>(
@@ -501,7 +502,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                 validator:
                     (v) =>
                         (v == null && isGuardian) ? 'Campo obrigatório' : null,
-                readOnly: false,
+                readOnly: isReadOnlyMode,
               ),
 
               const SizedBox(height: 16),
@@ -529,7 +530,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
                     ? null
                     : (value) => setState(() => _selectedTeamId = value),
                 validator: null,
-                readOnly: !canEditLogistic,
+                readOnly: !canEditLogistic || isReadOnlyMode,
               ),
 
               if (isDriver) ...[
@@ -554,7 +555,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
               const SizedBox(height: 32),
 
-              if (isGuardian || isDriver)
+              if (!isReadOnlyMode)
                 ElevatedButton(
                   onPressed: studentProvider.isLoading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(

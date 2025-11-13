@@ -381,4 +381,33 @@ class StudentProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<Student> getStudentDetails(int studentId) async {
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      final url = Uri.parse('${Endpoints.baseUrl}/student/get/$studentId');
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final studentJson = data['student'];
+        return Student.fromJson(studentJson);
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['message'] ?? 'Falha ao carregar dados do aluno.');
+      }
+    } catch (e) {
+      _error = e.toString();
+      rethrow;
+    }
+  }
 }

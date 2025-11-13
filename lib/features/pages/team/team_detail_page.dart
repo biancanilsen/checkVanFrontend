@@ -61,6 +61,60 @@ class _TeamDetailPageState extends State<TeamDetailPage> {
     });
   }
 
+  void _navigateToStudentDetails(Student partialStudent) async {
+    final studentProvider = context.read<StudentProvider>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Dialog(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 20),
+                Text("Buscando dados..."),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    try {
+      final Student fullStudent =
+      await studentProvider.getStudentDetails(partialStudent.id);
+
+      if (mounted) Navigator.pop(context);
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (newContext) => ChangeNotifierProvider.value(
+              value: studentProvider,
+              child: AddStudentPage(student: fullStudent, isJustViewState: true,),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+            Text(studentProvider.error ?? 'Não foi possível carregar o aluno.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,24 +147,11 @@ class _TeamDetailPageState extends State<TeamDetailPage> {
                   padding: const EdgeInsets.only(bottom: 8.0),
                   child: StudentTile(
                     name: student.name,
-                    // O 'student' que vem da 'team' não tem 'address'
-                    // Você pode querer buscar o 'student' completo
-                    // ou ajustar o modelo
                     address: student.address ?? 'Endereço não disponível',
                     image_profile: student.image_profile,
                     isGuardian: false,
                     onActionPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (newContext) => ChangeNotifierProvider.value(
-                            // --- 2. CORREÇÃO AQUI ---
-                            // Lê o StudentProvider do contexto
-                            value: context.read<StudentProvider>(),
-                            child: AddStudentPage(student: student),
-                          ),
-                        ),
-                      );
+                      _navigateToStudentDetails(student);
                     },
                   ),
                 );
