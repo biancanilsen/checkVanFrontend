@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../../model/student_model.dart';
 import '../../../provider/school_provider.dart';
 import '../../../provider/student_provider.dart';
+import '../../enum/snack_bar_type.dart';
+import '../widgets/van/custom_snackbar.dart';
 
 class EditStudentForm extends StatefulWidget {
   final Student student;
@@ -90,13 +92,17 @@ class _EditStudentFormState extends State<EditStudentForm> {
 
     if (mounted) {
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Aluno atualizado com sucesso!'), backgroundColor: Colors.green),
+        CustomSnackBar.show(
+          context: context,
+          label: 'Aluno atualizado com sucesso!',
+          type: SnackBarType.success,
         );
         Navigator.of(context).pop();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(studentProvider.error ?? 'Falha ao atualizar'), backgroundColor: Colors.red),
+        CustomSnackBar.show(
+          context: context,
+          label: studentProvider.error ?? 'Falha ao atualizar',
+          type: SnackBarType.error,
         );
       }
     }

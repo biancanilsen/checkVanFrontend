@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme.dart';
+import '../../../enum/snack_bar_type.dart';
 import '../../../model/address_suggestion.dart';
 import '../../../model/student_model.dart';
 import '../../../provider/geocoding_provider.dart';
@@ -22,6 +23,7 @@ import '../../widgets/dialog/delete_student_dialog.dart';
 import '../../widgets/student/guardian_card.dart';
 import '../../widgets/utils/address_field.dart';
 import '../../widgets/utils/custom_dropdown_field.dart';
+import '../../widgets/van/custom_snackbar.dart';
 
 class AddStudentPage extends StatefulWidget {
   final Student? student;
@@ -176,23 +178,19 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
     if (mounted) {
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              isEditing
-                  ? 'Aluno atualizado com sucesso!'
-                  : 'Aluno cadastrado com sucesso!',
-            ),
-            backgroundColor: AppPalette.green500,
-          ),
+        CustomSnackBar.show(
+          context: context,
+          label: isEditing
+              ? 'Aluno atualizado com sucesso!'
+              : 'Aluno cadastrado com sucesso!',
+          type: SnackBarType.success,
         );
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(studentProvider.error ?? 'Ocorreu um erro.'),
-            backgroundColor: AppPalette.red500,
-          ),
+        CustomSnackBar.show(
+          context: context,
+          label: studentProvider.error ?? 'Ocorreu um erro.',
+          type: SnackBarType.error,
         );
       }
     }
@@ -220,19 +218,16 @@ class _AddStudentPageState extends State<AddStudentPage> {
       if (success) {
         // Sucesso
         Navigator.pop(context); // Fecha a AddStudentPage
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Aluno excluído com sucesso.'),
-            backgroundColor: AppPalette.green500,
-          ),
+        CustomSnackBar.show(
+          context: context,
+          label: 'Aluno excluído com sucesso.',
+          type: SnackBarType.success,
         );
       } else {
-        // Erro
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(studentProvider.error ?? 'Erro ao excluir aluno.'),
-            backgroundColor: AppPalette.red500,
-          ),
+        CustomSnackBar.show(
+          context: context,
+          label: 'Erro ao excluir aluno',
+          type: SnackBarType.error,
         );
       }
     }
@@ -672,7 +667,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
               const SizedBox(height: 16), // Espaçamento entre os botões
 
-              if (isEditing && !isReadOnlyMode)
+              if (isEditing && !isReadOnlyMode && isGuardian)
                 DangerOutlineButton(
                   text: 'Excluir aluno',
                   onPressed: _showDeleteConfirmationDialog,

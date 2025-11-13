@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme.dart';
 
-class DeleteStudentDialog extends StatelessWidget {
-  final String studentName;
+class DeleteSchoolDialog extends StatelessWidget {
+  final String schoolName;
   final VoidCallback onConfirm;
   final bool isLoading;
 
-  const DeleteStudentDialog({
+  const DeleteSchoolDialog({
     super.key,
-    required this.studentName,
+    required this.schoolName,
     required this.onConfirm,
     this.isLoading = false,
   });
@@ -16,19 +16,20 @@ class DeleteStudentDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      // Usa o shape global (ou local de 12)
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      title: const Text('Excluir Aluno', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppPalette.primary800),
+      title: const Text('Excluir Escola', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppPalette.primary800),
       ),
       contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
       content: RichText(
         text: TextSpan(
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: AppPalette.neutral700),
           children: <TextSpan>[
-            const TextSpan(text: 'Tem certeza que deseja excluir o aluno '),
+            const TextSpan(text: 'Tem certeza que deseja excluir a escola '),
             TextSpan(
-              text: studentName,
+              text: schoolName,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const TextSpan(text: '?'),
@@ -36,18 +37,20 @@ class DeleteStudentDialog extends StatelessWidget {
         ),
       ),
       actions: [
+        // Botão Cancelar
         OutlinedButton(
-          onPressed: isLoading ? null : () => Navigator.pop(context), // Fecha o dialog
+          onPressed: isLoading ? null : () => Navigator.pop(context),
           style: OutlinedButton.styleFrom(
-            side: BorderSide(color: Colors.grey.shade400), // Borda cinza
-            foregroundColor: AppPalette.neutral700, // Cor do texto
+            side: BorderSide(color: Colors.grey.shade400),
+            foregroundColor: AppPalette.neutral700,
           ),
           child: const Text('Cancelar'),
         ),
+        // Botão Excluir
         FilledButton(
           onPressed: isLoading ? null : onConfirm,
           style: FilledButton.styleFrom(
-            backgroundColor: AppPalette.red700,
+            backgroundColor: AppPalette.red500,
           ),
           child: isLoading
               ? const SizedBox(

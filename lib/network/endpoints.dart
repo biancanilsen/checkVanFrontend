@@ -49,6 +49,7 @@ class Endpoints {
   static const String getAllVans = '$baseUrl/van/getAll';
   static const String updateVan = '$baseUrl/van/update';
   static const String searchVans = '$baseUrl/van/search';
+  static const String deleteVan = '$baseUrl/van/delete';
 
   // School
   static const String getAllSchools = '$baseUrl/school/getAll';

@@ -3,9 +3,11 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
+import '../../enum/snack_bar_type.dart';
 import '../../provider/login_provider.dart';
 import '../../provider/sign_up_provider.dart';
 import '../pages/home/home_page.dart';
+import '../widgets/van/custom_snackbar.dart';
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({super.key});
@@ -118,7 +120,11 @@ class _SignUpFormState extends State<SignUpForm> {
 
     if (!mounted) return;
     if (!signUpSuccess) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(signUpProvider.error!)));
+      CustomSnackBar.show(
+        context: context,
+        label: signUpProvider.error!,
+        type: SnackBarType.error,
+      );
       return;
     }
 
@@ -130,11 +136,19 @@ class _SignUpFormState extends State<SignUpForm> {
 
     if (!mounted) return;
     if (!loginSuccess) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loginProvider.error!)));
+      CustomSnackBar.show(
+        context: context,
+        label: loginProvider.error!,
+        type: SnackBarType.error,
+      );
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Conta criada com sucesso')));
+    CustomSnackBar.show(
+      context: context,
+      label: 'Conta criada com sucesso',
+      type: SnackBarType.success,
+    );
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
   }
 

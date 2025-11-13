@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../enum/snack_bar_type.dart';
 import '../../../provider/forgot_password_provider.dart';
 import '../../../provider/login_provider.dart';
 import '../../widgets/login/forgot_password_modal.dart';
+import '../../widgets/van/custom_snackbar.dart';
 
 class LoginPage extends StatelessWidget {
   final emailController = TextEditingController();
@@ -90,8 +92,10 @@ class LoginPage extends StatelessWidget {
                   if (success && context.mounted) {
                     Navigator.pushReplacementNamed(context, '/home');
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(provider.error ?? 'Erro inesperado')),
+                    CustomSnackBar.show(
+                      context: context,
+                      label: provider.error ?? 'Erro inesperado',
+                      type: SnackBarType.error,
                     );
                   }
                 },

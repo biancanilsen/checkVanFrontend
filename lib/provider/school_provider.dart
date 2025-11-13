@@ -187,5 +187,42 @@ class SchoolProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> deleteSchool(int id) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      final response = await http.delete(
+        Uri.parse('${Endpoints.deleteSchool}/$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Sucesso. Recarrega a lista principal
+        await getSchools();
+        _isLoading = false;
+        notifyListeners(); // getSchools() já notifica, mas para garantir
+        return true;
+      } else {
+        final data = jsonDecode(response.body);
+        _error = data['message'] ?? 'Erro ao excluir escola.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }
 

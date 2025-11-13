@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme.dart';
+import '../../../enum/snack_bar_type.dart';
 import '../../../provider/van_provider.dart';
+import '../../widgets/button/danger_outline_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/dialog/delete_van_dialog.dart';
+import '../../widgets/van/custom_snackbar.dart';
 
 class AddVanPage extends StatefulWidget {
   final Van? van;
@@ -25,8 +29,8 @@ class _AddVanPageState extends State<AddVanPage> {
   final _plateController = TextEditingController();
   final _capacityController = TextEditingController();
 
-  // 3. Getter para modo de edição
   bool get isEditing => widget.van != null;
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -72,22 +76,89 @@ class _AddVanPageState extends State<AddVanPage> {
 
     if (mounted) {
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEditing ? 'Van atualizada com sucesso!' : 'Van cadastrada com sucesso!'),
-            backgroundColor: AppPalette.green500,
-          ),
+        CustomSnackBar.show(
+          context: context,
+          label: isEditing ? 'Van atualizada com sucesso!' : 'Van cadastrada com sucesso!',
+          type: SnackBarType.success,
         );
+
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(vanProvider.error ?? 'Ocorreu um erro desconhecido.'),
-            backgroundColor: AppPalette.red500,
-          ),
+        CustomSnackBar.show(
+          context: context,
+          label: vanProvider.error ?? 'Ocorreu um erro desconhecido.',
+          type: SnackBarType.error,
         );
       }
     }
+  }
+
+  Future<void> _handleDeleteVan() async {
+    if (!isEditing) return;
+
+    setState(() {
+      _isDeleting = true;
+    });
+
+    final vanProvider = context.read<VanProvider>();
+    bool success = false;
+
+    try {
+      success = await vanProvider.deleteVan(widget.van!.id);
+    } catch (e) {
+      success = false;
+    }
+
+    if (mounted) {
+      Navigator.pop(context); // Fecha o dialog
+
+      if (success) {
+        Navigator.pop(context); // Fecha a AddVanPage
+        CustomSnackBar.show(
+          context: context,
+          label: 'Van excluída com sucesso.',
+          type: SnackBarType.success,
+        );
+      } else {
+        CustomSnackBar.show(
+          context: context,
+          label: vanProvider.error ?? 'Erro ao excluir van.',
+          type: SnackBarType.error,
+        );
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _isDeleting = false;
+      });
+    }
+  }
+
+  void _showDeleteConfirmationDialog() {
+    if (!isEditing || widget.van == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return DeleteVanDialog(
+              vanNickname: widget.van!.nickname,
+              isLoading: _isDeleting,
+              onConfirm: _handleDeleteVan,
+            );
+          },
+        );
+      },
+    ).then((_) {
+      if (_isDeleting) {
+        setState(() {
+          _isDeleting = false;
+        });
+      }
+    });
   }
 
   @override
@@ -165,6 +236,14 @@ class _AddVanPageState extends State<AddVanPage> {
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : Text(isEditing ? 'Salvar Alterações' : 'Salvar Van'),
               ),
+              const SizedBox(height: 24),
+              if (isEditing)
+                DangerOutlineButton(
+                  text: 'Excluir van',
+                  onPressed: _showDeleteConfirmationDialog,
+                  isLoading: _isDeleting,
+                ),
+
               const SizedBox(height: 24),
             ],
           ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../enum/snack_bar_type.dart';
 import '../../../../provider/route_provider.dart';
 import '../../../../core/theme.dart';
+import '../../van/custom_snackbar.dart';
 
 class HomeRouteCard extends StatelessWidget {
   final int teamId;
@@ -33,12 +35,11 @@ class HomeRouteCard extends StatelessWidget {
                     arguments: routeProvider.routeData,
                   );
                 } else if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(routeProvider.error ?? 'Erro ao gerar rota'),
-                      backgroundColor: AppPalette.red500,
-                    ),
-                  );
+                    CustomSnackBar.show(
+                      context: context,
+                      label: 'Erro ao gerar rota',
+                      type: SnackBarType.error,
+                    );
                 }
               },
           child: Stack(

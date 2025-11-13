@@ -4,10 +4,12 @@ import 'package:intl/intl.dart';
 import 'dart:io';
 
 import '../../../core/theme.dart';
+import '../../../enum/snack_bar_type.dart';
 import '../../../services/user_service.dart';
 import '../../../model/user_model.dart';
 import '../../../utils/user_session.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/van/custom_snackbar.dart';
 
 class MyProfile extends StatefulWidget {
   const MyProfile({super.key});
@@ -117,8 +119,10 @@ class _MyProfileState extends State<MyProfile> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao selecionar imagem: $e')),
+      CustomSnackBar.show(
+        context: context,
+        label: 'Erro ao selecionar imagem: $e',
+        type: SnackBarType.error,
       );
     }
   }
@@ -159,15 +163,19 @@ class _MyProfileState extends State<MyProfile> {
       _senhaController.clear();
       _confirmSenhaController.clear();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Perfil atualizado!')),
+      CustomSnackBar.show(
+        context: context,
+        label: 'Perfil atualizado!',
+        type: SnackBarType.success,
       );
 
       Navigator.pop(context);
 
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro ao atualizar perfil')),
+      CustomSnackBar.show(
+        context: context,
+        label: 'Erro ao atualizar perfil',
+        type: SnackBarType.error,
       );
     }
   }

@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme.dart';
+import '../../../enum/snack_bar_type.dart';
 import '../../../model/address_suggestion.dart';
 import '../../../model/school_model.dart';
 import '../../../provider/geocoding_provider.dart';
 import '../../../provider/school_provider.dart';
 import '../../../utils/address_utils.dart';
+import '../../widgets/button/danger_outline_button.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/dialog/delete_school_dialog.dart';
+import '../../widgets/van/custom_snackbar.dart';
 
 class AddSchoolPage extends StatefulWidget {
   final School? school;
@@ -39,6 +43,7 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
   Timer? _debounce;
 
   bool get isEditing => widget.school != null;
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -155,22 +160,89 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
 
     if (mounted) {
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isEditing ? 'Escola atualizada com sucesso!' : 'Escola cadastrada com sucesso!'),
-            backgroundColor: AppPalette.green500,
-          ),
+        CustomSnackBar.show(
+          context: context,
+          label: isEditing ? 'Escola atualizada com sucesso!' : 'Escola cadastrada com sucesso!',
+          type: SnackBarType.success,
         );
         Navigator.pop(context);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(schoolProvider.error ?? 'Ocorreu um erro desconhecido.'),
-            backgroundColor: AppPalette.red500,
-          ),
+        CustomSnackBar.show(
+          context: context,
+          label: schoolProvider.error ?? 'Ocorreu um erro desconhecido.',
+          type: SnackBarType.error,
         );
       }
     }
+  }
+
+  Future<void> _handleDeleteSchool() async {
+    if (!isEditing) return;
+
+    setState(() {
+      _isDeleting = true; // Ativa o loading
+    });
+
+    final schoolProvider = context.read<SchoolProvider>();
+    bool success = false;
+
+    try {
+      success = await schoolProvider.deleteSchool(widget.school!.id);
+    } catch (e) {
+      success = false;
+    }
+
+    if (mounted) {
+      Navigator.pop(context); // Fecha o dialog
+
+      if (success) {
+        Navigator.pop(context); // Fecha a AddSchoolPage
+        CustomSnackBar.show(
+          context: context,
+          label: 'Escola excluída com sucesso.',
+          type: SnackBarType.success,
+        );
+      } else {
+        CustomSnackBar.show(
+          context: context,
+          label: schoolProvider.error ?? 'Erro ao excluir escola.',
+          type: SnackBarType.error,
+        );
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _isDeleting = false;
+      });
+    }
+  }
+
+  void _showDeleteConfirmationDialog() {
+    if (!isEditing || widget.school == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder( // Para o loading no dialog
+          builder: (context, setDialogState) {
+            return DeleteSchoolDialog(
+              schoolName: widget.school!.name,
+              isLoading: _isDeleting,
+              onConfirm: _handleDeleteSchool,
+            );
+          },
+        );
+      },
+    ).then((_) {
+      // Garante que o loading seja resetado se o dialog for fechado
+      if (_isDeleting) {
+        setState(() {
+          _isDeleting = false;
+        });
+      }
+    });
   }
 
   @override
@@ -281,6 +353,14 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
                 )
                     : Text(isEditing ? 'Salvar Alterações' : 'Salvar Escola'),
               ),
+              const SizedBox(height: 24),
+
+              if (isEditing)
+                DangerOutlineButton(
+                  text: 'Excluir escola',
+                  onPressed: _showDeleteConfirmationDialog,
+                  isLoading: _isDeleting,
+                ),
               const SizedBox(height: 24),
             ],
           ),

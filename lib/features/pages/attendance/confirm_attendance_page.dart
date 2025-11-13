@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import '../../../enum/snack_bar_type.dart';
 import '../../../provider/presence_provider.dart';
 import '../../../provider/student_provider.dart';
 
@@ -11,6 +12,7 @@ import '../../widgets/attendance/attendance_app_bar.dart';
 import '../../widgets/attendance/confirm_button.dart';
 import '../../widgets/attendance/presence_options.dart';
 import '../../widgets/attendance/week_selector.dart';
+import '../../widgets/van/custom_snackbar.dart';
 
 class ConfirmAttendancePage extends StatefulWidget {
   final int studentId;
@@ -108,11 +110,10 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
     final optionToConfirm = _selectedTransportOption ?? optionFromBackend;
 
     if (optionToConfirm == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor, selecione uma opção de transporte.'),
-          backgroundColor: AppPalette.red700,
-        ),
+      CustomSnackBar.show(
+        context: context,
+        label: 'Por favor, selecione uma opção de transporte.',
+        type: SnackBarType.error,
       );
       return;
     }
@@ -129,20 +130,18 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Presença confirmada com sucesso!'),
-          backgroundColor: Colors.green,
-        ),
+      CustomSnackBar.show(
+        context: context,
+        label: 'Presença confirmada com sucesso!',
+        type: SnackBarType.success,
       );
       await context.read<StudentProvider>().getPresenceSummary();
       //Navigator.of(context).pop();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro: ${presenceProvider.error ?? "Ocorreu um problema."}'),
-          backgroundColor: AppPalette.red700,
-        ),
+      CustomSnackBar.show(
+        context: context,
+        label: 'Erro: ${presenceProvider.error ?? "Ocorreu um problema."}',
+        type: SnackBarType.error,
       );
     }
   }

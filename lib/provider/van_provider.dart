@@ -178,4 +178,41 @@ class VanProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> deleteVan(int id) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      final response = await http.delete(
+        Uri.parse('${Endpoints.deleteVan}/$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Sucesso
+        await getVans(); // Recarrega a lista
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        final data = jsonDecode(response.body);
+        _error = data['message'] ?? 'Erro ao excluir van.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }
