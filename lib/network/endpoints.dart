@@ -1,5 +1,5 @@
 class Endpoints {
-  static const String baseUrl = 'http://192.168.1.26:3200';
+  static const String baseUrl = 'http://192.168.0.4:3200';
 
   // user
   static const String login = '$baseUrl/user/login';

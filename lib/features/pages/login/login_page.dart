@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../enum/snack_bar_type.dart';
 import '../../../provider/forgot_password_provider.dart';
 import '../../../provider/login_provider.dart';
+import '../../../services/notification_service.dart';
 import '../../widgets/login/forgot_password_modal.dart';
 import '../../widgets/van/custom_snackbar.dart';
 
@@ -90,6 +91,7 @@ class LoginPage extends StatelessWidget {
                     passwordController.text,
                   );
                   if (success && context.mounted) {
+                    await NotificationService.registerToken();
                     Navigator.pushReplacementNamed(context, '/home');
                   } else {
                     CustomSnackBar.show(

@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import '../../enum/snack_bar_type.dart';
 import '../../provider/login_provider.dart';
 import '../../provider/sign_up_provider.dart';
+import '../../services/notification_service.dart';
 import '../pages/home/home_page.dart';
 import '../widgets/van/custom_snackbar.dart';
 
@@ -149,6 +150,7 @@ class _SignUpFormState extends State<SignUpForm> {
       label: 'Conta criada com sucesso',
       type: SnackBarType.success,
     );
+    await NotificationService.registerToken();
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
   }
 

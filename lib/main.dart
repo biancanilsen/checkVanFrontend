@@ -1,3 +1,13 @@
+// Imports do Firebase
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; // Você PRECISA deste arquivo (gerado pelo FlutterFire)
+
+// Import do seu serviço de notificação
+import 'package:check_van_frontend/services/notification_service.dart';
+// --- ADICIONE O IMPORT DA NOVA CHAVE ---
+import 'package:check_van_frontend/services/navigation_service.dart';
+
+// Imports do seu app (existentes)
 import 'package:check_van_frontend/features/pages/route/active_route_page.dart';
 import 'package:check_van_frontend/features/pages/route/route_page.dart';
 import 'package:check_van_frontend/features/pages/school/school_page.dart';
@@ -25,7 +35,15 @@ import 'features/pages/school/add_school_page.dart';
 import 'features/pages/login/signup_page.dart';
 import 'features/pages/student/students_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  await NotificationService.initListeners();
+
   runApp(
     MultiProvider(
       providers: [
@@ -51,6 +69,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
+
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

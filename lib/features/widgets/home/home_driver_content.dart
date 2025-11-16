@@ -24,7 +24,9 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
     super.initState();
     _loadUserName();
     // Busca as viagens ao iniciar a tela
-    Provider.of<TripProvider>(context, listen: false).fetchNextTrips();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TripProvider>().fetchNextTrips();
+    });
   }
 
   Future<void> _loadUserName() async {
