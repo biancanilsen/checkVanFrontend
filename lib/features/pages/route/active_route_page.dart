@@ -9,7 +9,7 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 
-// Imports do seu projeto (ajuste se necessário)
+// Imports do seu projeto
 import 'package:check_van_frontend/model/route_model.dart';
 import 'package:check_van_frontend/model/student_model.dart';
 import 'package:check_van_frontend/provider/notification_provider.dart';
@@ -42,21 +42,21 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   BitmapDescriptor? _navigationIcon;
 
   // Variáveis de Fluxo
-  int _currentStopIndex = 0;        // Índice do aluno atual
-  bool _hasArrivedAtStop = false;   // True = Chegou na casa (mostra botão embarcar)
-  bool _isRouteFinished = false;    // True = Chegou na escola
-  bool _isBoarding = false;         // True = Loading do botão
+  int _currentStopIndex = 0;        // Índice do alvo atual (Aluno ou Escola se for o último)
+  bool _hasArrivedAtStop = false;   // True = GPS detectou chegada (mostra card de ação)
+  bool _isRouteFinished = false;    // True = Rota concluída totalmente
+  bool _isBoarding = false;         // True = Loading do botão (spinner)
 
   // Variáveis de UI/Nav
   double _sheetPosition = 0.4;
   bool _isCameraCentered = true;
   bool _isSoundOn = true;
   String _currentInstruction = "Iniciando a rota...";
-  int _currentStepIndex = 0; // Para manobras (direita/esquerda)
+  int _currentStepIndex = 0;
   bool _isDisposed = false;
 
   // Configurações
-  static const double _arrivalThreshold = 30.0; // Metros para considerar chegada
+  static const double _arrivalThreshold = 30.0; // 30 metros
   static const double _navigationZoom = 18.0;
   static const double _navigationTilt = 45.0;
 
@@ -66,9 +66,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     _sheetController.addListener(_onSheetChanged);
 
     _createNavigationIcon().then((icon) {
-      setState(() {
-        _navigationIcon = icon;
-      });
+      if (mounted) setState(() => _navigationIcon = icon);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -203,7 +201,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   // --- LÓGICA PRINCIPAL DE NAVEGAÇÃO ---
 
   void _setupLocationListener() async {
-    // Checagem de permissões (mantida igual)
     bool serviceEnabled = await _location.serviceEnabled();
     if (!serviceEnabled) {
       serviceEnabled = await _location.requestService();
@@ -253,15 +250,13 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
         );
       }
 
-      // 3. LÓGICA DE DISTÂNCIA E CHEGADA
-
-      // Se já chegamos na parada atual ou a rota acabou, não fazemos check de distância
+      // 3. LÓGICA DE DETECÇÃO DE CHEGADA
       if (_hasArrivedAtStop || _isRouteFinished) return;
 
       LatLng targetLocation;
       String targetName;
 
-      // Verifica se estamos indo para a Escola (última parada) ou Aluno
+      // Verifica se o destino atual é a ESCOLA (quando o index iguala o tamanho da lista)
       bool goingToSchool = _currentStopIndex == _routeData.students.length;
 
       if (goingToSchool) {
@@ -279,38 +274,33 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
         targetLocation.latitude, targetLocation.longitude,
       );
 
-      // CHEGOU NO DESTINO
+      // --- VERIFICAÇÃO DE PROXIMIDADE ---
       if (distanceToStop < _arrivalThreshold) {
         _flutterTts.stop();
 
-        if (goingToSchool) {
-          // --- Chegada na Escola ---
-          setState(() {
-            _isRouteFinished = true;
-            _currentInstruction = "Chegamos na escola. Rota finalizada!";
-            _hasArrivedAtStop = false;
-          });
-          _locationSubscription?.cancel();
+        // Se ainda não tínhamos detectado a chegada, agora detectamos
+        if (!_hasArrivedAtStop) {
 
-          // Dispara finalização
-          _confirmArrivalAtSchool();
+          String instructionText;
 
-        } else {
-          // --- Chegada no Aluno ---
-          // Só entra aqui se _hasArrivedAtStop for false
+          if (goingToSchool) {
+            // >>> CASO ESCOLA: CHEGADA MANUAL <<<
+            instructionText = "Chegamos na escola. Confirme para finalizar.";
+          } else {
+            // >>> CASO ALUNO: CHEGADA AUTOMÁTICA (NOTIFICAÇÃO) <<<
+            final currentStudent = _routeData.students[_currentStopIndex];
+            context.read<NotificationProvider>().notifyArrivalHome(currentStudent.id);
+            instructionText = "Chegamos ao destino: $targetName";
+          }
 
-          // 1. Dispara notificação AUTOMÁTICA "Chegando na casa"
-          final currentStudent = _routeData.students[_currentStopIndex];
-          context.read<NotificationProvider>().notifyArrivalHome(currentStudent.id);
-
-          // 2. Atualiza UI para mostrar botão de embarque
+          // Atualiza UI para mostrar o Card de Confirmação
           setState(() {
             _hasArrivedAtStop = true;
-            _currentInstruction = "Chegamos ao destino: $targetName";
+            _currentInstruction = instructionText;
           });
-          _speakInstruction("Você chegou na casa de $targetName");
+          _speakInstruction(instructionText);
 
-          // Sobe o painel
+          // Abre o painel inferior
           if (_sheetController.isAttached) {
             _sheetController.animateTo(0.4,
               duration: const Duration(milliseconds: 300),
@@ -319,7 +309,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           }
         }
       }
-      // Navegação por Voz (Manobras) - só se não chegou ainda
+      // Navegação por Voz (Manobras)
       else if (_currentStepIndex < _routeData.steps.length - 1) {
         final nextManeuverPosition = _routeData.steps[_currentStepIndex].endLocation;
         final distanceToManeuver = _calculateDistance(
@@ -327,7 +317,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           nextManeuverPosition.latitude, nextManeuverPosition.longitude,
         );
 
-        if (distanceToManeuver < 130) { // 130 metros antes da curva
+        if (distanceToManeuver < 130) {
           _currentStepIndex++;
           final nextInstruction = _routeData.steps[_currentStepIndex].instruction;
           setState(() => _currentInstruction = nextInstruction);
@@ -339,7 +329,25 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
 
   // --- AÇÕES DE USUÁRIO ---
 
-  // Botão "Embarcar"
+  // Botão "Ausente" (Pula o aluno sem chamar backend)
+  void _markAbsent() {
+    // Não bloqueia a UI com _isBoarding pois não tem chamada de rede
+    setState(() {
+      _currentStopIndex++; // Pula para o próximo
+      _hasArrivedAtStop = false; // Volta para a lista de rota
+
+      // Prepara a próxima instrução
+      if (_currentStopIndex == _routeData.students.length) {
+        _currentInstruction = "Todos a bordo! Próxima parada: ${_routeData.schoolName}";
+      } else {
+        final nextStudent = _routeData.students[_currentStopIndex];
+        _currentInstruction = "Próxima parada: ${nextStudent.name}";
+      }
+      _speakInstruction(_currentInstruction);
+    });
+  }
+
+  // Botão "Embarcar" (Apenas para alunos)
   void _confirmBoarding() async {
     if (_isBoarding || _lastLocation == null) return;
 
@@ -348,18 +356,18 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     final provider = context.read<NotificationProvider>();
     final currentStudent = _routeData.students[_currentStopIndex];
 
-    // Chama endpoint ESPECÍFICO de embarque
+    // 1. Chama endpoint específico
     final success = await provider.notifyBoarding(currentStudent.id);
 
     if (!mounted) return;
 
     if (success) {
       setState(() {
-        _currentStopIndex++; // Vai para o próximo alvo
-        _hasArrivedAtStop = false; // Sai do modo "Embarque"
+        _currentStopIndex++; // Avança para o próximo
+        _hasArrivedAtStop = false; // Sai do modo "Chegada"
         _isBoarding = false;
 
-        // Prepara instrução do próximo
+        // Prepara a próxima instrução
         if (_currentStopIndex == _routeData.students.length) {
           _currentInstruction = "Todos a bordo! Próxima parada: ${_routeData.schoolName}";
         } else {
@@ -378,30 +386,35 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
   }
 
-  // Finalização Automática (Chegada na Escola)
+  // Botão "Finalizar Rota" (Apenas para escola, acionado manualmente)
   void _confirmArrivalAtSchool() async {
-    // Bloqueia UI
     setState(() { _isBoarding = true; });
 
     final provider = context.read<NotificationProvider>();
 
-    // Chama endpoint ESPECÍFICO de escola
+    // 1. Chama endpoint específico de escola
     final success = await provider.notifyArrivalSchool(_routeData.teamId);
 
     if (!mounted) return;
 
     if (success) {
+      // Sucesso: Encerra
+      setState(() {
+        _isRouteFinished = true;
+        _locationSubscription?.cancel();
+      });
+
       showDialog(
           context: context,
           barrierDismissible: false,
           builder: (ctx) => AlertDialog(
             title: const Text("Rota Finalizada"),
-            content: const Text("Todos os alunos entregues na escola."),
+            content: const Text("Chegada na escola registrada e responsáveis notificados."),
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.pop(ctx); // Fecha dialog
-                  Navigator.pop(context); // Sai da tela de rota
+                  Navigator.pop(ctx);
+                  Navigator.pop(context);
                 },
                 child: const Text("OK"),
               )
@@ -409,13 +422,12 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           )
       );
     } else {
+      // Erro
       CustomSnackBar.show(
         context: context,
-        label: provider.error ?? "Erro ao finalizar a rota no servidor.",
+        label: provider.error ?? "Erro ao notificar chegada na escola.",
         type: SnackBarType.error,
       );
-      // Se der erro, mantemos o estado de finalizado mas liberamos o loading
-      // O ideal aqui seria ter um botão "Tentar Novamente"
       setState(() { _isBoarding = false; });
     }
   }
@@ -427,7 +439,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     var c = cos;
     var a = 0.5 - c((lat2 - lat1) * p)/2 +
         c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p))/2;
-    return 12742 * asin(sqrt(a)) * 1000; // Retorna em metros
+    return 12742 * asin(sqrt(a)) * 1000; // metros
   }
 
   LatLngBounds _boundsFromLatLngList(List<LatLng> list) {
@@ -466,7 +478,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       ),
       body: Stack(
         children: [
-          // 1. MAPA
+          // 1. Mapa
           GoogleMap(
             onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
@@ -483,7 +495,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             },
           ),
 
-          // 2. CARD DE INSTRUÇÃO (TOPO)
+          // 2. Card de Instrução (Topo)
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
@@ -522,7 +534,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             ),
           ),
 
-          // 3. PAINEL INFERIOR (BottomSheet)
+          // 3. Painel Inferior
           if (!_isRouteFinished)
             DraggableScrollableSheet(
               initialChildSize: 0.4,
@@ -536,12 +548,10 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                     borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                     boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 20)],
                   ),
-                  // Se chegou na parada: Mostra Card Confirmar
-                  // Se está andando: Mostra Lista
                   child: _hasArrivedAtStop
                       ? _buildConfirmationCard(
                     context,
-                    // Proteção contra index out of bounds
+                    // Se o index atual for < lista, é aluno. Se for igual, é escola (null).
                     _currentStopIndex < routeDataArgs.students.length
                         ? routeDataArgs.students[_currentStopIndex]
                         : null,
@@ -555,7 +565,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
               },
             ),
 
-          // 4. BOTÃO RECENTRALIZAR
+          // 4. Botão Centralizar
           if (!_isCameraCentered && _lastLocation != null && !_isRouteFinished)
             Positioned(
               left: 16,
@@ -588,10 +598,21 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     );
   }
 
-  // --- WIDGETS AUXILIARES ---
+  // --- WIDGETS DE UI ---
 
+  // Exibe card quando chega no destino (Aluno ou Escola)
   Widget _buildConfirmationCard(BuildContext context, Student? student) {
-    if (student == null) return const Center(child: CircularProgressIndicator());
+    // Se student for null, significa que estamos no passo final (Escola)
+    final isSchool = student == null;
+
+    // Configura os textos e cores baseados se é Escola ou Aluno
+    final String displayName = isSchool ? _routeData.schoolName : student!.name;
+    final String displayAddress = isSchool ? "Destino Final" : (student!.address ?? 'Endereço não informado');
+    final String? displayImage = isSchool ? null : student!.image_profile;
+
+    // Se for escola, o botão é azul. Se for aluno, verde.
+    final Color primaryButtonColor = isSchool ? AppPalette.primary800 : AppPalette.green500;
+    final VoidCallback? primaryAction = isSchool ? _confirmArrivalAtSchool : _confirmBoarding;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
@@ -608,18 +629,24 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Confirmar embarque',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppPalette.primary900),
+          Text(
+            isSchool ? 'Chegamos na Escola' : 'Confirmar embarque',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppPalette.primary900),
           ),
           const SizedBox(height: 24),
+
+          // Dados do Aluno ou Escola
           Row(
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundImage: (student.image_profile != null && student.image_profile!.isNotEmpty)
-                    ? NetworkImage(student.image_profile!)
-                    : const AssetImage('assets/profile.png') as ImageProvider,
+                backgroundColor: isSchool ? AppPalette.primary800 : AppPalette.neutral150,
+                backgroundImage: (displayImage != null && displayImage.isNotEmpty)
+                    ? NetworkImage(displayImage)
+                    : null,
+                child: (displayImage == null || isSchool)
+                    ? Icon(isSchool ? Icons.school : Icons.person, color: Colors.white, size: 30)
+                    : null,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -627,34 +654,76 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(student.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 2),
-                    Text(student.address ?? 'Endereço não informado', style: const TextStyle(color: AppPalette.neutral600)),
+                    Text(displayAddress, style: const TextStyle(color: AppPalette.neutral600)),
                   ],
                 ),
               ),
             ],
           ),
           const Spacer(),
-          ElevatedButton(
-            onPressed: _isBoarding ? null : _confirmBoarding,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppPalette.green500,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+
+          // --- ÁREA DOS BOTÕES ---
+          if (isSchool)
+          // Se for Escola: Apenas um botão para finalizar
+            ElevatedButton(
+              onPressed: _isBoarding ? null : primaryAction,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryButtonColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              child: _isBoarding
+                  ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3,))
+                  : const Text('Finalizar Rota'),
+            )
+          else
+          // Se for Aluno: Botões "Ausente" e "Embarcar" lado a lado
+            Row(
+              children: [
+                // Botão AUSENTE
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _isBoarding ? null : _markAbsent,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppPalette.red700,
+                      side: const BorderSide(color: AppPalette.red700),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    child: const Text('Ausente'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Botão EMBARCAR
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isBoarding ? null : primaryAction,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryButtonColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    child: _isBoarding
+                        ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3,))
+                        : const Text('Embarcar'),
+                  ),
+                ),
+              ],
             ),
-            child: _isBoarding
-                ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3,))
-                : const Text('Embarcar'),
-          ),
           const SizedBox(height: 16),
         ],
       ),
     );
   }
 
+  // Lista de próximas paradas
   Widget _buildStopList(BuildContext context, ScrollController scrollController, List<Student> students) {
     final remainingStops = students.sublist(_currentStopIndex);
     bool nextIsSchool = _currentStopIndex == students.length;
@@ -687,6 +756,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: remainingStops.length + 1,
             itemBuilder: (context, index) {
+              // Último item da lista visual sempre é a escola
               if (index == remainingStops.length) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 24.0),
