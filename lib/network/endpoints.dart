@@ -30,6 +30,7 @@ class Endpoints {
   static const String notifyArrivalHome = '$baseUrl/notifications/notify-arrival-home';
   static const String notifyBoarding = '$baseUrl/notifications/notify-boarding';
   static const String notifyArrivalSchool = '$baseUrl/notifications/notify-arrival-school';
+  static const String notifyProximity = '$baseUrl/notifications/notify-proximity';
 
   //team
   static const String getTeamsByTripId = '$baseUrl/trip/getBytripId';

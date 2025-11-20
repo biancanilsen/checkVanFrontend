@@ -11,13 +11,19 @@ class NotificationProvider extends ChangeNotifier {
   String? _error;
 
   List<Notification> get notifications => _notifications;
+
   bool get isLoading => _isLoading;
+
   String? get error => _error;
 
-  Notification? get nextNotification => _notifications.isEmpty ? null : _notifications.first;
-  List<Notification> get scheduledNotifications => _notifications.isEmpty ? [] : _notifications.skip(1).toList();
+  Notification? get nextNotification =>
+      _notifications.isEmpty ? null : _notifications.first;
 
-  Future<bool> sendLocationUpdate(int teamId, double lat, double lon, String tripType) async {
+  List<Notification> get scheduledNotifications =>
+      _notifications.isEmpty ? [] : _notifications.skip(1).toList();
+
+  Future<bool> sendLocationUpdate(int teamId, double lat, double lon,
+      String tripType) async {
     try {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
@@ -54,48 +60,54 @@ class NotificationProvider extends ChangeNotifier {
   }
 
   Future<bool> _postRequest(String endpoint, Map<String, dynamic> body) async {
-  try {
-  final token = await UserSession.getToken();
-  if (token == null) throw Exception('Usuário não autenticado.');
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
 
-  final url = Uri.parse(endpoint);
+      final url = Uri.parse(endpoint);
 
-  final response = await http.post(
-  url,
-  headers: {
-  'Content-Type': 'application/json; charset=UTF-8',
-  'Authorization': 'Bearer $token',
-  },
-  body: jsonEncode(body),
-  );
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
 
-  if (response.statusCode == 200) {
-  return true;
-  } else {
-  final data = jsonDecode(response.body);
-  _error = data['message'] ?? 'Erro na requisição.';
-  return false;
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        final data = jsonDecode(response.body);
+        print('Erro backend: ${data['message']}');
+        return false;
+      }
+    } catch (e) {
+      print('Erro request: $e');
+      return false;
+    }
   }
-  } catch (e) {
-  _error = e.toString();
-  return false;
-  }
+
+  // 1. Notificar Proximidade (Tempo estimado)
+  Future<bool> notifyProximity(int studentId, int minutes) async {
+    return _postRequest(Endpoints.notifyProximity, {
+      'studentId': studentId,
+      'minutes': minutes
+    });
   }
 
-  // Notificar Embarque (Botão)
+  // 2. Notificar Embarque
   Future<bool> notifyBoarding(int studentId) async {
-  // Certifique-se de criar essa constante no seu arquivo de endpoints
-  // Ex: static const String notifyBoarding = '$baseUrl/notify-boarding';
-  return _postRequest(Endpoints.notifyBoarding, {'studentId': studentId});
+    return _postRequest(Endpoints.notifyBoarding, {'studentId': studentId});
   }
 
-  // Notificar Chegada na Casa (Automático)
+  // 3. Notificar Chegada na Casa (Automático - Já está aqui)
   Future<bool> notifyArrivalHome(int studentId) async {
-  return _postRequest(Endpoints.notifyArrivalHome, {'studentId': studentId});
+    return _postRequest(Endpoints.notifyArrivalHome, {'studentId': studentId});
   }
 
-  // Notificar Chegada na Escola (Fim da Rota)
+  // 4. Notificar Chegada na Escola
   Future<bool> notifyArrivalSchool(int teamId) async {
-  return _postRequest(Endpoints.notifyArrivalSchool, {'teamId': teamId});
+    return _postRequest(Endpoints.notifyArrivalSchool, {'teamId': teamId});
   }
 }

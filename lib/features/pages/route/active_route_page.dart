@@ -42,10 +42,11 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   BitmapDescriptor? _navigationIcon;
 
   // Variáveis de Fluxo
-  int _currentStopIndex = 0;        // Índice do alvo atual (Aluno ou Escola se for o último)
-  bool _hasArrivedAtStop = false;   // True = GPS detectou chegada (mostra card de ação)
-  bool _isRouteFinished = false;    // True = Rota concluída totalmente
-  bool _isBoarding = false;         // True = Loading do botão (spinner)
+  int _currentStopIndex = 0;
+  bool _hasArrivedAtStop = false;
+  bool _isRouteFinished = false;
+  bool _isBoarding = false;
+  bool _firstNotificationSent = false;
 
   // Variáveis de UI/Nav
   double _sheetPosition = 0.4;
@@ -56,10 +57,12 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   bool _isDisposed = false;
 
   // Configurações
-  // ALTERADO: Aumentado para 100.0 para compensar imprecisão do GPS
   static const double _arrivalThreshold = 100.0;
   static const double _navigationZoom = 18.0;
   static const double _navigationTilt = 45.0;
+
+  // Velocidade média (Km/h)
+  static const double _averageSpeedKmh = 25.0;
 
   @override
   void initState() {
@@ -78,6 +81,13 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
         }
         _initializeTts();
         _setupLocationListener();
+
+        // GATILHO 1: Notificar o PRIMEIRO pai ao iniciar a rota
+        if (!_firstNotificationSent && _routeData.students.isNotEmpty) {
+          // Agora é chamado sem await para não travar a UI, mas o método é async internamente
+          _notifyNextStudent(targetIndex: 0);
+          _firstNotificationSent = true;
+        }
       }
     });
   }
@@ -95,6 +105,80 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     setState(() {
       _sheetPosition = _sheetController.size;
     });
+  }
+
+  // --- Lógica de Cálculo de ETA ---
+
+  int _calculateEtaInMinutes(LatLng from, LatLng to) {
+    // Proteção contra coordenadas inválidas (0,0)
+    if ((from.latitude.abs() < 0.0001 && from.longitude.abs() < 0.0001) ||
+        (to.latitude.abs() < 0.0001 && to.longitude.abs() < 0.0001)) {
+      return 0;
+    }
+
+    double distMeters = _calculateDistance(from.latitude, from.longitude, to.latitude, to.longitude);
+    double speedMetersPerMin = (_averageSpeedKmh * 1000) / 60;
+    double minutes = distMeters / speedMetersPerMin;
+
+    return minutes.ceil() + 2; // +2 min de buffer
+  }
+
+  // --- Lógica de Notificação do Próximo Aluno (CORRIGIDA) ---
+
+  Future<void> _notifyNextStudent({required int targetIndex}) async {
+    if (targetIndex >= _routeData.students.length) return;
+
+    final nextStudent = _routeData.students[targetIndex];
+    LatLng? startPoint;
+
+    // 1. Tenta pegar do stream (cache local)
+    if (_lastLocation != null && _lastLocation!.latitude != null) {
+      startPoint = LatLng(_lastLocation!.latitude!, _lastLocation!.longitude!);
+    }
+    // 2. Se o stream ainda não disparou (inicio da rota), busca a localização atual explicitamente
+    else {
+      try {
+        // Tenta pegar a localização atual com timeout de 3 segundos para não travar
+        final currentLocation = await _location.getLocation().timeout(const Duration(seconds: 3));
+        if (currentLocation.latitude != null) {
+          _lastLocation = currentLocation; // Atualiza o cache
+          startPoint = LatLng(currentLocation.latitude!, currentLocation.longitude!);
+        }
+      } catch (e) {
+        print("Erro ao obter localização GPS para ETA: $e");
+      }
+    }
+
+    // 3. Fallbacks (Se GPS falhar)
+    if (startPoint == null) {
+      if (targetIndex > 0) {
+        // Usa localização do aluno anterior
+        final prev = _routeData.students[targetIndex - 1];
+        if (prev.latitude != null) {
+          startPoint = LatLng(prev.latitude!, prev.longitude!);
+        }
+      } else {
+        // Último recurso: Escola (mesmo que seja 0,0, evitamos o crash, mas validamos abaixo)
+        startPoint = _routeData.schoolLocation;
+      }
+    }
+
+    // 4. Validação Final e Envio
+    // Se mesmo assim o startPoint for nulo ou (0,0), abortamos para não mandar ETA errado
+    if (startPoint == null || (startPoint.latitude.abs() < 0.0001 && startPoint.longitude.abs() < 0.0001)) {
+      print("Não foi possível calcular ETA: Localização de partida inválida.");
+      return;
+    }
+
+    if (nextStudent.latitude != null && nextStudent.longitude != null) {
+      final endPoint = LatLng(nextStudent.latitude!, nextStudent.longitude!);
+      final minutes = _calculateEtaInMinutes(startPoint, endPoint);
+
+      if (minutes > 0) {
+        context.read<NotificationProvider>().notifyProximity(nextStudent.id, minutes);
+        print("Notificação enviada para ${nextStudent.name}: $minutes min");
+      }
+    }
   }
 
   // --- Configuração do Mapa e UI ---
@@ -257,7 +341,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       LatLng targetLocation;
       String targetName;
 
-      // Verifica se o destino atual é a ESCOLA (quando o index iguala o tamanho da lista)
       bool goingToSchool = _currentStopIndex == _routeData.students.length;
 
       if (goingToSchool) {
@@ -279,13 +362,9 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       if (distanceToStop < _arrivalThreshold) {
         _flutterTts.stop();
 
-        // Se ainda não tínhamos detectado a chegada, agora detectamos
         if (!_hasArrivedAtStop) {
-
-          // Usa a função auxiliar para ativar o estado de chegada
           _triggerArrivalState(isSchool: goingToSchool, targetName: targetName);
 
-          // Abre o painel inferior
           if (_sheetController.isAttached) {
             _sheetController.animateTo(0.4,
               duration: const Duration(milliseconds: 300),
@@ -294,7 +373,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           }
         }
       }
-      // Navegação por Voz (Manobras)
       else if (_currentStepIndex < _routeData.steps.length - 1) {
         final nextManeuverPosition = _routeData.steps[_currentStepIndex].endLocation;
         final distanceToManeuver = _calculateDistance(
@@ -312,20 +390,15 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     });
   }
 
-  // --- LÓGICA DE CHEGADA (GPS ou MANUAL) ---
-
   void _triggerArrivalState({required bool isSchool, String? targetName}) {
-    if (_hasArrivedAtStop) return; // Evita duplicação
+    if (_hasArrivedAtStop) return;
 
     String instructionText;
 
     if (isSchool) {
-      // >>> CASO ESCOLA: CHEGADA MANUAL <<<
       instructionText = "Chegamos na escola. Confirme para finalizar.";
     } else {
-      // >>> CASO ALUNO: CHEGADA AUTOMÁTICA (NOTIFICAÇÃO) <<<
       final currentStudent = _routeData.students[_currentStopIndex];
-      // Envia a notificação de "Chegando" para os pais
       context.read<NotificationProvider>().notifyArrivalHome(currentStudent.id);
       instructionText = "Chegamos ao destino: $targetName";
     }
@@ -337,22 +410,20 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     _speakInstruction(instructionText);
   }
 
-  // Função para "Forçar Chegada" manualmente ao clicar no tile
   void _forceArrival({required bool isSchool, String? targetName}) {
     _triggerArrivalState(isSchool: isSchool, targetName: targetName);
   }
 
-
   // --- AÇÕES DE USUÁRIO ---
 
-  // Botão "Ausente" (Pula o aluno sem chamar backend)
   void _markAbsent() {
-    // Não bloqueia a UI com _isBoarding pois não tem chamada de rede
     setState(() {
-      _currentStopIndex++; // Pula para o próximo
-      _hasArrivedAtStop = false; // Volta para a lista de rota
+      _currentStopIndex++;
+      _hasArrivedAtStop = false;
 
-      // Prepara a próxima instrução
+      // GATILHO 2: Notificar o PRÓXIMO pai
+      _notifyNextStudent(targetIndex: _currentStopIndex);
+
       if (_currentStopIndex == _routeData.students.length) {
         _currentInstruction = "Todos a bordo! Próxima parada: ${_routeData.schoolName}";
       } else {
@@ -363,7 +434,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     });
   }
 
-  // Botão "Embarcar" (Apenas para alunos)
   void _confirmBoarding() async {
     if (_isBoarding || _lastLocation == null) return;
 
@@ -372,18 +442,19 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     final provider = context.read<NotificationProvider>();
     final currentStudent = _routeData.students[_currentStopIndex];
 
-    // 1. Chama endpoint específico
     final success = await provider.notifyBoarding(currentStudent.id);
 
     if (!mounted) return;
 
     if (success) {
       setState(() {
-        _currentStopIndex++; // Avança para o próximo
-        _hasArrivedAtStop = false; // Sai do modo "Chegada"
+        _currentStopIndex++;
+        _hasArrivedAtStop = false;
         _isBoarding = false;
 
-        // Prepara a próxima instrução
+        // GATILHO 3: Notificar o PRÓXIMO pai
+        _notifyNextStudent(targetIndex: _currentStopIndex);
+
         if (_currentStopIndex == _routeData.students.length) {
           _currentInstruction = "Todos a bordo! Próxima parada: ${_routeData.schoolName}";
         } else {
@@ -402,19 +473,15 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
   }
 
-  // Botão "Finalizar Rota" (Apenas para escola, acionado manualmente)
   void _confirmArrivalAtSchool() async {
     setState(() { _isBoarding = true; });
 
     final provider = context.read<NotificationProvider>();
-
-    // 1. Chama endpoint específico de escola
     final success = await provider.notifyArrivalSchool(_routeData.teamId);
 
     if (!mounted) return;
 
     if (success) {
-      // Sucesso: Encerra
       setState(() {
         _isRouteFinished = true;
         _locationSubscription?.cancel();
@@ -438,7 +505,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           )
       );
     } else {
-      // Erro
       CustomSnackBar.show(
         context: context,
         label: provider.error ?? "Erro ao notificar chegada na escola.",
@@ -448,14 +514,12 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
   }
 
-  // --- HELPERS ---
-
   double _calculateDistance(lat1, lon1, lat2, lon2){
     var p = 0.017453292519943295;
     var c = cos;
     var a = 0.5 - c((lat2 - lat1) * p)/2 +
         c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p))/2;
-    return 12742 * asin(sqrt(a)) * 1000; // metros
+    return 12742 * asin(sqrt(a)) * 1000;
   }
 
   LatLngBounds _boundsFromLatLngList(List<LatLng> list) {
@@ -494,7 +558,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       ),
       body: Stack(
         children: [
-          // 1. Mapa
           GoogleMap(
             onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
@@ -511,7 +574,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             },
           ),
 
-          // 2. Card de Instrução (Topo)
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
@@ -550,7 +612,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             ),
           ),
 
-          // 3. Painel Inferior
           if (!_isRouteFinished)
             DraggableScrollableSheet(
               initialChildSize: 0.4,
@@ -567,7 +628,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                   child: _hasArrivedAtStop
                       ? _buildConfirmationCard(
                     context,
-                    // Se o index atual for < lista, é aluno. Se for igual, é escola (null).
                     _currentStopIndex < routeDataArgs.students.length
                         ? routeDataArgs.students[_currentStopIndex]
                         : null,
@@ -581,7 +641,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
               },
             ),
 
-          // 4. Botão Centralizar
           if (!_isCameraCentered && _lastLocation != null && !_isRouteFinished)
             Positioned(
               left: 16,
@@ -614,19 +673,13 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     );
   }
 
-  // --- WIDGETS DE UI ---
-
-  // Exibe card quando chega no destino (Aluno ou Escola)
   Widget _buildConfirmationCard(BuildContext context, Student? student) {
-    // Se student for null, significa que estamos no passo final (Escola)
     final isSchool = student == null;
 
-    // Configura os textos e cores baseados se é Escola ou Aluno
     final String displayName = isSchool ? _routeData.schoolName : student!.name;
     final String displayAddress = isSchool ? "Destino Final" : (student!.address ?? 'Endereço não informado');
     final String? displayImage = isSchool ? null : student!.image_profile;
 
-    // Se for escola, o botão é azul. Se for aluno, verde.
     final Color primaryButtonColor = isSchool ? AppPalette.primary800 : AppPalette.green500;
     final VoidCallback? primaryAction = isSchool ? _confirmArrivalAtSchool : _confirmBoarding;
 
@@ -651,7 +704,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           ),
           const SizedBox(height: 24),
 
-          // Dados do Aluno ou Escola
           Row(
             children: [
               CircleAvatar(
@@ -680,9 +732,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           ),
           const Spacer(),
 
-          // --- ÁREA DOS BOTÕES ---
           if (isSchool)
-          // Se for Escola: Apenas um botão para finalizar
             ElevatedButton(
               onPressed: _isBoarding ? null : primaryAction,
               style: ElevatedButton.styleFrom(
@@ -697,10 +747,8 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                   : const Text('Finalizar Rota'),
             )
           else
-          // Se for Aluno: Botões "Ausente" e "Embarcar" lado a lado
             Row(
               children: [
-                // Botão AUSENTE
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _isBoarding ? null : _markAbsent,
@@ -715,7 +763,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Botão EMBARCAR
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _isBoarding ? null : primaryAction,
@@ -739,7 +786,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     );
   }
 
-  // Lista de próximas paradas
   Widget _buildStopList(BuildContext context, ScrollController scrollController, List<Student> students) {
     final remainingStops = students.sublist(_currentStopIndex);
     bool nextIsSchool = _currentStopIndex == students.length;
@@ -772,22 +818,17 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: remainingStops.length + 1,
             itemBuilder: (context, index) {
-              // Verifica se é o PRÓXIMO alvo imediato (index 0 desta lista).
-              // Apenas o próximo alvo pode ser forçado (não faz sentido forçar um aluno que está 3 paradas a frente).
               final bool isCurrentTarget = index == 0;
 
-              // Último item da lista visual sempre é a escola
               if (index == remainingStops.length) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 24.0),
                   child: _buildStopTile(
                     name: _routeData.schoolName,
-                    // Adicionei uma dica visual de que pode clicar
                     address: isCurrentTarget ? "Toque aqui para forçar chegada" : "Destino Final",
                     imageUrl: null,
                     isLastStop: true,
                     isSchool: true,
-                    // SÓ PERMITE CLICAR SE FOR O ALVO ATUAL
                     onTap: isCurrentTarget
                         ? () => _forceArrival(isSchool: true, targetName: _routeData.schoolName)
                         : null,
@@ -799,13 +840,11 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                 padding: const EdgeInsets.only(bottom: 24.0),
                 child: _buildStopTile(
                   name: student.name,
-                  // Adicionei uma dica visual de que pode clicar
                   address: isCurrentTarget
                       ? "Toque aqui para forçar chegada"
                       : (student.address ?? 'Endereço não informado'),
                   imageUrl: student.image_profile,
                   isLastStop: false,
-                  // SÓ PERMITE CLICAR SE FOR O ALVO ATUAL
                   onTap: isCurrentTarget
                       ? () => _forceArrival(isSchool: false, targetName: student.name)
                       : null,
@@ -818,16 +857,15 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     );
   }
 
-  // Tile agora suporta onTap (InkWell)
   Widget _buildStopTile({
     required String name,
     required String address,
     required bool isLastStop,
     String? imageUrl,
     bool isSchool = false,
-    VoidCallback? onTap, // Novo parâmetro
+    VoidCallback? onTap,
   }) {
-    return InkWell( // Torna o item clicável
+    return InkWell(
       onTap: onTap,
       child: IntrinsicHeight(
         child: Row(
