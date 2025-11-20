@@ -56,7 +56,8 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   bool _isDisposed = false;
 
   // Configurações
-  static const double _arrivalThreshold = 30.0; // 30 metros
+  // ALTERADO: Aumentado para 100.0 para compensar imprecisão do GPS
+  static const double _arrivalThreshold = 100.0;
   static const double _navigationZoom = 18.0;
   static const double _navigationTilt = 45.0;
 
@@ -281,24 +282,8 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
         // Se ainda não tínhamos detectado a chegada, agora detectamos
         if (!_hasArrivedAtStop) {
 
-          String instructionText;
-
-          if (goingToSchool) {
-            // >>> CASO ESCOLA: CHEGADA MANUAL <<<
-            instructionText = "Chegamos na escola. Confirme para finalizar.";
-          } else {
-            // >>> CASO ALUNO: CHEGADA AUTOMÁTICA (NOTIFICAÇÃO) <<<
-            final currentStudent = _routeData.students[_currentStopIndex];
-            context.read<NotificationProvider>().notifyArrivalHome(currentStudent.id);
-            instructionText = "Chegamos ao destino: $targetName";
-          }
-
-          // Atualiza UI para mostrar o Card de Confirmação
-          setState(() {
-            _hasArrivedAtStop = true;
-            _currentInstruction = instructionText;
-          });
-          _speakInstruction(instructionText);
+          // Usa a função auxiliar para ativar o estado de chegada
+          _triggerArrivalState(isSchool: goingToSchool, targetName: targetName);
 
           // Abre o painel inferior
           if (_sheetController.isAttached) {
@@ -326,6 +311,37 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       }
     });
   }
+
+  // --- LÓGICA DE CHEGADA (GPS ou MANUAL) ---
+
+  void _triggerArrivalState({required bool isSchool, String? targetName}) {
+    if (_hasArrivedAtStop) return; // Evita duplicação
+
+    String instructionText;
+
+    if (isSchool) {
+      // >>> CASO ESCOLA: CHEGADA MANUAL <<<
+      instructionText = "Chegamos na escola. Confirme para finalizar.";
+    } else {
+      // >>> CASO ALUNO: CHEGADA AUTOMÁTICA (NOTIFICAÇÃO) <<<
+      final currentStudent = _routeData.students[_currentStopIndex];
+      // Envia a notificação de "Chegando" para os pais
+      context.read<NotificationProvider>().notifyArrivalHome(currentStudent.id);
+      instructionText = "Chegamos ao destino: $targetName";
+    }
+
+    setState(() {
+      _hasArrivedAtStop = true;
+      _currentInstruction = instructionText;
+    });
+    _speakInstruction(instructionText);
+  }
+
+  // Função para "Forçar Chegada" manualmente ao clicar no tile
+  void _forceArrival({required bool isSchool, String? targetName}) {
+    _triggerArrivalState(isSchool: isSchool, targetName: targetName);
+  }
+
 
   // --- AÇÕES DE USUÁRIO ---
 
@@ -756,16 +772,25 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: remainingStops.length + 1,
             itemBuilder: (context, index) {
+              // Verifica se é o PRÓXIMO alvo imediato (index 0 desta lista).
+              // Apenas o próximo alvo pode ser forçado (não faz sentido forçar um aluno que está 3 paradas a frente).
+              final bool isCurrentTarget = index == 0;
+
               // Último item da lista visual sempre é a escola
               if (index == remainingStops.length) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 24.0),
                   child: _buildStopTile(
                     name: _routeData.schoolName,
-                    address: "Destino Final",
+                    // Adicionei uma dica visual de que pode clicar
+                    address: isCurrentTarget ? "Toque aqui para forçar chegada" : "Destino Final",
                     imageUrl: null,
                     isLastStop: true,
                     isSchool: true,
+                    // SÓ PERMITE CLICAR SE FOR O ALVO ATUAL
+                    onTap: isCurrentTarget
+                        ? () => _forceArrival(isSchool: true, targetName: _routeData.schoolName)
+                        : null,
                   ),
                 );
               }
@@ -774,9 +799,16 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                 padding: const EdgeInsets.only(bottom: 24.0),
                 child: _buildStopTile(
                   name: student.name,
-                  address: student.address ?? 'Endereço não informado',
+                  // Adicionei uma dica visual de que pode clicar
+                  address: isCurrentTarget
+                      ? "Toque aqui para forçar chegada"
+                      : (student.address ?? 'Endereço não informado'),
                   imageUrl: student.image_profile,
                   isLastStop: false,
+                  // SÓ PERMITE CLICAR SE FOR O ALVO ATUAL
+                  onTap: isCurrentTarget
+                      ? () => _forceArrival(isSchool: false, targetName: student.name)
+                      : null,
                 ),
               );
             },
@@ -786,64 +818,69 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     );
   }
 
+  // Tile agora suporta onTap (InkWell)
   Widget _buildStopTile({
     required String name,
     required String address,
     required bool isLastStop,
     String? imageUrl,
     bool isSchool = false,
+    VoidCallback? onTap, // Novo parâmetro
   }) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            width: 40,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Icon(
-                    isSchool ? Icons.school : Icons.location_on,
-                    color: isSchool ? AppPalette.primary800 : AppPalette.red700,
-                    size: 28
-                ),
-                if (!isLastStop)
-                  Expanded(
-                    child: Container(width: 2, color: AppPalette.neutral300),
-                  )
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
-                      ? NetworkImage(imageUrl)
-                      : const AssetImage('assets/profile.png') as ImageProvider,
-                  child: (imageUrl == null && isSchool)
-                      ? const Icon(Icons.school, color: Colors.white)
-                      : null,
-                  backgroundColor: isSchool ? AppPalette.primary800 : AppPalette.neutral150,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 2),
-                      Text(address, style: const TextStyle(color: AppPalette.neutral600)),
-                    ],
+    return InkWell( // Torna o item clicável
+      onTap: onTap,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: 40,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Icon(
+                      isSchool ? Icons.school : Icons.location_on,
+                      color: isSchool ? AppPalette.primary800 : AppPalette.red700,
+                      size: 28
                   ),
-                ),
-              ],
+                  if (!isLastStop)
+                    Expanded(
+                      child: Container(width: 2, color: AppPalette.neutral300),
+                    )
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Expanded(
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
+                        ? NetworkImage(imageUrl)
+                        : const AssetImage('assets/profile.png') as ImageProvider,
+                    child: (imageUrl == null && isSchool)
+                        ? const Icon(Icons.school, color: Colors.white)
+                        : null,
+                    backgroundColor: isSchool ? AppPalette.primary800 : AppPalette.neutral150,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 2),
+                        Text(address, style: const TextStyle(color: AppPalette.neutral600)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
