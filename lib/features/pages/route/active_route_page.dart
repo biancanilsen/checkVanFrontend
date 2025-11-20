@@ -46,7 +46,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   bool _hasArrivedAtStop = false;
   bool _isRouteFinished = false;
   bool _isBoarding = false;
-  bool _firstNotificationSent = false;
+  bool _firstNotificationSent = false; // Controle para não reenviar ao reconstruir
 
   // Variáveis de UI/Nav
   double _sheetPosition = 0.4;
@@ -61,7 +61,8 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   static const double _navigationZoom = 18.0;
   static const double _navigationTilt = 45.0;
 
-  // Velocidade média (Km/h)
+  // Velocidade média estimada em áreas urbanas com paradas (Km/h)
+  // 25 km/h é uma estimativa conservadora para transporte escolar "pinga-pinga"
   static const double _averageSpeedKmh = 25.0;
 
   @override
@@ -82,9 +83,8 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
         _initializeTts();
         _setupLocationListener();
 
-        // GATILHO 1: Notificar o PRIMEIRO pai ao iniciar a rota
+        // --- GATILHO 1: Notificar o PRIMEIRO pai ao iniciar a rota ---
         if (!_firstNotificationSent && _routeData.students.isNotEmpty) {
-          // Agora é chamado sem await para não travar a UI, mas o método é async internamente
           _notifyNextStudent(targetIndex: 0);
           _firstNotificationSent = true;
         }
@@ -107,77 +107,56 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     });
   }
 
-  // --- Lógica de Cálculo de ETA ---
+  // --- Lógica de Cálculo de ETA (Tempo Estimado) ---
 
   int _calculateEtaInMinutes(LatLng from, LatLng to) {
-    // Proteção contra coordenadas inválidas (0,0)
-    if ((from.latitude.abs() < 0.0001 && from.longitude.abs() < 0.0001) ||
-        (to.latitude.abs() < 0.0001 && to.longitude.abs() < 0.0001)) {
+    if(from.latitude < 1 || from.longitude < 1 || to.latitude < 1 || to.longitude < 1) {
       return 0;
     }
-
+    // Distância em metros
     double distMeters = _calculateDistance(from.latitude, from.longitude, to.latitude, to.longitude);
+
+    // Velocidade: 25 km/h = ~416 metros por minuto
     double speedMetersPerMin = (_averageSpeedKmh * 1000) / 60;
+
+    // Tempo = Distância / Velocidade
     double minutes = distMeters / speedMetersPerMin;
 
-    return minutes.ceil() + 2; // +2 min de buffer
+    // Adiciona um buffer de 2 minutos para manobras/trânsito leve
+    int totalMinutes = minutes.ceil() + 2;
+
+    return totalMinutes;
   }
 
-  // --- Lógica de Notificação do Próximo Aluno (CORRIGIDA) ---
+  // --- Lógica de Notificação do Próximo Aluno ---
 
-  Future<void> _notifyNextStudent({required int targetIndex}) async {
+  void _notifyNextStudent({required int targetIndex}) {
+    // Se o índice alvo for maior ou igual ao número de alunos, é a escola ou fim de lista
     if (targetIndex >= _routeData.students.length) return;
 
     final nextStudent = _routeData.students[targetIndex];
-    LatLng? startPoint;
 
-    // 1. Tenta pegar do stream (cache local)
+    // Determina o ponto de partida para o cálculo (Local atual da Van)
+    // Se o GPS ainda não pegou, usa o ponto anterior da rota ou a escola (início)
+    LatLng startPoint;
     if (_lastLocation != null && _lastLocation!.latitude != null) {
       startPoint = LatLng(_lastLocation!.latitude!, _lastLocation!.longitude!);
-    }
-    // 2. Se o stream ainda não disparou (inicio da rota), busca a localização atual explicitamente
-    else {
-      try {
-        // Tenta pegar a localização atual com timeout de 3 segundos para não travar
-        final currentLocation = await _location.getLocation().timeout(const Duration(seconds: 3));
-        if (currentLocation.latitude != null) {
-          _lastLocation = currentLocation; // Atualiza o cache
-          startPoint = LatLng(currentLocation.latitude!, currentLocation.longitude!);
-        }
-      } catch (e) {
-        print("Erro ao obter localização GPS para ETA: $e");
-      }
-    }
-
-    // 3. Fallbacks (Se GPS falhar)
-    if (startPoint == null) {
-      if (targetIndex > 0) {
-        // Usa localização do aluno anterior
-        final prev = _routeData.students[targetIndex - 1];
-        if (prev.latitude != null) {
-          startPoint = LatLng(prev.latitude!, prev.longitude!);
-        }
-      } else {
-        // Último recurso: Escola (mesmo que seja 0,0, evitamos o crash, mas validamos abaixo)
-        startPoint = _routeData.schoolLocation;
-      }
-    }
-
-    // 4. Validação Final e Envio
-    // Se mesmo assim o startPoint for nulo ou (0,0), abortamos para não mandar ETA errado
-    if (startPoint == null || (startPoint.latitude.abs() < 0.0001 && startPoint.longitude.abs() < 0.0001)) {
-      print("Não foi possível calcular ETA: Localização de partida inválida.");
-      return;
+    } else if (targetIndex > 0) {
+      // Se não tem GPS, assume que estamos no aluno anterior
+      final prev = _routeData.students[targetIndex - 1];
+      startPoint = LatLng(prev.latitude!, prev.longitude!);
+    } else {
+      // Se é o primeiro aluno e sem GPS, assume que saiu da escola/base
+      startPoint = _routeData.schoolLocation;
     }
 
     if (nextStudent.latitude != null && nextStudent.longitude != null) {
       final endPoint = LatLng(nextStudent.latitude!, nextStudent.longitude!);
       final minutes = _calculateEtaInMinutes(startPoint, endPoint);
 
-      if (minutes > 0) {
-        context.read<NotificationProvider>().notifyProximity(nextStudent.id, minutes);
-        print("Notificação enviada para ${nextStudent.name}: $minutes min");
-      }
+      // Chama o provider
+      context.read<NotificationProvider>().notifyProximity(nextStudent.id, minutes);
+      print("Notificação de proximidade enviada para ${nextStudent.name}: $minutes min");
     }
   }
 
@@ -416,12 +395,14 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
 
   // --- AÇÕES DE USUÁRIO ---
 
+  // Botão "Ausente"
   void _markAbsent() {
     setState(() {
       _currentStopIndex++;
       _hasArrivedAtStop = false;
 
-      // GATILHO 2: Notificar o PRÓXIMO pai
+      // --- GATILHO 2: Notificar o PRÓXIMO pai ---
+      // Como o atual faltou, avisamos o próximo da fila que a van está indo pra lá
       _notifyNextStudent(targetIndex: _currentStopIndex);
 
       if (_currentStopIndex == _routeData.students.length) {
@@ -434,6 +415,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     });
   }
 
+  // Botão "Embarcar"
   void _confirmBoarding() async {
     if (_isBoarding || _lastLocation == null) return;
 
@@ -452,7 +434,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
         _hasArrivedAtStop = false;
         _isBoarding = false;
 
-        // GATILHO 3: Notificar o PRÓXIMO pai
+        // --- GATILHO 3: Notificar o PRÓXIMO pai ---
         _notifyNextStudent(targetIndex: _currentStopIndex);
 
         if (_currentStopIndex == _routeData.students.length) {
@@ -473,6 +455,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
   }
 
+  // Botão "Finalizar Rota"
   void _confirmArrivalAtSchool() async {
     setState(() { _isBoarding = true; });
 

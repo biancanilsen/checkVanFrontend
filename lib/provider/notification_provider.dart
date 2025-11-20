@@ -110,4 +110,32 @@ class NotificationProvider extends ChangeNotifier {
   Future<bool> notifyArrivalSchool(int teamId) async {
     return _postRequest(Endpoints.notifyArrivalSchool, {'teamId': teamId});
   }
+
+  Future<int?> getRealTimeEta(double currentLat, double currentLon, int studentId) async {
+    try {
+      final token = await UserSession.getToken();
+      final url = Uri.parse(Endpoints.calculateEta); // Certifique-se de adicionar no Endpoints
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'lat': currentLat,
+          'lon': currentLon,
+          'studentId': studentId
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['minutes']; // Pode ser null ou int
+      }
+    } catch (e) {
+      print('Erro ao buscar ETA real: $e');
+    }
+    return null; // Retorna null se der erro, para usarmos o cálculo local
+  }
 }

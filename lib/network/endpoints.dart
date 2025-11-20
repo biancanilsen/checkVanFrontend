@@ -50,6 +50,7 @@ class Endpoints {
   // geocoding
   static const String autocompleteAddress = '$baseUrl/geocoding/autocomplete';
   static const String geocodingDetails = '$baseUrl/geocoding/details';
+  static const String calculateEta = '$baseUrl/geocoding/calculate-eta';
  
   // Van
   static const String createVan = '$baseUrl/van/create';
