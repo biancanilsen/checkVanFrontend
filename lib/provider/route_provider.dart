@@ -16,7 +16,12 @@ class RouteProvider extends ChangeNotifier {
   String? get error => _error;
   RouteData? get routeData => _routeData;
 
-  Future<bool> generateRoute({required int teamId}) async {
+  // --- MÉTODO ATUALIZADO ---
+  // 1. Adicionado 'tripType' aos argumentos
+  Future<bool> generateRoute({
+    required int teamId,
+    required String tripType, // Ex: "GOING" ou "RETURNING"
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -30,13 +35,15 @@ class RouteProvider extends ChangeNotifier {
       final uri = Uri.parse('${Endpoints.generateRoute}/$teamId?date=$formattedDate');
 
       final response = await http.get(
-        uri, // Use a nova URI
+        uri,
         headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _routeData = RouteData.fromJson(data);
+
+        // 2. Passado 'tripType' para o factory
+        _routeData = RouteData.fromJson(data, teamId, tripType);
         return true;
       } else {
         final data = jsonDecode(response.body);

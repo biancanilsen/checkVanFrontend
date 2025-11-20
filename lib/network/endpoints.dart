@@ -25,6 +25,12 @@ class Endpoints {
   static const String deleteTrip = '$baseUrl/trip/delete';
   static const String getNextTrips = '$baseUrl/trip/next-trips';
 
+  // notifications
+  static const String updateLocation = '$baseUrl/notifications/update-location';
+  static const String notifyArrivalHome = '$baseUrl/notifications/notify-arrival-home';
+  static const String notifyBoarding = '$baseUrl/notifications/notify-boarding';
+  static const String notifyArrivalSchool = '$baseUrl/notifications/notify-arrival-school';
+
   //team
   static const String getTeamsByTripId = '$baseUrl/trip/getBytripId';
   static const String getAllTeamsByDriver = '$baseUrl/team/getAllByDriver';

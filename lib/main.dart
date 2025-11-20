@@ -1,4 +1,5 @@
 // Imports do Firebase
+import 'package:check_van_frontend/provider/notification_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; // Você PRECISA deste arquivo (gerado pelo FlutterFire)
 
@@ -56,6 +57,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => RouteProvider()),
         ChangeNotifierProvider(create: (_) => PresenceProvider()),
         ChangeNotifierProvider(create: (_) => TripProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: const MyApp(),
     ),

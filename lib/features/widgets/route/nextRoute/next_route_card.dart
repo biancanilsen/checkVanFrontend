@@ -169,6 +169,7 @@ class NextRouteCard extends StatelessWidget {
                         // teamId é pego do nextTrip
                         final success = await routeProvider.generateRoute(
                           teamId: teamId!,
+                            tripType: "GOING" // todo - remover informação mock
                         );
                         if (success && context.mounted) {
                           Navigator.pushNamed(

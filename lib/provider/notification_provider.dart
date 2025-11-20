@@ -1,0 +1,101 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+import '../network/endpoints.dart';
+import '../utils/user_session.dart';
+
+class NotificationProvider extends ChangeNotifier {
+  List<Notification> _notifications = [];
+  bool _isLoading = false;
+  String? _error;
+
+  List<Notification> get notifications => _notifications;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+
+  Notification? get nextNotification => _notifications.isEmpty ? null : _notifications.first;
+  List<Notification> get scheduledNotifications => _notifications.isEmpty ? [] : _notifications.skip(1).toList();
+
+  Future<bool> sendLocationUpdate(int teamId, double lat, double lon, String tripType) async {
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      final url = Uri.parse(Endpoints.updateLocation);
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        // 2. Adicionado 'tripType' ao JSON
+        body: jsonEncode({
+          'teamId': teamId,
+          'lat': lat,
+          'lon': lon,
+          'tripType': tripType,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('Localização e status de embarque processados pelo backend.');
+        return true;
+      } else {
+        final data = jsonDecode(response.body);
+        _error = data['message'] ?? 'Falha ao processar localização.';
+        return false;
+      }
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> _postRequest(String endpoint, Map<String, dynamic> body) async {
+  try {
+  final token = await UserSession.getToken();
+  if (token == null) throw Exception('Usuário não autenticado.');
+
+  final url = Uri.parse(endpoint);
+
+  final response = await http.post(
+  url,
+  headers: {
+  'Content-Type': 'application/json; charset=UTF-8',
+  'Authorization': 'Bearer $token',
+  },
+  body: jsonEncode(body),
+  );
+
+  if (response.statusCode == 200) {
+  return true;
+  } else {
+  final data = jsonDecode(response.body);
+  _error = data['message'] ?? 'Erro na requisição.';
+  return false;
+  }
+  } catch (e) {
+  _error = e.toString();
+  return false;
+  }
+  }
+
+  // Notificar Embarque (Botão)
+  Future<bool> notifyBoarding(int studentId) async {
+  // Certifique-se de criar essa constante no seu arquivo de endpoints
+  // Ex: static const String notifyBoarding = '$baseUrl/notify-boarding';
+  return _postRequest(Endpoints.notifyBoarding, {'studentId': studentId});
+  }
+
+  // Notificar Chegada na Casa (Automático)
+  Future<bool> notifyArrivalHome(int studentId) async {
+  return _postRequest(Endpoints.notifyArrivalHome, {'studentId': studentId});
+  }
+
+  // Notificar Chegada na Escola (Fim da Rota)
+  Future<bool> notifyArrivalSchool(int teamId) async {
+  return _postRequest(Endpoints.notifyArrivalSchool, {'teamId': teamId});
+  }
+}
