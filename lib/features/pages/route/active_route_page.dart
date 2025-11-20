@@ -272,8 +272,9 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     List<LatLng> latLngList = polylineCoordinates.map((p) => LatLng(p.latitude, p.longitude)).toList();
     Polyline routePolyline = Polyline(
       polylineId: const PolylineId('route'),
-      color: AppPalette.primary800,
-      width: 6,
+      color: AppPalette.primary800.withOpacity(0.6),
+      width: 7,
+      zIndex: 1,
       points: latLngList,
     );
 
@@ -613,6 +614,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             myLocationEnabled: false,
             myLocationButtonEnabled: false,
             compassEnabled: false,
+            trafficEnabled: true,
             onCameraMoveStarted: () {
               if (_isCameraCentered) setState(() => _isCameraCentered = false);
             },
