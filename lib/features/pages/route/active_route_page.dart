@@ -541,7 +541,25 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppPalette.primary900,
+        leading: Container(
+          margin: const EdgeInsets.all(8.0),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              )
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppPalette.primary900),
+            onPressed: () => Navigator.maybePop(context),
+            tooltip: 'Voltar',
+          ),
+        ),
       ),
       body: Stack(
         children: [
