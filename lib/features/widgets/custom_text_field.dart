@@ -53,14 +53,14 @@ class CustomTextField extends StatelessWidget {
                 const TextSpan(
                   text: ' *',
                   style: TextStyle(
-                    color: AppPalette.red500,
+                    color: AppPalette.red700,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 2),
         TextFormField(
           controller: controller,
           readOnly: (onTap != null) || readOnly,
