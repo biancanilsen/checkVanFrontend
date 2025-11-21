@@ -8,6 +8,7 @@ import '../../../services/notification_service.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/login/forgot_password_modal.dart';
 import '../../widgets/van/custom_snackbar.dart';
+import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -91,23 +92,20 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 8),
                 Align(
-                  alignment: Alignment.center, // Alinhado à direita ou centro conforme preferir
+                  alignment: Alignment.center,
                   child: TextButton(
                     onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => ChangeNotifierProvider(
-                          create: (_) => ForgotPasswordProvider(),
-                          child: const ForgotPasswordModal(),
-                        ),
+                      // MUDANÇA AQUI: Navegação para a nova página
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
                       );
                     },
                     child: Text(
                       'Esqueceu a senha?',
                       style: TextStyle(
                         color: _primaryColor,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
