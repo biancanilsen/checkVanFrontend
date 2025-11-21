@@ -1,121 +1,192 @@
+import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../enum/snack_bar_type.dart';
 import '../../../provider/forgot_password_provider.dart';
 import '../../../provider/login_provider.dart';
 import '../../../services/notification_service.dart';
+import '../../widgets/custom_text_field.dart';
 import '../../widgets/login/forgot_password_modal.dart';
 import '../../widgets/van/custom_snackbar.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
+  const LoginPage({Key? key}) : super(key: key);
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  LoginPage({Key? key}) : super(key: key);
+  bool _obscurePassword = true;
+
+  // Cor principal (Azul escuro do tema)
+  final Color _primaryColor = const Color(0xFF0D3B66);
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<LoginProvider>(context);
 
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset('assets/logo_check_van.png', height: 120),
-              const SizedBox(height: 24),
-              const Text(
-                'Entre na sua conta',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              const SizedBox(height: 24),
-
-              TextField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  child: Image.asset(
+                    'assets/children_login.png',
+                    height: 250,
+                    fit: BoxFit.contain,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
 
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Senha',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
+                Text(
+                  'Bem-vindo',
+                  style: TextStyle(
+                    color: _primaryColor,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 24,
                   ),
                 ),
-              ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => ChangeNotifierProvider(
-                        create: (_) => ForgotPasswordProvider(),
-                        child: const ForgotPasswordModal(),
-                      ),
-                    );
+                CustomTextField(
+                  controller: emailController,
+                  label: 'E-mail',
+                  hint: 'Digite seu e-mail',
+                  isRequired: true,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+
+                const SizedBox(height: 16),
+
+                CustomTextField(
+                  controller: passwordController,
+                  label: 'Senha',
+                  hint: 'Digite sua senha',
+                  isRequired: true,
+                  obscureText: _obscurePassword,
+                  suffixIcon: _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  onSuffixIconTap: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
                   },
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    alignment: Alignment.centerLeft,
-                  ),
-                  child: Text(
-                    'Esqueci a senha',
-                    style: TextStyle(
-                      color: Color(0xFF0000EE),
+                ),
+
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.center, // Alinhado à direita ou centro conforme preferir
+                  child: TextButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => ChangeNotifierProvider(
+                          create: (_) => ForgotPasswordProvider(),
+                          child: const ForgotPasswordModal(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Esqueceu a senha?',
+                      style: TextStyle(
+                        color: _primaryColor,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              provider.isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                onPressed: () async {
-                  final success = await provider.login(
-                    emailController.text,
-                    passwordController.text,
-                  );
-                  if (success && context.mounted) {
-                    await NotificationService.registerToken();
-                    Navigator.pushReplacementNamed(context, '/home');
-                  } else {
-                    CustomSnackBar.show(
-                      context: context,
-                      label: provider.error ?? 'Erro inesperado',
-                      type: SnackBarType.error,
-                    );
-                  }
-                },
-                child: const Text('Entrar'),
-              ),
-
-              const SizedBox(height: 16),
-
-              provider.isLoading
-                  ? const SizedBox.shrink()
-                  : SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () => Navigator.pushNamed(context, '/signup'),
-                  child: const Text('Criar conta'),
+                provider.isLoading
+                    ? const CircularProgressIndicator()
+                    : SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final success = await provider.login(
+                        emailController.text,
+                        passwordController.text,
+                      );
+                      if (success && context.mounted) {
+                        await NotificationService.registerToken();
+                        Navigator.pushReplacementNamed(context, '/home');
+                      } else {
+                        CustomSnackBar.show(
+                          context: context,
+                          label: provider.error ?? 'Erro inesperado',
+                          type: SnackBarType.error,
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Entrar',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(Icons.arrow_forward, color: Colors.white),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 24),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Não tem uma conta? ',
+                      style: TextStyle(color: AppPalette.primary900, fontSize: 14, fontWeight: FontWeight.w500 ),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/signup'),
+                      child: Text(
+                        'Cadastre-se',
+                        style: TextStyle(
+                          color: AppPalette.primary800,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),

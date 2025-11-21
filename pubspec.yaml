@@ -83,6 +83,7 @@ flutter:
     - assets/icons/warning_icon.svg
     - assets/profile.png
     - assets/rota.png
+    - assets/children_login.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
