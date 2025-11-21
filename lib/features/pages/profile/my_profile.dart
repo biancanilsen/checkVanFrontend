@@ -200,15 +200,9 @@ class _MyProfileState extends State<MyProfile> {
             children: [
               const SizedBox(height: 16),
               const Text(
-                'Meu Perfil',
+                'Meus dados',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Atualize seus dados pessoais',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: AppPalette.neutral600),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppPalette.primary800),
               ),
               const SizedBox(height: 32),
 
@@ -216,7 +210,7 @@ class _MyProfileState extends State<MyProfile> {
                 child: GestureDetector(
                   onTap: _pickImage,
                   child: CircleAvatar(
-                    radius: 80,
+                    radius: 70,
                     backgroundColor: Colors.grey.shade200,
                     backgroundImage: _imageFile != null
                         ? FileImage(File(_imageFile!.path))
@@ -305,7 +299,7 @@ class _MyProfileState extends State<MyProfile> {
               if (_userRole == 'driver') ...[
                 CustomTextField(
                   controller: _licenseController,
-                  label: 'CNH',
+                  label: 'Carteira Nacional de Trânsito (CNH)',
                   hint: 'Número da CNH',
                   isRequired: true,
                   validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
@@ -325,7 +319,7 @@ class _MyProfileState extends State<MyProfile> {
                 ),
                 child: _isLoading
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Salvar Alterações'),
+                    : const Text('Salvar'),
               ),
               const SizedBox(height: 24),
             ],
