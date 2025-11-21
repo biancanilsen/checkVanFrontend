@@ -32,7 +32,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   final Location _location = Location();
   final FlutterTts _flutterTts = FlutterTts();
   StreamSubscription<LocationData>? _locationSubscription;
-  Timer? _etaUpdateTimer; // Timer para atualizar a cada minuto
+  Timer? _etaUpdateTimer;
 
   // --- Dados e Estado ---
   late final RouteData _routeData;
@@ -43,15 +43,15 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   BitmapDescriptor? _navigationIcon;
 
   // Variáveis de Fluxo
-  int _currentStopIndex = 0;        // Índice do alvo atual
-  bool _hasArrivedAtStop = false;   // True = Chegou
-  bool _isRouteFinished = false;    // True = Rota concluída
-  bool _isBoarding = false;         // True = Loading
+  int _currentStopIndex = 0;
+  bool _hasArrivedAtStop = false;
+  bool _isRouteFinished = false;
+  bool _isBoarding = false;
   bool _firstNotificationSent = false;
 
-  // Variáveis de UI (Novas)
-  String _schoolEtaText = "-- min"; // Tempo total até a escola
-  String? _nextStopEtaText; // Tempo até o próximo aluno
+  // Variáveis de UI
+  String _schoolEtaText = "-- min";
+  String? _nextStopEtaText;
 
   // Variáveis de UI/Nav
   double _sheetPosition = 0.4;
@@ -72,7 +72,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     super.initState();
     _sheetController.addListener(_onSheetChanged);
 
-    // Cria ícone de seta
     _createNavigationIcon().then((icon) {
       if (mounted) setState(() => _navigationIcon = icon);
     });
@@ -86,13 +85,11 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
         _initializeTts();
         _setupLocationListener();
 
-        // 1. Gatilho Inicial (Imediato)
         if (!_firstNotificationSent && _routeData.students.isNotEmpty) {
-          _refreshEtas(sendNotification: true); // Manda push no início
+          _refreshEtas(sendNotification: true);
           _firstNotificationSent = true;
         }
 
-        // 2. Inicia o Timer de 1 minuto para atualizar a UI (Sem Push)
         _startEtaTimer();
       }
     });
@@ -101,7 +98,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   @override
   void dispose() {
     _isDisposed = true;
-    _etaUpdateTimer?.cancel(); // Cancela o timer
+    _etaUpdateTimer?.cancel();
     _locationSubscription?.cancel();
     _flutterTts.stop();
     _sheetController.dispose();
@@ -114,17 +111,14 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     });
   }
 
-  // --- NOVO: Timer para atualizar ETA ---
   void _startEtaTimer() {
     _etaUpdateTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       if (!_isRouteFinished && !_isDisposed) {
-        // Atualiza apenas os valores na tela, NÃO envia notificação (false)
         _refreshEtas(sendNotification: false);
       }
     });
   }
 
-  // --- Lógica de Cálculo de ETA LOCAL ---
   int _calculateLocalEta(LatLng from, LatLng to) {
     if ((from.latitude.abs() < 0.0001 && from.longitude.abs() < 0.0001) ||
         (to.latitude.abs() < 0.0001 && to.longitude.abs() < 0.0001)) {
@@ -136,30 +130,20 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     return minutes.ceil() + 2;
   }
 
-  // --- Lógica Central de Atualização de ETA e Notificação ---
-  // Agora aceita 'sendNotification' para distinguir atualização de tela de envio de push
   Future<void> _refreshEtas({required bool sendNotification}) async {
-    // Determina onde a van está agora
     LatLng? startPoint;
-
-    // Tenta pegar cache
     if (_lastLocation != null && _lastLocation!.latitude != null) {
       startPoint = LatLng(_lastLocation!.latitude!, _lastLocation!.longitude!);
-    }
-    // Se não tem cache, tenta GPS rápido
-    else {
+    } else {
       try {
         final currentLocation = await _location.getLocation().timeout(const Duration(seconds: 2));
         if (currentLocation.latitude != null) {
           _lastLocation = currentLocation;
           startPoint = LatLng(currentLocation.latitude!, currentLocation.longitude!);
         }
-      } catch (e) {
-        // Silencioso no timer
-      }
+      } catch (e) {}
     }
 
-    // Fallbacks se GPS falhar
     if (startPoint == null) {
       if (_currentStopIndex > 0 && _currentStopIndex < _routeData.students.length) {
         final prev = _routeData.students[_currentStopIndex - 1];
@@ -173,60 +157,39 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
 
     if (startPoint == null) return;
 
-    // 1. Calcula ETA para a Escola (Localmente, para ser rápido e atualizar todo minuto)
-    // Se quiser muito preciso, pode chamar API aqui também, mas cuidado com custos.
-    int schoolMinutes = _calculateLocalEta(startPoint, _routeData.schoolLocation);
+    final provider = context.read<NotificationProvider>();
 
-    // 2. Calcula ETA do próximo Aluno (Se houver)
-    int minutesToSend = 0;
-
-    // Verifica se ainda tem alunos na rota
+    List<int> remainingIds = [];
     if (_currentStopIndex < _routeData.students.length) {
-      final nextStudent = _routeData.students[_currentStopIndex];
-
-      if (nextStudent.latitude != null && nextStudent.longitude != null) {
-        try {
-          final provider = context.read<NotificationProvider>();
-
-          // Tenta Google API (Com Trânsito)
-          final realTimeMinutes = await provider.getRealTimeEta(
-              startPoint.latitude,
-              startPoint.longitude,
-              nextStudent.id
-          );
-
-          if (realTimeMinutes != null) {
-            minutesToSend = realTimeMinutes;
-          } else {
-            // Fallback Local
-            minutesToSend = _calculateLocalEta(
-                startPoint,
-                LatLng(nextStudent.latitude!, nextStudent.longitude!)
-            );
-          }
-        } catch (e) {
-          minutesToSend = _calculateLocalEta(
-              startPoint,
-              LatLng(nextStudent.latitude!, nextStudent.longitude!)
-          );
-        }
-
-        // Apenas envia Push se a flag for verdadeira
-        if (sendNotification && minutesToSend > 0) {
-          context.read<NotificationProvider>().notifyProximity(nextStudent.id, minutesToSend);
-          print("Push enviado para ${nextStudent.name}: $minutesToSend min");
-        }
+      for (int i = _currentStopIndex; i < _routeData.students.length; i++) {
+        remainingIds.add(_routeData.students[i].id);
       }
     }
 
-    // 3. Atualiza a UI (Sempre acontece, seja pelo timer ou botão)
+    final result = await provider.calculateRouteEtas(
+        currentLat: startPoint.latitude,
+        currentLon: startPoint.longitude,
+        remainingStudentIds: remainingIds,
+        teamId: _routeData.teamId
+    );
+
+    int nextStopMinutes = 0;
+    int totalSchoolMinutes = 0;
+
+    if (result != null) {
+      nextStopMinutes = result['nextStopEta'] ?? 0;
+      totalSchoolMinutes = result['schoolEta'] ?? 0;
+    }
+
+    if (sendNotification && nextStopMinutes > 0 && remainingIds.isNotEmpty) {
+      int nextStudentId = remainingIds[0];
+      context.read<NotificationProvider>().notifyProximity(nextStudentId, nextStopMinutes);
+    }
+
     if (mounted) {
       setState(() {
-        _schoolEtaText = "$schoolMinutes min";
-        // Se tiver minutos calculados, mostra. Se não (ex: acabou os alunos), mostra vazio/null.
-        _nextStopEtaText = (_currentStopIndex < _routeData.students.length && minutesToSend > 0)
-            ? "$minutesToSend min"
-            : null;
+        _schoolEtaText = "$totalSchoolMinutes min";
+        _nextStopEtaText = remainingIds.isNotEmpty ? "$nextStopMinutes min" : null;
       });
     }
   }
@@ -360,7 +323,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
               markerId: const MarkerId('van_location'),
               position: currentPosition,
               icon: _navigationIcon!,
-              flat: true, // Efeito 3D
+              flat: true,
               rotation: newLocation.heading ?? 0.0,
               anchor: const Offset(0.5, 0.5),
               zIndex: 2,
@@ -453,6 +416,13 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     _triggerArrivalState(isSchool: isSchool, targetName: targetName);
   }
 
+  void _cancelArrivalState() {
+    setState(() {
+      _hasArrivedAtStop = false;
+      _currentInstruction = "Retornando à rota...";
+    });
+  }
+
   // --- AÇÕES DE USUÁRIO ---
 
   void _markAbsent() {
@@ -460,7 +430,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       _currentStopIndex++;
       _hasArrivedAtStop = false;
 
-      // Atualiza UI e Envia Push para o próximo
       _refreshEtas(sendNotification: true);
 
       if (_currentStopIndex == _routeData.students.length) {
@@ -488,7 +457,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
         _hasArrivedAtStop = false;
         _isBoarding = false;
 
-        // Atualiza UI e Envia Push para o próximo
         _refreshEtas(sendNotification: true);
 
         if (_currentStopIndex == _routeData.students.length) {
@@ -515,7 +483,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       setState(() {
         _isRouteFinished = true;
         _locationSubscription?.cancel();
-        _etaUpdateTimer?.cancel(); // Para o timer
+        _etaUpdateTimer?.cancel();
       });
       showDialog(
           context: context,
@@ -577,7 +545,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       ),
       body: Stack(
         children: [
-          // 1. Mapa com Trânsito
+          // 1. Mapa
           GoogleMap(
             onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
@@ -595,7 +563,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             },
           ),
 
-          // 2. Card de Instrução (Topo)
+          // 2. Card de Instrução
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
@@ -723,12 +691,29 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            isSchool ? 'Chegamos na Escola' : 'Confirmar embarque',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppPalette.primary900),
+          const SizedBox(height: 16),
+
+          // --- CABEÇALHO COM BOTÃO VOLTAR ---
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: AppPalette.primary900),
+                onPressed: _cancelArrivalState,
+                tooltip: 'Voltar para lista',
+              ),
+              Expanded(
+                child: Text(
+                  isSchool ? 'Chegamos na Escola' : 'Confirmar embarque',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppPalette.primary900),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(width: 48),
+            ],
           ),
-          const SizedBox(height: 24),
+
+          const SizedBox(height: 16),
 
           Row(
             children: [
@@ -836,12 +821,22 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
         Padding(
           padding: const EdgeInsets.only(bottom: 16.0),
           child: Center(
-            child: Text(
-              "Chegada na escola em: $_schoolEtaText",
-              style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppPalette.primary900
+            child: Text.rich(
+              TextSpan(
+                text: "Chegada na escola em: ",
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppPalette.primary900,
+                ),
+                children: [
+                  TextSpan(
+                    text: _schoolEtaText,
+                    style: const TextStyle(
+                      color: AppPalette.primary800, // Azul
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -850,7 +845,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: Text(
             nextIsSchool ? 'Destino Final' : 'Próximas paradas',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppPalette.primary900),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppPalette.primary900),
           ),
         ),
         Expanded(
@@ -861,12 +856,14 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             itemBuilder: (context, index) {
               final bool isCurrentTarget = index == 0;
 
+              // CASO ESCOLA
               if (index == remainingStops.length) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 24.0),
                   child: _buildStopTile(
                     name: _routeData.schoolName,
-                    address: isCurrentTarget ? "Toque aqui para forçar chegada" : "Destino Final",
+                    address: "Destino Final",
+                    isNextTarget: isCurrentTarget, // Para pintar o endereço de azul
                     imageUrl: null,
                     isLastStop: true,
                     isSchool: true,
@@ -876,14 +873,16 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                   ),
                 );
               }
+
+              // CASO ALUNO
               final student = remainingStops[index];
               return Padding(
                 padding: const EdgeInsets.only(bottom: 24.0),
                 child: _buildStopTile(
                   name: student.name,
-                  address: isCurrentTarget
-                      ? "Toque aqui para forçar chegada"
-                      : (student.address ?? 'Endereço não informado'),
+                  address: student.address ?? 'Endereço não informado',
+                  isNextTarget: isCurrentTarget, // Para pintar o endereço de azul
+
                   imageUrl: student.image_profile,
                   isLastStop: false,
                   etaBadge: isCurrentTarget ? _nextStopEtaText : null,
@@ -903,6 +902,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     required String name,
     required String address,
     required bool isLastStop,
+    required bool isNextTarget, // NOVO: Indica se deve pintar o endereço de azul
     String? imageUrl,
     bool isSchool = false,
     VoidCallback? onTap,
@@ -914,6 +914,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Coluna Ícone/Linha
             SizedBox(
               width: 40,
               child: Column(
@@ -935,6 +936,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             Expanded(
               child: Row(
                 children: [
+                  // Avatar
                   CircleAvatar(
                     radius: 28,
                     backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
@@ -946,6 +948,8 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                     backgroundColor: isSchool ? AppPalette.primary800 : AppPalette.neutral150,
                   ),
                   const SizedBox(width: 12),
+
+                  // Infos
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -953,11 +957,20 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                       children: [
                         Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(height: 2),
-                        Text(address, style: const TextStyle(color: AppPalette.neutral600)),
+                        // Endereço muda de cor se for o próximo alvo
+                        Text(
+                            address,
+                            style: TextStyle(
+                                color: isNextTarget ? AppPalette.primary800 : AppPalette.neutral600,
+                                fontSize: 12,
+                                fontWeight: FontWeight.normal
+                            )
+                        ),
                       ],
                     ),
                   ),
-                  // --- FLAG DE TEMPO (BADGE) ---
+
+                  // Badge de Tempo
                   if (etaBadge != null)
                     Container(
                       margin: const EdgeInsets.only(left: 8),
@@ -968,11 +981,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                       ),
                       child: Text(
                         etaBadge,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: AppPalette.primary900,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppPalette.primary900),
                       ),
                     )
                 ],

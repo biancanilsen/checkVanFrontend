@@ -1,4 +1,3 @@
-// lib/features/pages/home/route/nextRoute/next_route_card.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 

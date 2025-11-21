@@ -1,5 +1,5 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'student_model.dart'; // Certifique-se que este import está correto
+import 'student_model.dart';
 
 class RouteStep {
   final String instruction;
@@ -21,17 +21,17 @@ class RouteStep {
 }
 
 class RouteData {
-  final int teamId; // <-- 1. CAMPO ADICIONADO
-  final String tripType; // <-- 2. ADICIONADO (Ex: "GOING" ou "RETURNING")
+  final int teamId;
+  final String tripType;
   final String encodedPolyline;
-  final List<Student> students; // Alunos confirmados para esta rota
+  final List<Student> students;
   final List<RouteStep> steps;
   final LatLng schoolLocation;
   final String schoolName;
 
   RouteData({
-    required this.teamId, // <-- 3. ADICIONADO AO CONSTRUTOR
-    required this.tripType, // <-- 4. ADICIONADO AO CONSTRUTOR
+    required this.teamId,
+    required this.tripType,
     required this.encodedPolyline,
     required this.students,
     required this.steps,
@@ -39,9 +39,7 @@ class RouteData {
     required this.schoolName,
   });
 
-  // --- 5. FÁBRICA ATUALIZADA ---
-  // Agora ela recebe o teamId e o tripType de quem a está chamando
-  factory RouteData.fromJson(Map<String, dynamic> json, int teamId, String tripType) {
+  factory RouteData.fromJson(Map<String, dynamic> json, int teamIdArg, String tripTypeArg) {
     var studentList = (json['studentsGoing'] as List? ?? [])
         .map((s) => Student.fromJson(s..['isConfirmed'] = true))
         .toList();
@@ -56,20 +54,26 @@ class RouteData {
       }
     }
 
-    // Extrai os dados da escola do JSON (assumindo que a API os envia)
-    final schoolData = json['school'] as Map<String, dynamic>? ?? {};
-    final schoolLat = (schoolData['latitude'] ?? 0.0).toDouble();
-    final schoolLng = (schoolData['longitude'] ?? 0.0).toDouble();
-    final schoolName = schoolData['name'] as String? ?? 'Escola';
+    double schoolLat = 0.0;
+    double schoolLng = 0.0;
+    String sName = "Escola";
+
+    if (json['team'] != null && json['team']['school'] != null) {
+      final schoolObj = json['team']['school'];
+
+      schoolLat = (schoolObj['latitude'] ?? 0.0).toDouble();
+      schoolLng = (schoolObj['longitude'] ?? 0.0).toDouble();
+      sName = schoolObj['name'] ?? "Escola";
+    }
 
     return RouteData(
-      teamId: teamId, // <-- 6. PASSADO
-      tripType: tripType, // <-- 7. PASSADO
+      teamId: teamIdArg,
+      tripType: tripTypeArg,
       encodedPolyline: json['route']?['overview_polyline']?['points'] ?? '',
       students: studentList,
       steps: allSteps,
       schoolLocation: LatLng(schoolLat, schoolLng),
-      schoolName: schoolName,
+      schoolName: sName,
     );
   }
 }

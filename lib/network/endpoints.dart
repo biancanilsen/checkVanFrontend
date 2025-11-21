@@ -24,6 +24,7 @@ class Endpoints {
   static const String updateTrip = '$baseUrl/trip/update';
   static const String deleteTrip = '$baseUrl/trip/delete';
   static const String getNextTrips = '$baseUrl/trip/next-trips';
+  static const String calculateRouteEtas = '$baseUrl/trip/calculate-route-etas';
 
   // notifications
   static const String updateLocation = '$baseUrl/notifications/update-location';

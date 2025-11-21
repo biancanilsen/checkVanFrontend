@@ -138,4 +138,42 @@ class NotificationProvider extends ChangeNotifier {
     }
     return null; // Retorna null se der erro, para usarmos o cálculo local
   }
+
+  // Método novo que retorna os dois tempos
+  Future<Map<String, int>?> calculateRouteEtas({
+    required double currentLat,
+    required double currentLon,
+    required List<int> remainingStudentIds,
+    required int teamId,
+  }) async {
+    try {
+      final token = await UserSession.getToken();
+      final url = Uri.parse(Endpoints.calculateRouteEtas);
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'currentLat': currentLat,
+          'currentLon': currentLon,
+          'remainingStudentIds': remainingStudentIds,
+          'teamId': teamId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'nextStopEta': data['nextStopEta'] ?? 0,
+          'schoolEta': data['schoolEta'] ?? 0,
+        };
+      }
+    } catch (e) {
+      print('Erro ao calcular ETAs da rota: $e');
+    }
+    return null;
+  }
 }
