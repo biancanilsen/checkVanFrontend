@@ -18,6 +18,8 @@ class CustomTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onSuffixIconTap;
 
+  final TextCapitalization textCapitalization;
+
   const CustomTextField({
     super.key,
     required this.controller,
@@ -34,6 +36,7 @@ class CustomTextField extends StatelessWidget {
     this.obscureText = false,
     this.onChanged,
     this.onSuffixIconTap,
+    this.textCapitalization = TextCapitalization.sentences,
   });
 
   @override
@@ -69,12 +72,15 @@ class CustomTextField extends StatelessWidget {
           validator: validator,
           inputFormatters: inputFormatters,
 
+          textCapitalization: obscureText ? TextCapitalization.none : textCapitalization,
+
           obscureText: obscureText,
           onChanged: onChanged,
           decoration: InputDecoration(
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             hintText: hint,
+            hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
             suffixIcon: suffixIcon != null
                 ? IconButton(
               icon: Icon(suffixIcon, color: AppPalette.neutral600),

@@ -72,6 +72,7 @@ class _LoginPageState extends State<LoginPage> {
                   hint: 'Digite seu e-mail',
                   isRequired: true,
                   keyboardType: TextInputType.emailAddress,
+                  textCapitalization: TextCapitalization.none,
                 ),
 
                 const SizedBox(height: 16),
