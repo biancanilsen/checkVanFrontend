@@ -53,14 +53,14 @@ class Endpoints {
   static const String geocodingDetails = '$baseUrl/geocoding/details';
   static const String calculateEta = '$baseUrl/geocoding/calculate-eta';
  
-  // Van
+  // van
   static const String createVan = '$baseUrl/van/create';
   static const String getAllVans = '$baseUrl/van/getAll';
   static const String updateVan = '$baseUrl/van/update';
   static const String searchVans = '$baseUrl/van/search';
   static const String deleteVan = '$baseUrl/van/delete';
 
-  // School
+  // school
   static const String getAllSchools = '$baseUrl/school/getAll';
   static const String createSchool = '$baseUrl/school/create';
   static const String getSchool = '$baseUrl/school/get';
@@ -68,15 +68,15 @@ class Endpoints {
   static const String deleteSchool = '$baseUrl/school/delete';
   static const String searchSchools = '$baseUrl/school/search';
 
+  // utils
+  static const String getCountries = '$baseUrl/utils/countries';
+
   // presence
   static String updatePresence(int studentId) => '$baseUrl/student/$studentId/presence';
   static const String getPresenceSummary = '$baseUrl/student/presence-summary';
   static String getMonthlyPresence(int studentId, int year, int month) {
-    // O backend em JS usa mês 0-11, o Dart usa 1-12.
-    // Ajustamos aqui, enviando o mês no formato que o JS espera (0-11).
     final jsMonth = month - 1;
 
-    // Note que a rota mudou para '/presences' e usa query parameters
     return '$baseUrl/student/$studentId/presences?year=$year&month=$jsMonth';
   }
   static const String getNextTripStatusBulk = '$baseUrl/user/guardian/next-trip-status-bulk';
