@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 enum Period { morning, afternoon, night }
 
 class PeriodSelector extends StatefulWidget {
-  final ValueChanged<Period?> onPeriodSelected;
+  final ValueChanged<Period> onPeriodSelected; // Removido o '?' pois sempre terá um valor
   final Period? initialPeriod;
 
   const PeriodSelector({
     super.key,
     required this.onPeriodSelected,
-    this.initialPeriod = Period.morning,
+    this.initialPeriod, // O default será tratado no initState
   });
 
   @override
@@ -18,12 +18,13 @@ class PeriodSelector extends StatefulWidget {
 }
 
 class _PeriodSelectorState extends State<PeriodSelector> {
-  Period? _selectedPeriod;
+  // Agora é 'late Period' para garantir que nunca seja nulo na UI
+  late Period _selectedPeriod;
 
   @override
   void initState() {
     super.initState();
-    _selectedPeriod = widget.initialPeriod;
+    _selectedPeriod = widget.initialPeriod ?? Period.morning;
   }
 
   String _periodToString(Period period) {
@@ -38,7 +39,6 @@ class _PeriodSelectorState extends State<PeriodSelector> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,7 +47,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
           'Período',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.w600,
-            color: AppPalette.neutral800,
+            color: AppPalette.primary900,
           ),
         ),
         const SizedBox(height: 8),
@@ -55,13 +55,12 @@ class _PeriodSelectorState extends State<PeriodSelector> {
         Container(
           padding: const EdgeInsets.all(2.0),
           decoration: BoxDecoration(
-            color: AppPalette.neutral300,
+            color: AppPalette.neutral150,
             border: Border.all(
               color: AppPalette.neutral300,
               width: 1.0,
             ),
             borderRadius: BorderRadius.circular(12),
-
             boxShadow: [
               BoxShadow(
                 color: Colors.grey.withOpacity(0.5),
@@ -86,7 +85,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isSelected
                         ? AppPalette.primary800
-                        : AppPalette.neutral300,
+                        : AppPalette.neutral150,
                     foregroundColor: isSelected
                         ? AppPalette.white
                         : AppPalette.neutral600,

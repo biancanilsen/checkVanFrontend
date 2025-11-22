@@ -312,9 +312,8 @@ class _AddTeamPageState extends State<AddTeamPage> {
                     : (value) => setState(() => _selectedVanId = value),
                 validator: null,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              const SizedBox(height: 24),
               PeriodSelector(
                 initialPeriod: _selectedPeriod,
                 onPeriodSelected: (period) {
@@ -323,11 +322,26 @@ class _AddTeamPageState extends State<AddTeamPage> {
               ),
               const SizedBox(height: 40),
 
-              PrimaryButton(
-                text: isEditing ? 'Salvar Alterações' : 'Adicionar turma',
-                onPressed: (teamProvider.isLoading) ? null : _submitForm,
-                isLoading: teamProvider.isLoading,
-              ),
+              if (isEditing)
+                PrimaryButton(
+                  text: 'Salvar Alterações',
+                  onPressed: (teamProvider.isLoading) ? null : _submitForm,
+                  isLoading: teamProvider.isLoading,
+                )
+              else
+                ElevatedButton(
+                  onPressed: (teamProvider.isLoading) ? null : _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppPalette.primary800,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  child: teamProvider.isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('Adicionar turma'),
+                ),
+
               const SizedBox(height: 24),
             ],
           ),

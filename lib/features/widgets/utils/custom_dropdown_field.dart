@@ -1,4 +1,3 @@
-// /lib/widgets/utils/custom_dropdown_field.dart
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
 
@@ -29,18 +28,40 @@ class CustomDropdownField<T> extends StatelessWidget {
       children: [
         RichText(
           text: TextSpan(
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 16),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
             children: [
               TextSpan(text: label),
-              const TextSpan(text: ' *', style: TextStyle(color: AppPalette.red500, fontWeight: FontWeight.bold)),
+              const TextSpan(
+                text: ' *',
+                style: TextStyle(
+                  color: AppPalette.red700,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 2),
+
         DropdownButtonFormField<T>(
           value: value,
-          hint: Text(hint, style: Theme.of(context).inputDecorationTheme.hintStyle),
-          decoration: const InputDecoration(),
+          isExpanded: true, // Garante que o texto não quebre layout
+          icon: const Icon(Icons.arrow_drop_down, color: AppPalette.neutral600),
+
+          // --- AQUI PEGAMOS O ESTILO DO TEMA GLOBAL ---
+          hint: Text(
+            hint,
+            style: Theme.of(context).inputDecorationTheme.hintStyle,
+          ),
+
+          decoration: const InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+
           borderRadius: BorderRadius.circular(12.0),
           items: items,
           onChanged: readOnly ? null : onChanged,

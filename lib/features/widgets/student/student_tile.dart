@@ -61,7 +61,7 @@ class StudentTile extends StatelessWidget {
               // 3. TRAILING:
               IconButton(
                 icon: Icon(
-                  isGuardian ? Icons.edit_outlined : Icons.visibility_outlined,
+                  isGuardian ? Icons.edit_outlined : null,
                   color: Colors.grey[600],
                   size: 20,
                 ),

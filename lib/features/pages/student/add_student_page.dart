@@ -84,9 +84,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
       _selectedSchoolId = student.schoolId;
       _selectedShiftGoing = student.shiftGoing;
       _selectedShiftReturn = student.shiftReturn;
-      // 4. Preencha a turma (se o aluno tiver uma)
-      // Você precisará atualizar seu StudentModel para incluir o 'team_id' ou 'teams'
-      // Assumindo que student.teamId ou student.teams.first.id exista
       _selectedTeamId = student.teamId;
 
       AddressUtils.splitAddressForEditing(
@@ -213,11 +210,11 @@ class _AddStudentPageState extends State<AddStudentPage> {
     }
 
     if (mounted) {
-      Navigator.pop(context); // Fecha o dialog de qualquer forma
+      Navigator.pop(context);
 
       if (success) {
         // Sucesso
-        Navigator.pop(context); // Fecha a AddStudentPage
+        Navigator.pop(context);
         CustomSnackBar.show(
           context: context,
           label: 'Aluno excluído com sucesso.',
@@ -245,23 +242,19 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
     showDialog(
       context: context,
-      barrierDismissible: false, // Não deixa fechar clicando fora
+      barrierDismissible: false,
       builder: (BuildContext dialogContext) {
-        // Usa StatefulBuilder para que o dialog possa
-        // mostrar o loading sem ser reconstruído
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return DeleteStudentDialog(
               studentName: widget.student!.name,
-              isLoading: _isDeleting, // Usa a variável de estado da página
+              isLoading: _isDeleting,
               onConfirm: _handleDeleteStudent,
             );
           },
         );
       },
     ).then((_) {
-      // Se o dialog for dispensado (ex: "Cancelar")
-      // garanta que o loading de exclusão seja resetado.
       if (_isDeleting) {
         setState(() {
           _isDeleting = false;
@@ -402,10 +395,10 @@ class _AddStudentPageState extends State<AddStudentPage> {
               Text(
                 isGuardian
                     ? (isEditing && !isReadOnlyMode ? 'Editar Aluno' : 'Cadastrar Aluno')
-                    : 'Visulizar Aluno',
+                    : 'Informações do aluno',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 28,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: AppPalette.primary800,
                 ),
@@ -416,11 +409,11 @@ class _AddStudentPageState extends State<AddStudentPage> {
                     ? (isEditing
                         ? 'Altere os dados necessários'
                         : 'Preencha os dados para realizar o cadastro')
-                    : 'Visulize as informações do aluno',
+                    : 'Dados do aluno e responsáveis',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 16,
-                  color: AppPalette.neutral600,
+                  color: AppPalette.primary900,
                 ),
               ),
               const SizedBox(height: 32),
@@ -630,33 +623,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
               ],
 
               const SizedBox(height: 32),
-
-              if (!isReadOnlyMode)
-                // ElevatedButton(
-                //   onPressed: studentProvider.isLoading ? null : _submitForm,
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: AppPalette.primary800,
-                //     foregroundColor: Colors.white,
-                //     padding: const EdgeInsets.symmetric(vertical: 16),
-                //     textStyle: const TextStyle(
-                //       fontSize: 18,
-                //       fontWeight: FontWeight.w600,
-                //     ),
-                //   ),
-                //   child:
-                //       studentProvider.isLoading
-                //           ? const SizedBox(
-                //             height: 20,
-                //             width: 20,
-                //             child: CircularProgressIndicator(
-                //               color: Colors.white,
-                //               strokeWidth: 2,
-                //             ),
-                //           )
-                //           : Text(
-                //             isEditing ? 'Salvar Alterações' : 'Cadastrar Aluno',
-                //           ),
-                // ),
 
               if (!isReadOnlyMode && (isGuardian || isDriver))
                 PrimaryButton(
