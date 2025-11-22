@@ -254,20 +254,23 @@ class _SignUpFormState extends State<SignUpForm> {
             ],
             const SizedBox(height: 24),
 
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.primary800,
-                  foregroundColor: AppPalette.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+              Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16),
+              child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppPalette.primary800,
+                      foregroundColor: AppPalette.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    onPressed: provider.isLoading ? null : _submitForm,
+                    child: provider.isLoading
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Text('Criar conta'),
+                  ),
                 ),
-                onPressed: provider.isLoading ? null : _submitForm,
-                child: provider.isLoading
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Cadastrar'),
               ),
-            ),
             const SizedBox(height: 40),
           ],
         ),

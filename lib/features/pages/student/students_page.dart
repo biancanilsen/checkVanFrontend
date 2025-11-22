@@ -18,9 +18,7 @@ class StudentPage extends StatefulWidget {
 }
 
 class _StudentPageState extends State<StudentPage> {
-  // 1. REMOVA a instância local do provider
-  // final StudentProvider _studentProvider = StudentProvider();
-
+  final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
   String? _userRole;
   bool _isLoadingRole = true;
@@ -37,6 +35,7 @@ class _StudentPageState extends State<StudentPage> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -53,7 +52,6 @@ class _StudentPageState extends State<StudentPage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoadingRole) {
-      // É seguro ter um Scaffold aqui para a tela de loading
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -61,59 +59,55 @@ class _StudentPageState extends State<StudentPage> {
 
     final bool isGuardian = _userRole == 'guardian';
 
-    // 3. REMOVA o 'ChangeNotifierProvider.value'
-    // O Consumer abaixo encontrará o provider injetado pelo Shell.
     return ColoredBox(
       color: AppPalette.appBackground,
       child: SafeArea(
         child: Stack(
           children: [
-          _buildStudentList(isGuardian),
+            _buildStudentList(isGuardian),
 
-          if (isGuardian)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  label: const Text(
-                    'Adicionar aluno',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (newContext) => ChangeNotifierProvider.value(
-                          // 4. PASSE o provider lido do context
-                          value: context.read<StudentProvider>(),
-                          child: const AddStudentPage(student: null),
+            if (isGuardian)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    label: const Text(
+                      'Adicionar aluno',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (newContext) => ChangeNotifierProvider.value(
+                            value: context.read<StudentProvider>(),
+                            child: const AddStudentPage(student: null),
+                          ),
                         ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppPalette.green600,
+                      minimumSize: const Size(double.infinity, 52),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppPalette.primary800,
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildStudentList(bool isGuardian) {
-    // 5. O Consumer agora lê o provider do Shell
     return Consumer<StudentProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.students.isEmpty) {
@@ -124,33 +118,51 @@ class _StudentPageState extends State<StudentPage> {
           return Center(child: Text(provider.error!));
         }
 
-        // Esta verificação agora funciona, pois 'provider' é a instância correta
-        if (provider.students.isEmpty && !provider.isLoading) {
-          return const Center(child: Text('Nenhum aluno cadastrado.'));
-        }
+        final bool isListEmpty = provider.students.isEmpty;
+
+        final int itemCount = isListEmpty ? 3 : provider.students.length + 2;
 
         return ListView.builder(
           padding: EdgeInsets.fromLTRB(16, 0, 16, isGuardian ? 90 : 16),
-          // +2 para Header e SearchBar
-          itemCount: provider.students.length + 2,
+          itemCount: itemCount,
           itemBuilder: (context, index) {
+
             if (index == 0) {
               return const PageHeader(title: 'Meus alunos');
             }
+
             if (index == 1) {
               return PageSearchBar(
+                controller: _searchController, // Mantém o estado do texto
                 hintText: 'Pesquisar turma ou aluno',
                 onChanged: (value) {
                   if (_debounce?.isActive ?? false) _debounce!.cancel();
                   _debounce = Timer(const Duration(milliseconds: 500), () {
-                    // Chama o search no provider correto
                     provider.searchStudents(value);
                   });
                 },
               );
             }
 
+            if (isListEmpty) {
+              return Container(
+                margin: const EdgeInsets.only(top: 60),
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Icon(Icons.person_off_outlined, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Nenhum aluno encontrado.',
+                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                    ),
+                  ],
+                ),
+              );
+            }
+
             final student = provider.students[index - 2];
+
             return StudentTile(
               name: student.name,
               address: student.address,
@@ -161,7 +173,6 @@ class _StudentPageState extends State<StudentPage> {
                   context,
                   MaterialPageRoute(
                     builder: (newContext) => ChangeNotifierProvider.value(
-                      // 6. PASSE o 'provider' do Consumer
                       value: provider,
                       child: AddStudentPage(student: student),
                     ),
