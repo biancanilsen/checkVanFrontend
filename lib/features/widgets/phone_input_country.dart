@@ -118,7 +118,6 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // --- CAMPO DO DDI (Dropdown) ---
         SizedBox(
           width: 110,
           child: Column(
@@ -133,7 +132,7 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
               ),
               const SizedBox(height: 2),
               Container(
-                height: 48, // Altura alinhada com inputs isDense
+                height: 48,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
                   color: AppPalette.neutral75,
@@ -159,7 +158,7 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            Expanded( // Evita overflow se o DDI for longo
+                            Expanded(
                               child: Text(
                                 country.dialCode,
                                 overflow: TextOverflow.ellipsis,
@@ -179,7 +178,6 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
                           _selectedCountry = newValue;
                           _updateMask();
                         });
-                        // Notifica mudança de DDI
                         widget.onCountryChanged(newValue.dialCode);
                         // Notifica mudança de Sigla (ex: BR)
                         if (widget.onCountryIsoChanged != null) {
@@ -196,7 +194,6 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
 
         const SizedBox(width: 12),
 
-        // --- CAMPO DO NÚMERO ---
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,9 +221,8 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
               TextFormField(
                 controller: widget.controller,
                 keyboardType: TextInputType.number,
-                inputFormatters: [_maskFormatter], // Aplica a máscara
+                inputFormatters: [_maskFormatter],
                 validator: _validatePhone,
-                // Usa o estilo global definido no AppTheme
                 decoration: InputDecoration(
                   hintText: _selectedCountry?.mask ?? '(00) 00000-0000',
                   isDense: true,

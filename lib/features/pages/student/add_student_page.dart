@@ -23,6 +23,7 @@ import '../../widgets/dialog/delete_student_dialog.dart';
 import '../../widgets/student/guardian_card.dart';
 import '../../widgets/utils/address_field.dart';
 import '../../widgets/utils/custom_dropdown_field.dart';
+import '../../widgets/utils/phone_formatter.dart';
 import '../../widgets/van/custom_snackbar.dart';
 
 class AddStudentPage extends StatefulWidget {
@@ -63,6 +64,7 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
   bool _isDeleting = false;
   bool get isEditing => widget.student != null;
+  String _guardianFormattedPhone = '';
 
   @override
   void initState() {
@@ -72,6 +74,10 @@ class _AddStudentPageState extends State<AddStudentPage> {
       Provider.of<SchoolProvider>(context, listen: false).getSchools();
       Provider.of<TeamProvider>(context, listen: false).getTeams();
     });
+
+    if (isEditing && widget.student?.guardian != null) {
+      _formatGuardianPhone();
+    }
 
     if (isEditing) {
       final student = widget.student!;
@@ -95,6 +101,24 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
     _streetController.addListener(_onAddressChanged);
     _addressFocusNode.addListener(_onFocusChanged);
+  }
+
+  Future<void> _formatGuardianPhone() async {
+    final guardian = widget.student!.guardian!;
+    // Assumindo que o objeto Guardian (User) tem o campo phoneCountry
+    // Se o model student -> guardian ainda não tem, você precisará adicionar no backend/model
+
+    // Caso o guardian não tenha phoneCountry carregado no objeto student,
+    // você pode tentar inferir pelo DDI do telefone ou buscar o user completo.
+
+    // Exemplo assumindo que guardian tem phoneCountry:
+    final formatted = await PhoneFormatter.format(guardian.phone, guardian.phoneCountry);
+
+    if (mounted) {
+      setState(() {
+        _guardianFormattedPhone = formatted;
+      });
+    }
   }
 
   Future<void> _loadUserRole() async {
@@ -611,7 +635,9 @@ class _AddStudentPageState extends State<AddStudentPage> {
                 const SizedBox(height: 16),
                 GuardianCard(
                   name: widget.student!.guardian!.name,
-                  phone: widget.student!.guardian!.phone,
+                  phone: _guardianFormattedPhone.isNotEmpty
+                      ? _guardianFormattedPhone
+                      : widget.student!.guardian!.phone ?? '',
 
                   onCallPressed: () {
                     LauncherUtils.makePhoneCall(context, widget.student!.guardian!.phone);
