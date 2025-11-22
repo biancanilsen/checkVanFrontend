@@ -45,7 +45,7 @@ class CustomTextField extends StatelessWidget {
           text: TextSpan(
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 14,
             ),
             children: [
               TextSpan(text: label),
@@ -72,7 +72,15 @@ class CustomTextField extends StatelessWidget {
           obscureText: obscureText,
           onChanged: onChanged,
           decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             hintText: hint,
+            hintStyle: const TextStyle(
+              color: AppPalette.neutral600,
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+              fontStyle: FontStyle.italic,
+            ),
             suffixIcon: suffixIcon != null
                 ? IconButton(
               icon: Icon(suffixIcon, color: AppPalette.neutral600),

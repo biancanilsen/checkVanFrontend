@@ -5,33 +5,47 @@ import '../network/endpoints.dart';
 
 class UserService {
   static Future<bool> updateProfile({
-    required String name,
-    required String phone,
-    required String email,
-    required String password,
-    required String license,
+    String? name,
+    String? phone,
+    String? email,
+    String? password,
+    String? license,
     DateTime? birthDate,
   }) async {
     final token = await UserSession.getToken();
 
-    final body = {
-      'name': name,
-      'phone': phone,
-      'email': email,
-      'password': password,
-      'driver_license': license,
-      if (birthDate != null) 'birth_date': birthDate.toIso8601String(),
-    };
+    final Map<String, dynamic> body = {};
 
-    final response = await http.put(
-      Uri.parse(Endpoints.updateUser),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(body),
-    );
+    if (name != null) body['name'] = name;
+    if (phone != null) body['phone'] = phone;
+    if (email != null) body['email'] = email;
 
-    return response.statusCode == 200;
+    if (password != null && password.isNotEmpty) {
+      body['password'] = password;
+    }
+
+    if (license != null) body['driver_license'] = license;
+    if (birthDate != null) body['birth_date'] = birthDate.toIso8601String();
+
+    try {
+      final response = await http.put(
+        Uri.parse(Endpoints.updateUser),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Erro ao atualizar perfil: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Exceção no updateProfile: $e');
+      return false;
+    }
   }
 }

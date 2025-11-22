@@ -8,6 +8,7 @@ class UserModel {
   final String role;
   final String? driverLicense;
   final DateTime birthDate;
+  final bool isTempPassword;
 
   UserModel({
     required this.id,
@@ -17,6 +18,7 @@ class UserModel {
     required this.role,
     this.driverLicense,
     required this.birthDate,
+    this.isTempPassword = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,7 @@ class UserModel {
       role: json['role'] as String,
       driverLicense: json['driver_license'] as String?,
       birthDate: DateTime.parse(json['birth_date'] as String),
+      isTempPassword: json['is_temp_password'] ?? false,
     );
   }
 
@@ -40,6 +43,7 @@ class UserModel {
       'role': role,
       'driver_license': driverLicense,
       'birth_date': birthDate.toIso8601String(),
+      'is_temp_password': isTempPassword,
     };
   }
 

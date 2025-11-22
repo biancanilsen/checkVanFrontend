@@ -145,6 +145,8 @@ class _LoginPageState extends State<LoginPage> {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Icon(Icons.login, color: Colors.white),
+                        SizedBox(width: 6),
                         Text(
                           'Entrar',
                           style: TextStyle(
@@ -153,8 +155,6 @@ class _LoginPageState extends State<LoginPage> {
                             color: Colors.white,
                           ),
                         ),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward, color: Colors.white),
                       ],
                     ),
                   ),

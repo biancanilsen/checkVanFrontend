@@ -29,8 +29,6 @@ class _StudentPageState extends State<StudentPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 2. LEIA o provider que foi injetado pelo Shell
-      // (DriverShell ou GuardianShell)
       context.read<StudentProvider>().getStudents();
       _loadUserRole();
     });
