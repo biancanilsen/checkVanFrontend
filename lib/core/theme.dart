@@ -130,10 +130,11 @@ class AppTheme {
           backgroundColor: baseTheme.colorScheme.secondary,
           foregroundColor: baseTheme.colorScheme.onSecondary,
           minimumSize: const Size.fromHeight(40),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(8)),
           ),
+          textStyle: TextStyle(fontSize: 14)
         ),
       ),
 

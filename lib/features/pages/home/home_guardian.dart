@@ -55,33 +55,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
     });
   }
 
-  void _logout() async {
-    final bool? confirm = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmar Saída'),
-        content: const Text('Você tem certeza que deseja sair?'),
-        actions: [
-          TextButton(
-            child: const Text('Cancelar'),
-            onPressed: () => Navigator.pop(context, false),
-          ),
-          TextButton(
-            child: const Text('Sair'),
-            onPressed: () => Navigator.pop(context, true),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    await UserSession.signOutUser();
-    if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -98,7 +71,6 @@ class _HomeGuardianState extends State<HomeGuardian> {
               userName: _userName,
               imageProfile: _profileImageUrl,
               onProfileTap: _navigateToProfile,
-                onLogoutTap: _logout
             ),
 
             const SizedBox(height: 20),

@@ -6,7 +6,6 @@ class GuardianHomeHeader extends StatelessWidget {
   final String userName;
   final String? imageProfile;
   final VoidCallback onProfileTap;
-  final VoidCallback onLogoutTap;
 
   const GuardianHomeHeader({
     super.key,
@@ -14,7 +13,6 @@ class GuardianHomeHeader extends StatelessWidget {
     required this.userName,
     this.imageProfile,
     required this.onProfileTap,
-    required this.onLogoutTap,
   });
 
   @override
@@ -51,12 +49,6 @@ class GuardianHomeHeader extends StatelessWidget {
               ],
             ),
           ),
-        ),
-
-        IconButton(
-          icon: Icon(Icons.logout, color: Colors.grey[700]),
-          onPressed: onLogoutTap,
-          tooltip: 'Sair',
         ),
 
         const SizedBox(width: 8),

@@ -180,6 +180,13 @@ class _MyProfileState extends State<MyProfile> {
     }
   }
 
+  void _logout() async {
+    await UserSession.signOutUser();
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -199,10 +206,10 @@ class _MyProfileState extends State<MyProfile> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Meus dados',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppPalette.primary800),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: _userRole == "driver" ? AppPalette.primary800 : AppPalette.primary900),
               ),
               const SizedBox(height: 32),
 
@@ -307,21 +314,46 @@ class _MyProfileState extends State<MyProfile> {
                 const SizedBox(height: 16),
               ],
 
+              const SizedBox(height: 8),
+
+              Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16),
+                child: ElevatedButton(
+                  onPressed: _isLoading || !_senhasIguais ? null : _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _userRole == "driver" ? AppPalette.primary800 : AppPalette.green600,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('Salvar'),
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              if (_userRole == 'guardian')
+              Center(
+                child: TextButton.icon(
+                  onPressed: _logout,
+                  icon: const Icon(Icons.logout, color: Colors.black),
+                  label: const Text(
+                    'Sair',
+                    style: TextStyle(
+                        color: AppPalette.primary900,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 32),
 
-              ElevatedButton(
-                onPressed: _isLoading || !_senhasIguais ? null : _submitForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPalette.primary800,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                ),
-                child: _isLoading
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Salvar'),
-              ),
-              const SizedBox(height: 24),
             ],
           ),
         ),
