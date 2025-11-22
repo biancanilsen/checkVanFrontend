@@ -7,6 +7,7 @@ class UserService {
   static Future<bool> updateProfile({
     String? name,
     String? phone,
+    String? phoneCountry,
     String? email,
     String? password,
     String? license,
@@ -18,6 +19,7 @@ class UserService {
 
     if (name != null) body['name'] = name;
     if (phone != null) body['phone'] = phone;
+    if (phoneCountry != null) body['phone_country'] = phoneCountry;
     if (email != null) body['email'] = email;
 
     if (password != null && password.isNotEmpty) {

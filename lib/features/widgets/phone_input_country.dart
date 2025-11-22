@@ -8,8 +8,9 @@ class PhoneInputWithCountry extends StatefulWidget {
   final TextEditingController controller;
   final String label;
   final bool isRequired;
-  final ValueChanged<String> onCountryChanged;
-  final String? initialDialCode;
+  final ValueChanged<String> onCountryChanged; // Retorna o DDI (+55)
+  final ValueChanged<String>? onCountryIsoChanged; // Retorna a Sigla (BR)
+  final String? initialDialCode; // DDI inicial para pré-seleção
 
   const PhoneInputWithCountry({
     super.key,
@@ -18,6 +19,7 @@ class PhoneInputWithCountry extends StatefulWidget {
     this.label = 'Celular',
     this.isRequired = false,
     this.initialDialCode,
+    this.onCountryIsoChanged,
   });
 
   @override
@@ -34,7 +36,7 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
   void initState() {
     super.initState();
     _maskFormatter = MaskTextInputFormatter(
-      mask: '(##) #####-####',
+      mask: '(##) #####-####', // Máscara genérica inicial
       filter: {"#": RegExp(r'[0-9]')},
       type: MaskAutoCompletionType.lazy,
     );
@@ -43,19 +45,33 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
 
   Future<void> _fetchCountries() async {
     final countries = await UtilService.getCountries();
-    if (mounted) {
-      setState(() {
-        _countries = countries;
-        _selectedCountry = countries.firstWhere(
-              (c) => c.dialCode == widget.initialDialCode,
-          orElse: () => countries.firstWhere((c) => c.code == 'BR', orElse: () => countries.first),
-        );
-        _updateMask();
-        _isLoading = false;
-      });
-      // Notifica o pai do DDI inicial
-      if (_selectedCountry != null) {
-        widget.onCountryChanged(_selectedCountry!.dialCode);
+
+    if (!mounted) return;
+
+    setState(() {
+      _countries = countries;
+
+      // Tenta encontrar o país pelo DDI inicial passado
+      // Se não achar, tenta o Brasil (BR), se não achar, pega o primeiro da lista
+      _selectedCountry = countries.firstWhere(
+            (c) => c.dialCode == widget.initialDialCode,
+        orElse: () => countries.firstWhere(
+                (c) => c.code == 'BR',
+            orElse: () => countries.first
+        ),
+      );
+
+      _isLoading = false;
+
+      // Aplica a máscara do país encontrado
+      _updateMask();
+    });
+
+    // Notifica o pai sobre o país selecionado inicialmente
+    if (_selectedCountry != null) {
+      widget.onCountryChanged(_selectedCountry!.dialCode);
+      if (widget.onCountryIsoChanged != null) {
+        widget.onCountryIsoChanged!(_selectedCountry!.code);
       }
     }
   }
@@ -64,9 +80,17 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
     if (_selectedCountry != null) {
       _maskFormatter.updateMask(mask: _selectedCountry!.mask);
 
+      // CORREÇÃO PRINCIPAL:
+      // Se o controller já tem texto (ex: veio do banco de dados na tela de perfil),
+      // nós formatamos esse texto com a máscara do país selecionado.
       if (widget.controller.text.isNotEmpty) {
+        // 1. Remove tudo que não for número para ter o dado limpo
         final unmasked = widget.controller.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+        // 2. Aplica a máscara
         final formatted = _maskFormatter.maskText(unmasked);
+
+        // 3. Atualiza o controller visualmente
         widget.controller.text = formatted;
       }
     }
@@ -77,7 +101,8 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
       return 'Campo obrigatório';
     }
 
-    if (value != null && _selectedCountry != null) {
+    if (value != null && value.isNotEmpty && _selectedCountry != null) {
+      // Pega o texto sem a máscara para validar o tamanho
       final unmaskedText = _maskFormatter.getUnmaskedText();
 
       if (unmaskedText.length < _selectedCountry!.minLength) {
@@ -89,15 +114,13 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: LinearProgressIndicator());
-    }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // --- CAMPO DO DDI (Dropdown) ---
         SizedBox(
-          width: 110, // Largura um pouco maior para caber DDI
+          width: 110,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -110,7 +133,7 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
               ),
               const SizedBox(height: 2),
               Container(
-                height: 48, // Altura ajustada para isDense
+                height: 48, // Altura alinhada com inputs isDense
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
                   color: AppPalette.neutral75,
@@ -136,11 +159,14 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
                               ),
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              country.dialCode,
-                              style: const TextStyle(
-                                  color: AppPalette.neutral600,
-                                  fontSize: 12
+                            Expanded( // Evita overflow se o DDI for longo
+                              child: Text(
+                                country.dialCode,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    color: AppPalette.neutral600,
+                                    fontSize: 12
+                                ),
                               ),
                             ),
                           ],
@@ -153,7 +179,12 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
                           _selectedCountry = newValue;
                           _updateMask();
                         });
+                        // Notifica mudança de DDI
                         widget.onCountryChanged(newValue.dialCode);
+                        // Notifica mudança de Sigla (ex: BR)
+                        if (widget.onCountryIsoChanged != null) {
+                          widget.onCountryIsoChanged!(newValue.code);
+                        }
                       }
                     },
                   ),
@@ -194,13 +225,13 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
                 controller: widget.controller,
                 keyboardType: TextInputType.number,
                 inputFormatters: [_maskFormatter], // Aplica a máscara
-                validator: _validatePhone, // Aplica a validação de tamanho
+                validator: _validatePhone,
+                // Usa o estilo global definido no AppTheme
                 decoration: InputDecoration(
                   hintText: _selectedCountry?.mask ?? '(00) 00000-0000',
-                  // Prefixo visual apenas estético dentro do input, se desejar
-                  // prefixText: '${_selectedCountry?.dialCode} ',
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
                 ),
               ),
             ],

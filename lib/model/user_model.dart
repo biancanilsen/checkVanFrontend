@@ -4,6 +4,7 @@ class UserModel {
   final int id;
   final String name;
   final String phone;
+  final String? phoneCountry;
   final String email;
   final String role;
   final String? driverLicense;
@@ -14,6 +15,7 @@ class UserModel {
     required this.id,
     required this.name,
     required this.phone,
+    this.phoneCountry,
     required this.email,
     required this.role,
     this.driverLicense,
@@ -26,6 +28,7 @@ class UserModel {
       id: json['id'] as int,
       name: json['name'] as String,
       phone: json['phone'] as String,
+      phoneCountry: json['phone_country'],
       email: json['email'] as String,
       role: json['role'] as String,
       driverLicense: json['driver_license'] as String?,
