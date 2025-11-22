@@ -161,11 +161,9 @@ class NextRouteCard extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      // Desabilita se estiver carregando OU se não houver viagem
                       onPressed: (routeProviderLoading || !hasTrip)
                           ? null
                           : () async {
-                        // teamId é pego do nextTrip
                         final success = await routeProvider.generateRoute(
                           teamId: teamId!,
                             tripType: "GOING" // todo - remover informação mock
