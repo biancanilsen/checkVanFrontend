@@ -8,8 +8,8 @@ class PhoneInputWithCountry extends StatefulWidget {
   final TextEditingController controller;
   final String label;
   final bool isRequired;
-  // Callback para devolver o DDI selecionado para o pai (SignUpForm)
   final ValueChanged<String> onCountryChanged;
+  final String? initialDialCode;
 
   const PhoneInputWithCountry({
     super.key,
@@ -17,6 +17,7 @@ class PhoneInputWithCountry extends StatefulWidget {
     required this.onCountryChanged,
     this.label = 'Celular',
     this.isRequired = false,
+    this.initialDialCode,
   });
 
   @override
@@ -46,8 +47,8 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
       setState(() {
         _countries = countries;
         _selectedCountry = countries.firstWhere(
-              (c) => c.code == 'BR',
-          orElse: () => countries.first,
+              (c) => c.dialCode == widget.initialDialCode,
+          orElse: () => countries.firstWhere((c) => c.code == 'BR', orElse: () => countries.first),
         );
         _updateMask();
         _isLoading = false;
@@ -62,7 +63,12 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
   void _updateMask() {
     if (_selectedCountry != null) {
       _maskFormatter.updateMask(mask: _selectedCountry!.mask);
-      widget.controller.clear(); // Limpa o campo ao trocar de país para evitar conflito de máscara
+
+      if (widget.controller.text.isNotEmpty) {
+        final unmasked = widget.controller.text.replaceAll(RegExp(r'[^0-9]'), '');
+        final formatted = _maskFormatter.maskText(unmasked);
+        widget.controller.text = formatted;
+      }
     }
   }
 
@@ -72,7 +78,6 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
     }
 
     if (value != null && _selectedCountry != null) {
-      // Remove a formatação para contar apenas os números
       final unmaskedText = _maskFormatter.getUnmaskedText();
 
       if (unmaskedText.length < _selectedCountry!.minLength) {

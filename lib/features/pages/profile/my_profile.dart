@@ -9,6 +9,7 @@ import '../../../services/user_service.dart';
 import '../../../model/user_model.dart';
 import '../../../utils/user_session.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/phone_input_country.dart';
 import '../../widgets/van/custom_snackbar.dart';
 
 class MyProfile extends StatefulWidget {
@@ -27,6 +28,7 @@ class _MyProfileState extends State<MyProfile> {
   final _licenseController = TextEditingController();
   final _birthDateController = TextEditingController();
   final _confirmSenhaController = TextEditingController();
+
   bool _senhasIguais = true;
   bool _obscureSenha = true;
   bool _obscureConfirmSenha = true;
@@ -35,6 +37,8 @@ class _MyProfileState extends State<MyProfile> {
   String? _userRole;
   DateTime? _birthDate;
   String? _profileImageUrl;
+
+  String _selectedDDI = '+55';
 
   XFile? _imageFile;
   final ImagePicker _picker = ImagePicker();
@@ -55,15 +59,27 @@ class _MyProfileState extends State<MyProfile> {
       _userId = user.id;
       _userRole = user.role;
       _birthDate = user.birthDate;
-      // TODO: Adicionar 'image_profile' ao seu UserModel para atualizar a imagem
       // _profileImageUrl = user.image_profile;
 
       setState(() {
         _isDriver = _userRole == "driver";
         _nameController.text = user.name ?? '';
-        _phoneController.text = user.phone ?? '';
         _emailController.text = user.email ?? '';
         _licenseController.text = user.driverLicense ?? '';
+
+        // 2. TRATAMENTO DO TELEFONE AO CARREGAR
+        // O banco retorna: +5547999999999
+        // Precisamos separar para exibir corretamente
+        String rawPhone = user.phone ?? '';
+        if (rawPhone.startsWith('+55')) {
+          _selectedDDI = '+55';
+          // Remove o +55 para exibir só o número no input (ex: 47999999999)
+          _phoneController.text = rawPhone.substring(3);
+        } else {
+          // Caso seja outro formato ou vazio
+          _phoneController.text = rawPhone;
+        }
+
         if (_birthDate != null) {
           _birthDateController.text = DateFormat('dd/MM/yyyy').format(_birthDate!);
         }
@@ -135,10 +151,12 @@ class _MyProfileState extends State<MyProfile> {
 
     setState(() => _isLoading = true);
 
-    // TODO: Atualizar seu UserService.updateProfile para aceitar _imageFile
+    String cleanNumber = _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    String finalPhone = '$_selectedDDI$cleanNumber';
+
     final success = await UserService.updateProfile(
       name: _nameController.text,
-      phone: _phoneController.text,
+      phone: finalPhone,
       email: _emailController.text,
       password: _senhaController.text,
       license: _licenseController.text,
@@ -152,7 +170,7 @@ class _MyProfileState extends State<MyProfile> {
       await UserSession.saveUser(UserModel(
         id: _userId,
         name: _nameController.text,
-        phone: _phoneController.text,
+        phone: finalPhone,
         email: _emailController.text,
         driverLicense: _licenseController.text,
         role: _userRole!,
@@ -246,18 +264,21 @@ class _MyProfileState extends State<MyProfile> {
                 label: 'Nome',
                 hint: 'Seu nome completo',
                 isRequired: true,
+                textCapitalization: TextCapitalization.words,
                 validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
               ),
               const SizedBox(height: 16),
-              // TODO - Adicionar máscara
-              CustomTextField(
+
+              PhoneInputWithCountry(
                 controller: _phoneController,
                 label: 'Telefone',
-                hint: '(00) 00000-0000',
                 isRequired: true,
-                keyboardType: TextInputType.phone,
-                validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
+                initialDialCode: _selectedDDI,
+                onCountryChanged: (ddi) {
+                  _selectedDDI = ddi;
+                },
               ),
+
               const SizedBox(height: 16),
               CustomTextField(
                 controller: _emailController,
@@ -265,6 +286,7 @@ class _MyProfileState extends State<MyProfile> {
                 hint: 'seuemail@email.com',
                 isRequired: true,
                 keyboardType: TextInputType.emailAddress,
+                textCapitalization: TextCapitalization.none,
                 validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
               ),
               const SizedBox(height: 16),
@@ -273,7 +295,9 @@ class _MyProfileState extends State<MyProfile> {
                 label: 'Data de nascimento',
                 hint: 'dd/mm/aaaa',
                 isRequired: true,
+                readOnly: true,
                 onTap: _pickDate,
+                onSuffixIconTap: _pickDate,
                 suffixIcon: Icons.calendar_today,
                 validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
               ),
@@ -336,23 +360,23 @@ class _MyProfileState extends State<MyProfile> {
               const SizedBox(height: 40),
 
               if (_userRole == 'guardian')
-              Center(
-                child: TextButton.icon(
-                  onPressed: _logout,
-                  icon: const Icon(Icons.logout, color: Colors.black),
-                  label: const Text(
-                    'Sair',
-                    style: TextStyle(
-                        color: AppPalette.primary900,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500
+                Center(
+                  child: TextButton.icon(
+                    onPressed: _logout,
+                    icon: const Icon(Icons.logout, color: Colors.black),
+                    label: const Text(
+                      'Sair',
+                      style: TextStyle(
+                          color: AppPalette.primary900,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
                   ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
                 ),
-              ),
 
               const SizedBox(height: 32),
 
