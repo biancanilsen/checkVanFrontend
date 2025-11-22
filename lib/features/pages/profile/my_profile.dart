@@ -41,6 +41,7 @@ class _MyProfileState extends State<MyProfile> {
 
   bool _isLoading = false;
   bool _isLoaded = false;
+  bool _isDriver = false;
 
   @override
   void initState() {
@@ -54,10 +55,11 @@ class _MyProfileState extends State<MyProfile> {
       _userId = user.id;
       _userRole = user.role;
       _birthDate = user.birthDate;
-      // TODO: Adicionar 'image_profile' ao seu UserModel
+      // TODO: Adicionar 'image_profile' ao seu UserModel para atualizar a imagem
       // _profileImageUrl = user.image_profile;
 
       setState(() {
+        _isDriver = _userRole == "driver";
         _nameController.text = user.name ?? '';
         _phoneController.text = user.phone ?? '';
         _emailController.text = user.email ?? '';
@@ -209,7 +211,7 @@ class _MyProfileState extends State<MyProfile> {
               Text(
                 'Meus dados',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: _userRole == "driver" ? AppPalette.primary800 : AppPalette.primary900),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: _isDriver ? AppPalette.primary800 : AppPalette.primary900),
               ),
               const SizedBox(height: 32),
 
@@ -321,7 +323,7 @@ class _MyProfileState extends State<MyProfile> {
                 child: ElevatedButton(
                   onPressed: _isLoading || !_senhasIguais ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _userRole == "driver" ? AppPalette.primary800 : AppPalette.green600,
+                    backgroundColor: _isDriver ? AppPalette.primary800 : AppPalette.green600,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),

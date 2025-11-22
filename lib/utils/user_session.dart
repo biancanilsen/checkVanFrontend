@@ -35,4 +35,14 @@ class UserSession {
     await prefs.remove(_tokenKey);
     await prefs.remove(_userKey);
   }
+
+  static Future<bool> hasRole(String roleToCheck) async {
+    final user = await getUser();
+    return user != null && user.role == roleToCheck;
+  }
+
+  static Future<String?> getCurrentRole() async {
+    final user = await getUser();
+    return user?.role;
+  }
 }
