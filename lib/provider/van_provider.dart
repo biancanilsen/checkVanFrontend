@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../model/van_model.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
+import '../services/navigation_service.dart';
 
 class VanProvider extends ChangeNotifier {
   List<Van> _vans = [];
@@ -29,7 +32,7 @@ class VanProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -40,6 +43,12 @@ class VanProvider extends ChangeNotifier {
         _error = data['message'] ?? 'Falha ao carregar vans.';
         _vans = [];
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      _vans = [];
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      _vans = [];
     } catch (e) {
       _error = 'Erro de conexão: ${e.toString()}';
       _vans = [];
@@ -66,7 +75,7 @@ class VanProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -77,6 +86,12 @@ class VanProvider extends ChangeNotifier {
         _error = data['message'] ?? 'Falha ao buscar vans.';
         _vans = [];
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      _vans = [];
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      _vans = [];
     } catch (e) {
       _error = e.toString();
       _vans = [];
@@ -112,7 +127,7 @@ class VanProvider extends ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 201) {
         await getVans();
@@ -120,15 +135,20 @@ class VanProvider extends ChangeNotifier {
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao cadastrar van.';
-        _isLoading = false;
-        notifyListeners();
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = 'Erro de conexão: ${e.toString()}';
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return false;
     }
   }
 
@@ -159,7 +179,7 @@ class VanProvider extends ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         await getVans();
@@ -167,15 +187,20 @@ class VanProvider extends ChangeNotifier {
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao atualizar van.';
-        _isLoading = false;
-        notifyListeners();
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = 'Erro de conexão: ${e.toString()}';
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return false;
     }
   }
 
@@ -193,25 +218,28 @@ class VanProvider extends ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         await getVans();
-        _isLoading = false;
-        notifyListeners();
         return true;
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao excluir van.';
-        _isLoading = false;
-        notifyListeners();
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = e.toString();
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return false;
     }
   }
 }

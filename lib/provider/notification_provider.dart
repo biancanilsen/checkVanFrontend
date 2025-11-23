@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
+import '../services/navigation_service.dart';
 
 class NotificationProvider extends ChangeNotifier {
   List<Notification> _notifications = [];
@@ -42,16 +45,23 @@ class NotificationProvider extends ChangeNotifier {
           'lon': lon,
           'tripType': tripType,
         }),
-      );
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
-        print('Localização e status de embarque processados pelo backend.');
         return true;
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Falha ao processar localização.';
         return false;
       }
+    } on TimeoutException catch (_) {
+      // Location updates are silent, maybe don't force error screen here to not interrupt driving?
+      // Or force if critical. Let's keep it consistent with request:
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = e.toString();
       return false;
@@ -72,7 +82,7 @@ class NotificationProvider extends ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         return true;
@@ -81,13 +91,19 @@ class NotificationProvider extends ChangeNotifier {
         print('Erro backend: ${data['message']}');
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       print('Erro request: $e');
+      NavigationService.forceErrorScreen();
       return false;
     }
   }
 
-  // Notificar Proximidade (Tempo estimado)
   Future<bool> notifyProximity(int studentId, int minutes) async {
     return _postRequest(Endpoints.notifyProximity, {
       'studentId': studentId,
@@ -95,17 +111,14 @@ class NotificationProvider extends ChangeNotifier {
     });
   }
 
-  // Notificar Embarque
   Future<bool> notifyBoarding(int studentId) async {
     return _postRequest(Endpoints.notifyBoarding, {'studentId': studentId});
   }
 
-  // Notificar Chegada na Casa (Automático - Já está aqui)
   Future<bool> notifyArrivalHome(int studentId) async {
     return _postRequest(Endpoints.notifyArrivalHome, {'studentId': studentId});
   }
 
-  // Notificar Chegada na Escola
   Future<bool> notifyArrivalSchool(int teamId) async {
     return _postRequest(Endpoints.notifyArrivalSchool, {'teamId': teamId});
   }
@@ -113,7 +126,7 @@ class NotificationProvider extends ChangeNotifier {
   Future<int?> getRealTimeEta(double currentLat, double currentLon, int studentId) async {
     try {
       final token = await UserSession.getToken();
-      final url = Uri.parse(Endpoints.calculateEta); // Certifique-se de adicionar no Endpoints
+      final url = Uri.parse(Endpoints.calculateEta);
 
       final response = await http.post(
         url,
@@ -126,19 +139,24 @@ class NotificationProvider extends ChangeNotifier {
           'lon': currentLon,
           'studentId': studentId
         }),
-      );
+      ).timeout(const Duration(seconds: 20));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['minutes']; // Pode ser null ou int
+        return data['minutes'];
       }
+    } on TimeoutException catch (_) {
+      // Silent fail for ETA calculation (fallback to local) or force error?
+      // Usually background calculations shouldn't break UI flow, but per instruction:
+      NavigationService.forceErrorScreen();
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
     } catch (e) {
       print('Erro ao buscar ETA real: $e');
     }
-    return null; // Retorna null se der erro, para usarmos o cálculo local
+    return null;
   }
 
-  // Método novo que retorna os dois tempos
   Future<Map<String, int>?> calculateRouteEtas({
     required double currentLat,
     required double currentLon,
@@ -161,7 +179,7 @@ class NotificationProvider extends ChangeNotifier {
           'remainingStudentIds': remainingStudentIds,
           'teamId': teamId,
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -170,8 +188,13 @@ class NotificationProvider extends ChangeNotifier {
           'schoolEta': data['schoolEta'] ?? 0,
         };
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
     } catch (e) {
       print('Erro ao calcular ETAs da rota: $e');
+      NavigationService.forceErrorScreen();
     }
     return null;
   }

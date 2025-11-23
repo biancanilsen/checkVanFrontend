@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../model/team_model.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
+import '../services/navigation_service.dart';
 
 class TeamProvider extends ChangeNotifier {
   List<Team> _teams = [];
@@ -29,7 +32,7 @@ class TeamProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -40,6 +43,12 @@ class TeamProvider extends ChangeNotifier {
         _error = data['message'] ?? 'Falha ao carregar turmas.';
         _teams = [];
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      _teams = [];
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      _teams = [];
     } catch (e) {
       _error = 'Erro de conexão: ${e.toString()}';
       _teams = [];
@@ -77,7 +86,7 @@ class TeamProvider extends ChangeNotifier {
           'van_id': vanId,
           'shift': shift,
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 201) {
         await getTeams();
@@ -85,15 +94,20 @@ class TeamProvider extends ChangeNotifier {
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao adicionar turma.';
-        _isLoading = false;
-        notifyListeners();
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = 'Ocorreu um erro: $e';
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return false;
     }
   }
 
@@ -126,7 +140,7 @@ class TeamProvider extends ChangeNotifier {
           'van_id': vanId,
           'shift': shift,
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         await getTeams();
@@ -134,15 +148,20 @@ class TeamProvider extends ChangeNotifier {
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao atualizar turma.';
-        _isLoading = false;
-        notifyListeners();
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = 'Ocorreu um erro: $e';
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return false;
     }
   }
 

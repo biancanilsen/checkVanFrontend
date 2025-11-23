@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../model/user_model.dart';
 import '../network/endpoints.dart';
 import '../services/session_manager.dart';
 import '../utils/user_session.dart';
+import '../services/navigation_service.dart';
 
 class LoginProvider extends ChangeNotifier {
   bool isLoading = false;
@@ -19,7 +22,7 @@ class LoginProvider extends ChangeNotifier {
         Uri.parse(Endpoints.login),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
-      );
+      ).timeout(const Duration(seconds: 60));
 
       if (loginResponse.statusCode == 200) {
         final body = jsonDecode(loginResponse.body) as Map<String, dynamic>;
@@ -33,7 +36,7 @@ class LoginProvider extends ChangeNotifier {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
           },
-        );
+        ).timeout(const Duration(seconds: 30));
 
         if (profileResponse.statusCode == 200) {
           final profileBody = jsonDecode(profileResponse.body) as Map<String, dynamic>;
@@ -41,6 +44,7 @@ class LoginProvider extends ChangeNotifier {
           final user = UserModel.fromJson(userJson);
 
           await UserSession.saveUser(user);
+
           SessionManager().startSession();
 
           error = null;
@@ -54,8 +58,15 @@ class LoginProvider extends ChangeNotifier {
         error = resp['message'] as String? ?? 'Erro no login';
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
-      error = 'Erro de conexão';
+      print("Erro genérico no login: $e");
+      NavigationService.forceErrorScreen();
       return false;
     } finally {
       isLoading = false;

@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
+import '../services/navigation_service.dart';
 
 class PresenceProvider extends ChangeNotifier {
   bool _isConfirming = false;
@@ -34,7 +37,7 @@ class PresenceProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         _fetchedMonths.add(monthKey);
@@ -50,6 +53,10 @@ class PresenceProvider extends ChangeNotifier {
       } else {
         print('Falha ao carregar presença do mês $monthKey.');
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
     } catch (e) {
       error = e.toString();
       _monthlyPresence = {};
@@ -85,7 +92,7 @@ class PresenceProvider extends ChangeNotifier {
           'date': formattedDate,
           'status': status,
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         _monthlyPresence[formattedDate] = status;
@@ -99,6 +106,12 @@ class PresenceProvider extends ChangeNotifier {
         error = resp['message'] as String? ?? 'Falha ao atualizar presença.';
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       error = 'Erro de conexão. Verifique sua internet.';
       return false;

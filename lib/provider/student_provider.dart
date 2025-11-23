@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -8,6 +10,7 @@ import '../model/student_model.dart';
 import '../model/student_presence_summary.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
+import '../services/navigation_service.dart';
 
 class StudentProvider extends ChangeNotifier {
   List<Student> _students = [];
@@ -41,7 +44,7 @@ class StudentProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
@@ -51,6 +54,12 @@ class StudentProvider extends ChangeNotifier {
         final data = jsonDecode(response.body);
         throw Exception(data['message'] ?? 'Falha ao carregar o resumo de presença.');
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      _presenceSummaryStudents = [];
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      _presenceSummaryStudents = [];
     } catch (e) {
       _error = e.toString();
       _presenceSummaryStudents = [];
@@ -79,7 +88,7 @@ class StudentProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -92,6 +101,12 @@ class StudentProvider extends ChangeNotifier {
         final data = jsonDecode(response.body);
         throw Exception(data['message'] ?? 'Falha ao carregar alunos.');
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      _students = [];
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      _students = [];
     } catch (e) {
       _error = e.toString();
       _students = [];
@@ -134,7 +149,7 @@ class StudentProvider extends ChangeNotifier {
           'shift_going': shiftGoing,
           'shift_return': shiftReturn,
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       final data = jsonDecode(createResponse.body);
 
@@ -158,7 +173,7 @@ class StudentProvider extends ChangeNotifier {
           ),
         );
 
-        final streamedResponse = await request.send();
+        final streamedResponse = await request.send().timeout(const Duration(seconds: 60));
         final uploadResponse = await http.Response.fromStream(streamedResponse);
 
         if (uploadResponse.statusCode != 200) {
@@ -169,6 +184,12 @@ class StudentProvider extends ChangeNotifier {
       await getStudents();
       return true;
 
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = e.toString();
       return false;
@@ -210,7 +231,7 @@ class StudentProvider extends ChangeNotifier {
             contentType: MediaType('image', imageFile.path.split('.').last),
           ),
         );
-        final streamedResponse = await request.send();
+        final streamedResponse = await request.send().timeout(const Duration(seconds: 60));
         final uploadResponse = await http.Response.fromStream(streamedResponse);
 
         if (uploadResponse.statusCode != 200) {
@@ -234,7 +255,7 @@ class StudentProvider extends ChangeNotifier {
           'shift_return': shiftReturn,
           'team_id': teamId,
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         await getStudents();
@@ -243,6 +264,12 @@ class StudentProvider extends ChangeNotifier {
         final data = jsonDecode(response.body);
         throw Exception(data['message'] ?? 'Erro ao atualizar aluno.');
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = e.toString();
       return false;
@@ -266,7 +293,7 @@ class StudentProvider extends ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         _students.removeWhere((student) => student.id == studentId);
@@ -276,6 +303,12 @@ class StudentProvider extends ChangeNotifier {
         final data = jsonDecode(response.body);
         throw Exception(data['message'] ?? 'Erro ao excluir aluno.');
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = e.toString();
       return false;
@@ -288,15 +321,12 @@ class StudentProvider extends ChangeNotifier {
   Future<void> searchStudents(String name) async {
     _isLoading = true;
     _error = null;
-    // Notifica os ouvintes para mostrar o loading
     notifyListeners();
 
     try {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // O backend já cuida da lógica de role (guardian/driver)
-      // O 'name' é enviado como um query parameter
       final uri = Uri.parse('${Endpoints.searchStudents}?name=${Uri.encodeComponent(name)}');
 
       final response = await http.get(
@@ -305,7 +335,7 @@ class StudentProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -318,6 +348,12 @@ class StudentProvider extends ChangeNotifier {
         final data = jsonDecode(response.body);
         throw Exception(data['message'] ?? 'Falha ao buscar alunos.');
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      _students = [];
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      _students = [];
     } catch (e) {
       _error = e.toString();
       _students = [];
@@ -356,7 +392,7 @@ class StudentProvider extends ChangeNotifier {
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({'studentIds': studentIds}),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
@@ -365,6 +401,12 @@ class StudentProvider extends ChangeNotifier {
         final data = jsonDecode(response.body);
         throw Exception(data['message'] ?? 'Falha ao carregar status da viagem.');
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      _tripStatus = 'NAO_VAI';
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      _tripStatus = 'NAO_VAI';
     } catch (e) {
       _error = e.toString();
       _tripStatus = 'NAO_VAI';
@@ -387,7 +429,7 @@ class StudentProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -397,6 +439,12 @@ class StudentProvider extends ChangeNotifier {
         final data = jsonDecode(response.body);
         throw Exception(data['message'] ?? 'Falha ao carregar dados do aluno.');
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      rethrow;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      rethrow;
     } catch (e) {
       _error = e.toString();
       rethrow;

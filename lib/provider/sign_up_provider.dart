@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:check_van_frontend/model/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
+import '../services/navigation_service.dart';
 
 class SignUpProvider extends ChangeNotifier {
   bool isLoading = false;
@@ -35,7 +38,7 @@ class SignUpProvider extends ChangeNotifier {
         Uri.parse(Endpoints.userRegistration),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -59,6 +62,12 @@ class SignUpProvider extends ChangeNotifier {
         error = data['message'] ?? 'Erro no cadastro';
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       error = 'Erro de conexão';
       return false;

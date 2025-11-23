@@ -1,3 +1,4 @@
+import 'package:check_van_frontend/features/pages/error/server_error_page.dart';
 import 'package:check_van_frontend/provider/notification_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -134,6 +135,7 @@ class _MyAppState extends State<MyApp> {
         '/route': (context) => const RoutePage(),
         '/active-route': (context) => const ActiveRoutePage(),
         '/add-team': (context) => const AddTeamPage(),
+        '/server-error': (context) => const ServerErrorPage(),
       },
     );
   }

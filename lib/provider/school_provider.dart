@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../model/school_model.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
+import '../services/navigation_service.dart';
 
 class SchoolProvider extends ChangeNotifier {
   List<School> _schools = [];
@@ -29,7 +32,7 @@ class SchoolProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -40,6 +43,10 @@ class SchoolProvider extends ChangeNotifier {
         _error = data['message'] ?? 'Falha ao carregar escolas.';
         _schools = [];
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
     } catch (e) {
       _error = 'Erro de conexão: ${e.toString()}';
       _schools = [];
@@ -79,24 +86,27 @@ class SchoolProvider extends ChangeNotifier {
           'afternoon_limit': afternoonLimit,
           'afternoon_departure': afternoonDeparture,
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 201) {
-        _isLoading = false;
-        notifyListeners();
         await getSchools();
         return true;
       } else {
         _error = 'Falha ao cadastrar a escola.';
-        _isLoading = false;
-        notifyListeners();
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = 'Ocorreu um erro: $e';
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return false;
     }
   }
 
@@ -131,22 +141,27 @@ class SchoolProvider extends ChangeNotifier {
           'afternoon_limit': afternoonLimit,
           'afternoon_departure': afternoonDeparture,
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         await getSchools();
         return true;
       } else {
         _error = 'Falha ao atualizar a escola.';
-        _isLoading = false;
-        notifyListeners();
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = 'Ocorreu um erro: $e';
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return false;
     }
   }
 
@@ -167,7 +182,7 @@ class SchoolProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -179,6 +194,12 @@ class SchoolProvider extends ChangeNotifier {
         final data = jsonDecode(response.body);
         throw Exception(data['message'] ?? 'Falha ao buscar escolas.');
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      _schools = [];
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      _schools = [];
     } catch (e) {
       _error = e.toString();
       _schools = [];
@@ -202,26 +223,28 @@ class SchoolProvider extends ChangeNotifier {
         headers: {
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         await getSchools();
-        _isLoading = false;
-        notifyListeners();
         return true;
       } else {
         final data = jsonDecode(response.body);
         _error = data['message'] ?? 'Erro ao excluir escola.';
-        _isLoading = false;
-        notifyListeners();
         return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
       _error = e.toString();
+      return false;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      return false;
     }
   }
 }
-

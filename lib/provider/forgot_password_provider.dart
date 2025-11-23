@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../network/endpoints.dart';
+import '../services/navigation_service.dart';
 
 class ForgotPasswordProvider with ChangeNotifier {
   bool isLoading = false;
@@ -17,21 +20,27 @@ class ForgotPasswordProvider with ChangeNotifier {
         Uri.parse(Endpoints.forgotPassword),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
-        isLoading = false;
-        notifyListeners();
+        error = null;
         return true;
       } else {
         error = 'Erro ao enviar email';
+        return false;
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      return false;
     } catch (e) {
-      error = e.toString();
+      NavigationService.forceErrorScreen();
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
-
-    isLoading = false;
-    notifyListeners();
-    return false;
   }
 }

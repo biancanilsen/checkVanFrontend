@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../model/trip_model.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
+import '../services/navigation_service.dart';
 
 class TripProvider extends ChangeNotifier {
   List<Trip> _trips = [];
@@ -33,7 +36,7 @@ class TripProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -48,6 +51,12 @@ class TripProvider extends ChangeNotifier {
           _trips = [];
         }
       }
+    } on TimeoutException catch (_) {
+      NavigationService.forceErrorScreen();
+      _trips = [];
+    } on SocketException catch (_) {
+      NavigationService.forceErrorScreen();
+      _trips = [];
     } catch (e) {
       _error = 'Erro de conexão: ${e.toString()}';
       _trips = [];
