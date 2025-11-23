@@ -9,7 +9,6 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 
-// Imports do seu projeto
 import 'package:check_van_frontend/model/route_model.dart';
 import 'package:check_van_frontend/model/student_model.dart';
 import 'package:check_van_frontend/provider/notification_provider.dart';
@@ -25,7 +24,6 @@ class ActiveRoutePage extends StatefulWidget {
 }
 
 class _ActiveRoutePageState extends State<ActiveRoutePage> {
-  // --- Controladores ---
   final Completer<GoogleMapController> _mapControllerCompleter = Completer();
   late GoogleMapController _mapController;
   final _sheetController = DraggableScrollableController();
@@ -34,7 +32,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   StreamSubscription<LocationData>? _locationSubscription;
   Timer? _etaUpdateTimer;
 
-  // --- Dados e Estado ---
   late final RouteData _routeData;
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
@@ -42,26 +39,23 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   LocationData? _lastLocation;
   BitmapDescriptor? _navigationIcon;
 
-  // Variáveis de Fluxo
   int _currentStopIndex = 0;
   bool _hasArrivedAtStop = false;
   bool _isRouteFinished = false;
   bool _isBoarding = false;
   bool _firstNotificationSent = false;
 
-  // Variáveis de UI
   String _schoolEtaText = "-- min";
   String? _nextStopEtaText;
 
-  // Variáveis de UI/Nav
   double _sheetPosition = 0.4;
   bool _isCameraCentered = true;
   bool _isSoundOn = true;
   String _currentInstruction = "Iniciando a rota...";
   int _currentStepIndex = 0;
   bool _isDisposed = false;
+  bool _isProgrammaticMovement = false;
 
-  // Configurações
   static const double _arrivalThreshold = 100.0;
   static const double _navigationZoom = 18.0;
   static const double _navigationTilt = 45.0;
@@ -295,8 +289,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
   }
 
-  // --- NAVEGAÇÃO ---
-
   void _setupLocationListener() async {
     bool serviceEnabled = await _location.serviceEnabled();
     if (!serviceEnabled) {
@@ -333,6 +325,8 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       }
 
       if (_isCameraCentered) {
+        _isProgrammaticMovement = true;
+
         _mapController.animateCamera(
           CameraUpdate.newCameraPosition(
             CameraPosition(
@@ -342,7 +336,10 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
               bearing: newLocation.heading ?? 0.0,
             ),
           ),
-        );
+        ).then((_) {
+          // Quando a animação terminar, liberamos a flag
+          _isProgrammaticMovement = false;
+        });
       }
 
       if (_hasArrivedAtStop || _isRouteFinished) return;
@@ -563,7 +560,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       ),
       body: Stack(
         children: [
-          // 1. Mapa
           GoogleMap(
             onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
@@ -577,11 +573,12 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             compassEnabled: false,
             trafficEnabled: true,
             onCameraMoveStarted: () {
-              if (_isCameraCentered) setState(() => _isCameraCentered = false);
+              if (!_isProgrammaticMovement) {
+                setState(() => _isCameraCentered = false);
+              }
             },
           ),
 
-          // 2. Card de Instrução
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
