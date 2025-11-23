@@ -129,7 +129,7 @@ class TeamProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        await getTeams(); // Recarrega a lista
+        await getTeams();
         return true;
       } else {
         final data = jsonDecode(response.body);
@@ -146,10 +146,7 @@ class TeamProvider extends ChangeNotifier {
     }
   }
 
-  // Novo método para Buscar
   Future<void> searchTeams(String name) async {
-    // TODO: Adicionar /team/search no backend e Endpoints.dart
-    // Por enquanto, filtra a lista local
     if (name.isEmpty) {
       await getTeams();
       return;
@@ -158,7 +155,6 @@ class TeamProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // Filtro local (temporário)
     final allTeams = _teams;
     final filtered = allTeams.where((team) =>
     team.name.toLowerCase().contains(name.toLowerCase()) ||

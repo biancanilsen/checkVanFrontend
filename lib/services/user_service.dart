@@ -72,7 +72,7 @@ class UserService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['imageUrl']; // Retorna a URL da nova imagem
+        return data['imageUrl'];
       } else {
         print('Erro upload imagem: ${response.body}');
         return null;

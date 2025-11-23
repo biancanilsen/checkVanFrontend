@@ -138,7 +138,6 @@ class _SignUpFormState extends State<SignUpForm> {
             ),
             const SizedBox(height: 32),
 
-            // Nome
             CustomTextField(
               controller: _nameController,
               label: 'Nome',
@@ -201,7 +200,6 @@ class _SignUpFormState extends State<SignUpForm> {
               onTap: _pickDate,
               onSuffixIconTap: _pickDate,
               suffixIcon: Icons.calendar_today,
-              // ----------------------------
 
               validator: (v) => v == null || v.isEmpty ? 'Campo obrigatório' : null,
             ),

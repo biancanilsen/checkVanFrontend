@@ -145,7 +145,7 @@ class StudentProvider extends ChangeNotifier {
       if (imageFile != null) {
         final int studentId = data['student']['id'];
 
-        final uploadUrl = Uri.parse('${Endpoints.baseUrl}/student/$studentId/upload-image'); // Ajuste o endpoint base
+        final uploadUrl = Uri.parse('${Endpoints.baseUrl}/student/$studentId/upload-image');
 
         final request = http.MultipartRequest('POST', uploadUrl);
         request.headers['Authorization'] = 'Bearer $token';
@@ -180,18 +180,16 @@ class StudentProvider extends ChangeNotifier {
 
   Future<bool> updateStudent({
     required int id,
-    // Campos do Guardian
     required String name,
     required DateTime birthDate,
     required String gender,
     required String address,
     XFile? imageFile,
 
-    // Campos do Driver (Logísticos)
     required int schoolId,
     required String shiftGoing,
     required String shiftReturn,
-    int? teamId, // <-- ADICIONE
+    int? teamId,
   }) async {
     _isLoading = true;
     _error = null;
@@ -201,9 +199,6 @@ class StudentProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      // O backend agora aceita o upload de imagem no 'update'
-      // (Baseado na sua lógica do 'addStudent')
-      // Se houver um 'imageFile', faça o upload primeiro
       if (imageFile != null) {
         final uploadUrl = Uri.parse('${Endpoints.baseUrl}/student/$id/upload-image');
         final request = http.MultipartRequest('POST', uploadUrl);
@@ -220,11 +215,9 @@ class StudentProvider extends ChangeNotifier {
 
         if (uploadResponse.statusCode != 200) {
           print('Upload da imagem falhou: ${uploadResponse.body}');
-          // Decide se quer continuar mesmo se o upload falhar
         }
       }
 
-      // Em seguida, atualize os dados de texto
       final response = await http.put(
         Uri.parse('${Endpoints.updateStudent}/$id'),
         headers: {
@@ -239,12 +232,12 @@ class StudentProvider extends ChangeNotifier {
           'address': address,
           'shift_going': shiftGoing,
           'shift_return': shiftReturn,
-          'team_id': teamId, // <-- PASSE O ID DA TURMA
+          'team_id': teamId,
         }),
       );
 
       if (response.statusCode == 200) {
-        await getStudents(); // Recarrega a lista de alunos
+        await getStudents();
         return true;
       } else {
         final data = jsonDecode(response.body);
