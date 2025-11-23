@@ -22,13 +22,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   bool _obscureConfirm = true;
   bool _isLoading = false;
 
-  bool get _has8Chars => _passwordController.text.length >= 8;
-  bool get _hasUpper => _passwordController.text.contains(RegExp(r'[A-Z]'));
-  bool get _hasLower => _passwordController.text.contains(RegExp(r'[a-z]'));
-  bool get _hasNumber => _passwordController.text.contains(RegExp(r'[0-9]'));
-  bool get _hasSpecial => _passwordController.text.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
-
-  bool get _isValid => _has8Chars && _hasUpper && _hasLower && _hasNumber && _hasSpecial;
+  // (NIST SP 800-63B)
+  bool get _isValid => _passwordController.text.length >= 12;
 
   @override
   void dispose() {
@@ -110,12 +105,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
               const SizedBox(height: 24),
 
+              // Passa apenas a senha atual para o widget calcular a força
               PasswordRequirementsList(
-                has8Chars: _has8Chars,
-                hasUpper: _hasUpper,
-                hasLower: _hasLower,
-                hasNumber: _hasNumber,
-                hasSpecial: _hasSpecial,
+                password: _passwordController.text,
               ),
 
               const SizedBox(height: 24),
