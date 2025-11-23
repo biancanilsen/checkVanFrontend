@@ -192,7 +192,7 @@ class _AddTeamPageState extends State<AddTeamPage> {
         name: _nameController.text.trim(),
         schoolId: _selectedSchoolId!,
         address: fullAddress,
-        shift: shift,
+        shift: shift ?? 'morning',
         vanId: _selectedVanId,
       );
     } else {
@@ -201,7 +201,7 @@ class _AddTeamPageState extends State<AddTeamPage> {
         schoolId: _selectedSchoolId!,
         address: fullAddress,
         vanId: _selectedVanId,
-        shift: shift,
+        shift: shift ?? 'morning',
       );
     }
 
@@ -262,6 +262,7 @@ class _AddTeamPageState extends State<AddTeamPage> {
               ),
               const SizedBox(height: 16),
 
+              // TODO - Adicionar label customizada para endereço de partida
               AddressField(
                 streetController: _addressController,
                 numberController: _numberController,
