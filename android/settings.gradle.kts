@@ -22,6 +22,7 @@ plugins {
     // START: FlutterFire Configuration
     id("com.google.gms.google-services") version("4.3.15") apply false
     // END: FlutterFire Configuration
+    // TODO - mudar para 1.9.0 ou 2.0.0
     id("org.jetbrains.kotlin.android") version "1.8.22" apply false
 }
 
