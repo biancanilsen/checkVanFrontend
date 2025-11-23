@@ -10,10 +10,12 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 
 import 'package:check_van_frontend/model/route_model.dart';
-import 'package:check_van_frontend/model/student_model.dart';
 import 'package:check_van_frontend/provider/notification_provider.dart';
 import '../../../core/theme.dart';
 import '../../../enum/snack_bar_type.dart';
+import '../../widgets/route/active_route/confirmation_card.dart';
+import '../../widgets/route/active_route/instruction_card.dart';
+import '../../widgets/route/active_route/route_stop_list.dart';
 import '../../widgets/van/custom_snackbar.dart';
 
 class ActiveRoutePage extends StatefulWidget {
@@ -188,8 +190,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
   }
 
-  // --- Configuração do Mapa e UI ---
-
   Future<BitmapDescriptor> _createNavigationIcon() async {
     final pictureRecorder = ui.PictureRecorder();
     final canvas = Canvas(pictureRecorder);
@@ -326,7 +326,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
 
       if (_isCameraCentered) {
         _isProgrammaticMovement = true;
-
         _mapController.animateCamera(
           CameraUpdate.newCameraPosition(
             CameraPosition(
@@ -337,7 +336,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             ),
           ),
         ).then((_) {
-          // Quando a animação terminar, liberamos a flag
           _isProgrammaticMovement = false;
         });
       }
@@ -420,8 +418,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     });
   }
 
-  // --- AÇÕES DE USUÁRIO ---
-
   void _markAbsent() {
     setState(() {
       _currentStopIndex++;
@@ -497,8 +493,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
   }
 
-  // --- HELPERS ---
-
   double _calculateDistance(lat1, lon1, lat2, lon2){
     var p = 0.017453292519943295;
     var c = cos;
@@ -522,8 +516,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
     return LatLngBounds(northeast: LatLng(x1!, y1!), southwest: LatLng(x0!, y0!));
   }
-
-  // --- BUILDERS ---
 
   @override
   Widget build(BuildContext context) {
@@ -583,41 +575,18 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
             right: 16,
-            child: Card(
-              color: AppPalette.primary800,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 8,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _currentInstruction,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppPalette.white),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    CircleAvatar(
-                      backgroundColor: Colors.black.withOpacity(0.2),
-                      child: IconButton(
-                        icon: Icon(_isSoundOn ? Icons.volume_up : Icons.volume_off, color: Colors.white),
-                        onPressed: () {
-                          setState(() {
-                            _isSoundOn = !_isSoundOn;
-                            if (!_isSoundOn) _flutterTts.stop();
-                          });
-                        },
-                      ),
-                    )
-                  ],
-                ),
-              ),
+            child: InstructionCard(
+              instruction: _currentInstruction,
+              isSoundOn: _isSoundOn,
+              onToggleSound: () {
+                setState(() {
+                  _isSoundOn = !_isSoundOn;
+                  if (!_isSoundOn) _flutterTts.stop();
+                });
+              },
             ),
           ),
 
-          // 3. Painel Inferior
           if (!_isRouteFinished)
             DraggableScrollableSheet(
               initialChildSize: 0.4,
@@ -632,22 +601,33 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                     boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 20)],
                   ),
                   child: _hasArrivedAtStop
-                      ? _buildConfirmationCard(
-                    context,
-                    _currentStopIndex < routeDataArgs.students.length
+                      ? ConfirmationCard(
+                    student: _currentStopIndex < routeDataArgs.students.length
                         ? routeDataArgs.students[_currentStopIndex]
                         : null,
+                    schoolName: _routeData.schoolName,
+                    isBoarding: _isBoarding,
+                    onCancel: _cancelArrivalState,
+                    onConfirm: _currentStopIndex < routeDataArgs.students.length
+                        ? _confirmBoarding
+                        : _confirmArrivalAtSchool,
+                    onMarkAbsent: _markAbsent,
                   )
-                      : _buildStopList(
-                    context,
-                    scrollController,
-                    routeDataArgs.students,
+                      : RouteStopList(
+                    scrollController: scrollController,
+                    students: routeDataArgs.students,
+                    currentStopIndex: _currentStopIndex,
+                    schoolName: _routeData.schoolName,
+                    schoolEtaText: _schoolEtaText,
+                    nextStopEtaText: _nextStopEtaText,
+                    onForceArrival: (isSchool, targetName) {
+                      _forceArrival(isSchool: isSchool, targetName: targetName);
+                    },
                   ),
                 );
               },
             ),
 
-          // 4. Botão Centralizar
           if (!_isCameraCentered && _lastLocation != null && !_isRouteFinished)
             Positioned(
               left: 16,
@@ -676,334 +656,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
               ),
             ),
         ],
-      ),
-    );
-  }
-
-  // --- WIDGETS DE UI ---
-
-  Widget _buildConfirmationCard(BuildContext context, Student? student) {
-    final isSchool = student == null;
-
-    final String displayName = isSchool ? _routeData.schoolName : student!.name;
-    final String displayAddress = isSchool ? "Destino Final" : (student!.address ?? 'Endereço não informado');
-    final String? displayImage = isSchool ? null : student!.image_profile;
-
-    final Color primaryButtonColor = isSchool ? AppPalette.primary800 : AppPalette.green500;
-    final VoidCallback? primaryAction = isSchool ? _confirmArrivalAtSchool : _confirmBoarding;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 40, height: 5,
-              decoration: BoxDecoration(
-                color: AppPalette.neutral300,
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // --- CABEÇALHO COM BOTÃO VOLTAR ---
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppPalette.primary900),
-                onPressed: _cancelArrivalState,
-                tooltip: 'Voltar para lista',
-              ),
-              Expanded(
-                child: Text(
-                  isSchool ? 'Chegamos na Escola' : 'Confirmar embarque',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppPalette.primary900),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(width: 48),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: isSchool ? AppPalette.primary800 : AppPalette.neutral150,
-                backgroundImage: (displayImage != null && displayImage.isNotEmpty)
-                    ? NetworkImage(displayImage)
-                    : null,
-                child: (displayImage == null || isSchool)
-                    ? Icon(isSchool ? Icons.school : Icons.person, color: Colors.white, size: 30)
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 2),
-                    Text(displayAddress, style: const TextStyle(color: AppPalette.neutral600)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-
-          // --- ÁREA DOS BOTÕES ---
-          if (isSchool)
-            ElevatedButton(
-              onPressed: _isBoarding ? null : primaryAction,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryButtonColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              child: _isBoarding
-                  ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3,))
-                  : const Text('Finalizar Rota'),
-            )
-          else
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isBoarding ? null : _markAbsent,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppPalette.red700,
-                      side: const BorderSide(color: AppPalette.red700),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
-                    child: const Text('Ausente'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isBoarding ? null : primaryAction,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryButtonColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
-                    child: _isBoarding
-                        ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3,))
-                        : const Text('Embarcar'),
-                  ),
-                ),
-              ],
-            ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStopList(BuildContext context, ScrollController scrollController, List<Student> students) {
-    final remainingStops = students.sublist(_currentStopIndex);
-    bool nextIsSchool = _currentStopIndex == students.length;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Center(
-            child: Container(
-              width: 40, height: 5,
-              decoration: BoxDecoration(
-                color: AppPalette.neutral300,
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
-        // Header de Tempo até Escola
-        Padding(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          child: Center(
-            child: Text.rich(
-              TextSpan(
-                text: "Chegada na escola em: ",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppPalette.primary900,
-                ),
-                children: [
-                  TextSpan(
-                    text: _schoolEtaText,
-                    style: const TextStyle(
-                      color: AppPalette.primary800, // Azul
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: Text(
-            nextIsSchool ? 'Destino Final' : 'Próximas paradas',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppPalette.primary900),
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            controller: scrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: remainingStops.length + 1,
-            itemBuilder: (context, index) {
-              final bool isCurrentTarget = index == 0;
-
-              // CASO ESCOLA
-              if (index == remainingStops.length) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 24.0),
-                  child: _buildStopTile(
-                    name: _routeData.schoolName,
-                    address: "Destino Final",
-                    isNextTarget: isCurrentTarget, // Para pintar o endereço de azul
-                    imageUrl: null,
-                    isLastStop: true,
-                    isSchool: true,
-                    onTap: isCurrentTarget
-                        ? () => _forceArrival(isSchool: true, targetName: _routeData.schoolName)
-                        : null,
-                  ),
-                );
-              }
-
-              // CASO ALUNO
-              final student = remainingStops[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 24.0),
-                child: _buildStopTile(
-                  name: student.name,
-                  address: student.address ?? 'Endereço não informado',
-                  isNextTarget: isCurrentTarget, // Para pintar o endereço de azul
-
-                  imageUrl: student.image_profile,
-                  isLastStop: false,
-                  etaBadge: isCurrentTarget ? _nextStopEtaText : null,
-                  onTap: isCurrentTarget
-                      ? () => _forceArrival(isSchool: false, targetName: student.name)
-                      : null,
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStopTile({
-    required String name,
-    required String address,
-    required bool isLastStop,
-    required bool isNextTarget, // NOVO: Indica se deve pintar o endereço de azul
-    String? imageUrl,
-    bool isSchool = false,
-    VoidCallback? onTap,
-    String? etaBadge,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Coluna Ícone/Linha
-            SizedBox(
-              width: 40,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Icon(
-                      isSchool ? Icons.school : Icons.location_on,
-                      color: isSchool ? AppPalette.primary800 : AppPalette.red700,
-                      size: 28
-                  ),
-                  if (!isLastStop)
-                    Expanded(
-                      child: Container(width: 2, color: AppPalette.neutral300),
-                    )
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Row(
-                children: [
-                  // Avatar
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
-                        ? NetworkImage(imageUrl)
-                        : const AssetImage('assets/profile.png') as ImageProvider,
-                    child: (imageUrl == null && isSchool)
-                        ? const Icon(Icons.school, color: Colors.white)
-                        : null,
-                    backgroundColor: isSchool ? AppPalette.primary800 : AppPalette.neutral150,
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Infos
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        const SizedBox(height: 2),
-                        // Endereço muda de cor se for o próximo alvo
-                        Text(
-                            address,
-                            style: TextStyle(
-                                color: isNextTarget ? AppPalette.primary800 : AppPalette.neutral600,
-                                fontSize: 12,
-                                fontWeight: FontWeight.normal
-                            )
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Badge de Tempo
-                  if (etaBadge != null)
-                    Container(
-                      margin: const EdgeInsets.only(left: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        etaBadge,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppPalette.primary900),
-                      ),
-                    )
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
