@@ -13,6 +13,9 @@ import '../../widgets/button/danger_outline_button.dart';
 import '../../widgets/button/primary_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/dialog/delete_school_dialog.dart';
+import '../../widgets/school/add_school_header.dart';
+import '../../widgets/school/school_address_section.dart';
+import '../../widgets/school/school_schedule_section.dart';
 import '../../widgets/van/custom_snackbar.dart';
 
 class AddSchoolPage extends StatefulWidget {
@@ -114,6 +117,16 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
     });
   }
 
+  void _handleSuggestionSelected(AddressSuggestion suggestion) {
+    _addressController.removeListener(_onAddressChanged);
+    setState(() {
+      _addressController.text = suggestion.fullDescription;
+      _showSuggestions = false;
+    });
+    _addressController.addListener(_onAddressChanged);
+    _addressFocusNode.unfocus();
+  }
+
   Future<void> _pickTime(BuildContext context, TextEditingController controller) async {
     final pickedTime = await showTimePicker(
       context: context,
@@ -126,7 +139,6 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
       });
     }
   }
-
 
   void _submitForm() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
@@ -181,7 +193,7 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
     if (!isEditing) return;
 
     setState(() {
-      _isDeleting = true; // Ativa o loading
+      _isDeleting = true;
     });
 
     final schoolProvider = context.read<SchoolProvider>();
@@ -194,10 +206,10 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
     }
 
     if (mounted) {
-      Navigator.pop(context); // Fecha o dialog
+      Navigator.pop(context);
 
       if (success) {
-        Navigator.pop(context); // Fecha a AddSchoolPage
+        Navigator.pop(context);
         CustomSnackBar.show(
           context: context,
           label: 'Escola excluída com sucesso.',
@@ -226,7 +238,7 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
-        return StatefulBuilder( // Para o loading no dialog
+        return StatefulBuilder(
           builder: (context, setDialogState) {
             return DeleteSchoolDialog(
               schoolName: widget.school!.name,
@@ -237,7 +249,6 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
         );
       },
     ).then((_) {
-      // Garante que o loading seja resetado se o dialog for fechado
       if (_isDeleting) {
         setState(() {
           _isDeleting = false;
@@ -263,17 +274,7 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                isEditing ? 'Editar Escola' : 'Dados da Escola',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                isEditing ? 'Atualize as informações da escola.' : 'Preencha as informações para cadastrar uma nova escola.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, color: AppPalette.neutral600),
-              ),
+              AddSchoolHeader(isEditing: isEditing),
               const SizedBox(height: 32),
 
               CustomTextField(
@@ -284,57 +285,27 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
                 validator: (v) => (v == null || v.isEmpty) ? 'Campo obrigatório' : null,
               ),
               const SizedBox(height: 16),
-              _buildAddressField(),
+
+              SchoolAddressSection(
+                addressController: _addressController,
+                numberController: _numberController,
+                addressFocusNode: _addressFocusNode,
+                showSuggestions: _showSuggestions,
+                isLoading: _isAddressLoading,
+                suggestions: _addressSuggestions,
+                onSuggestionSelected: _handleSuggestionSelected,
+              ),
+
               const SizedBox(height: 24),
-              const Text('Horários', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppPalette.neutral800)),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: CustomTextField(
-                      controller: _morningLimitController,
-                      label: 'Chegada (Manhã)',
-                      hint: 'HH:mm',
-                      onTap: () => _pickTime(context, _morningLimitController),
-                      suffixIcon: Icons.access_time_outlined,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: CustomTextField(
-                      controller: _morningDepartureController,
-                      label: 'Saída (Manhã)',
-                      hint: 'HH:mm',
-                      onTap: () => _pickTime(context, _morningDepartureController),
-                      suffixIcon: Icons.access_time_outlined,
-                    ),
-                  ),
-                ],
+
+              SchoolScheduleSection(
+                morningLimitController: _morningLimitController,
+                morningDepartureController: _morningDepartureController,
+                afternoonLimitController: _afternoonLimitController,
+                afternoonDepartureController: _afternoonDepartureController,
+                onPickTime: (controller) => _pickTime(context, controller),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: CustomTextField(
-                      controller: _afternoonLimitController,
-                      label: 'Chegada (Tarde)',
-                      hint: 'HH:mm',
-                      onTap: () => _pickTime(context, _afternoonLimitController),
-                      suffixIcon: Icons.access_time_outlined,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: CustomTextField(
-                      controller: _afternoonDepartureController,
-                      label: 'Saída (Tarde)',
-                      hint: 'HH:mm',
-                      onTap: () => _pickTime(context, _afternoonDepartureController),
-                      suffixIcon: Icons.access_time_outlined,
-                    ),
-                  ),
-                ],
-              ),
+
               const SizedBox(height: 32),
               PrimaryButton(
                 text: isEditing ? 'Salvar Alterações' : 'Cadastrar Escola',
@@ -354,90 +325,6 @@ class _AddSchoolPageState extends State<AddSchoolPage> {
           ),
         ),
       ),
-    );
-  }
-
-  // ... (seu _buildAddressField continua igual)
-  Widget _buildAddressField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        RichText(
-          text: const TextSpan(
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppPalette.neutral900),
-            children: [
-              TextSpan(text: 'Endereço'),
-              TextSpan(text: ' *', style: TextStyle(color: AppPalette.red500)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 3,
-              child: TextFormField(
-                controller: _addressController,
-                focusNode: _addressFocusNode,
-                decoration: const InputDecoration(hintText: 'Digite para buscar o endereço'),
-                validator: (value) => (value == null || value.isEmpty) ? 'Obrigatório' : null,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 1,
-              child: TextFormField(
-                controller: _numberController,
-                decoration: const InputDecoration(hintText: 'Nº'),
-                keyboardType: TextInputType.number,
-                validator: (value) => (value == null || value.isEmpty) ? 'Obrigatório' : null,
-              ),
-            ),
-          ],
-        ),
-        if (_showSuggestions)
-          Container(
-            height: 200,
-            margin: const EdgeInsets.only(top: 4.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 1,
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                )
-              ],
-            ),
-            child: _isAddressLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _addressSuggestions.isEmpty
-                ? const Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text('Nenhum endereço encontrado.')))
-                : ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              itemCount: _addressSuggestions.length,
-              itemBuilder: (context, index) {
-                final suggestion = _addressSuggestions[index];
-                return ListTile(
-                  title: Text(suggestion.displayName, style: const TextStyle(fontWeight: FontWeight.w500)),
-                  subtitle: Text(suggestion.addressDetails),
-                  onTap: () {
-                    _addressController.removeListener(_onAddressChanged);
-                    setState(() {
-                      _addressController.text = suggestion.fullDescription;
-                      _showSuggestions = false;
-                    });
-                    _addressController.addListener(_onAddressChanged);
-                    _addressFocusNode.unfocus();
-                  },
-                );
-              },
-            ),
-          ),
-      ],
     );
   }
 }
