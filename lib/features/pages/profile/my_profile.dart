@@ -11,6 +11,7 @@ import '../../../utils/user_session.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/phone_input_country.dart';
 import '../../widgets/van/custom_snackbar.dart';
+import '../../widgets/user/reset_password/password_requirements_list.dart';
 
 class MyProfile extends StatefulWidget {
   const MyProfile({super.key});
@@ -39,7 +40,6 @@ class _MyProfileState extends State<MyProfile> {
   String? _profileImageUrl;
 
   String _selectedDDI = '+55';
-  // --- NOVA VARIÁVEL PARA RESOLVER O ERRO 1 ---
   String _selectedCountryCode = 'BR';
 
   XFile? _imageFile;
@@ -48,6 +48,11 @@ class _MyProfileState extends State<MyProfile> {
   bool _isLoading = false;
   bool _isLoaded = false;
   bool _isDriver = false;
+
+  bool get _isPasswordLengthValid =>
+      _senhaController.text.isEmpty || _senhaController.text.length >= 12;
+
+  bool get _canSubmitPassword => _isPasswordLengthValid;
 
   @override
   void initState() {
@@ -61,9 +66,8 @@ class _MyProfileState extends State<MyProfile> {
       _userId = user.id;
       _userRole = user.role;
       _birthDate = user.birthDate;
-      _profileImageUrl = user.imageProfile; // Lê a imagem do perfil
+      _profileImageUrl = user.imageProfile;
 
-      // Recupera o código do país salvo (ou usa BR como fallback)
       if (user.phoneCountry != null) {
         _selectedCountryCode = user.phoneCountry!;
       }
@@ -74,18 +78,12 @@ class _MyProfileState extends State<MyProfile> {
         _emailController.text = user.email ?? '';
         _licenseController.text = user.driverLicense ?? '';
 
-        // TRATAMENTO DO TELEFONE
         String rawPhone = user.phone ?? '';
         if (rawPhone.startsWith('+')) {
-          // A lógica ideal seria ter o DDI salvo separado, mas aqui tentamos inferir
-          // O componente PhoneInputWithCountry vai tentar achar o DDI
-          // Se o DDI for +55, removemos os 3 primeiros chars
           if (rawPhone.startsWith('+55')) {
             _selectedDDI = '+55';
             _phoneController.text = rawPhone.substring(3);
           } else {
-            // Se for outro país, o componente vai tentar achar pelo DDI inicial
-            // Mas como não sabemos qual é, deixamos o texto inteiro ou tentamos limpar
             _phoneController.text = rawPhone;
           }
         } else {
@@ -159,16 +157,21 @@ class _MyProfileState extends State<MyProfile> {
 
   void _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
-    if (!_senhasIguais) return;
+
+    if (!_senhasIguais) {
+      CustomSnackBar.show(context: context, label: 'As senhas não conferem', type: SnackBarType.error);
+      return;
+    }
+    if (!_isPasswordLengthValid) {
+      CustomSnackBar.show(context: context, label: 'A senha deve ter no mínimo 12 caracteres', type: SnackBarType.error);
+      return;
+    }
 
     setState(() => _isLoading = true);
 
-    // 1. TRATAMENTO DO TELEFONE
     String cleanNumber = _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
     String finalPhone = '$_selectedDDI$cleanNumber';
 
-    // 2. ATUALIZA DADOS TEXTUAIS
-    // CORREÇÃO ERRO 1: Usamos _selectedCountryCode que é atualizado pelo callback
     bool success = await UserService.updateProfile(
       name: _nameController.text,
       phone: finalPhone,
@@ -179,7 +182,6 @@ class _MyProfileState extends State<MyProfile> {
       birthDate: _birthDate,
     );
 
-    // 3. ATUALIZA IMAGEM (SE HOUVER NOVA)
     String? newImageUrl;
     if (_imageFile != null) {
       newImageUrl = await UserService.uploadProfileImage(_imageFile!);
@@ -188,10 +190,6 @@ class _MyProfileState extends State<MyProfile> {
     setState(() => _isLoading = false);
 
     if (success) {
-      // CORREÇÃO ERRO 2: Se _birthDate for nulo, o UserModel pode reclamar se for required.
-      // Garanta que o UserModel aceite nulo ou trate aqui.
-      // Assumindo que UserModel.birthDate é DateTime? (nullable)
-
       await UserSession.saveUser(UserModel(
         id: _userId,
         name: _nameController.text,
@@ -200,8 +198,7 @@ class _MyProfileState extends State<MyProfile> {
         email: _emailController.text,
         driverLicense: _licenseController.text,
         role: _userRole!,
-        birthDate: _birthDate, // Passa nulo se não tiver
-
+        birthDate: _birthDate,
         imageProfile: newImageUrl ?? _profileImageUrl,
       ));
 
@@ -250,7 +247,6 @@ class _MyProfileState extends State<MyProfile> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ... (Cabeçalho e Avatar mantidos)
               const SizedBox(height: 16),
               Text(
                 'Meus dados',
@@ -295,17 +291,14 @@ class _MyProfileState extends State<MyProfile> {
               ),
               const SizedBox(height: 16),
 
-              // --- COMPONENTE DE TELEFONE COM CALLBACKS ---
               PhoneInputWithCountry(
                 controller: _phoneController,
                 label: 'Telefone',
                 isRequired: true,
-                initialDialCode: _selectedDDI, // Define o inicial (ex: +55)
+                initialDialCode: _selectedDDI,
                 onCountryChanged: (ddi) {
-                  // Atualiza o DDI quando o usuário troca no dropdown
                   _selectedDDI = ddi;
                 },
-                // CORREÇÃO: Callback para salvar a sigla (BR, US)
                 onCountryIsoChanged: (isoCode) {
                   _selectedCountryCode = isoCode;
                 },
@@ -313,7 +306,6 @@ class _MyProfileState extends State<MyProfile> {
 
               const SizedBox(height: 16),
 
-              // ... (Restante dos campos mantidos: Email, Data, Senha...)
               CustomTextField(
                 controller: _emailController,
                 label: 'Email',
@@ -337,6 +329,7 @@ class _MyProfileState extends State<MyProfile> {
               ),
 
               const SizedBox(height: 16),
+
               CustomTextField(
                 controller: _senhaController,
                 label: 'Nova Senha',
@@ -361,6 +354,14 @@ class _MyProfileState extends State<MyProfile> {
                   setState(() => _obscureConfirmSenha = !_obscureConfirmSenha);
                 },
               ),
+
+              if (_senhaController.text.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                PasswordRequirementsList(
+                  password: _senhaController.text,
+                ),
+              ],
+
               const SizedBox(height: 16),
 
               if (_userRole == 'driver') ...[
@@ -379,7 +380,7 @@ class _MyProfileState extends State<MyProfile> {
               Padding(
                 padding: const EdgeInsets.only(left: 16, right: 16),
                 child: ElevatedButton(
-                  onPressed: _isLoading || !_senhasIguais ? null : _submitForm,
+                  onPressed: _isLoading || !_canSubmitPassword ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _isDriver ? AppPalette.primary800 : AppPalette.green600,
                     foregroundColor: Colors.white,
