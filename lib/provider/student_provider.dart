@@ -369,12 +369,11 @@ class StudentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (_students.isEmpty) {
-        await getStudents();
-      }
+      await getStudents();
 
+      // Corrigido: Se a lista estiver vazia após a busca, definimos o status específico.
       if (_students.isEmpty) {
-        _tripStatus = 'NAO_VAI';
+        _tripStatus = 'SEM_ALUNO';
         _isStatusLoading = false;
         notifyListeners();
         return;

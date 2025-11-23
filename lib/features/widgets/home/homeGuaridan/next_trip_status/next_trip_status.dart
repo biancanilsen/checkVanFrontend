@@ -1,3 +1,4 @@
+import 'package:check_van_frontend/features/widgets/home/homeGuaridan/next_trip_status/no_student_callout.dart';
 import 'package:check_van_frontend/features/widgets/home/homeGuaridan/next_trip_status/waiting_route_callout.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -54,6 +55,9 @@ class _NextTripStatusState extends State<NextTripStatus> {
 
       case 'AGUARDANDO_CONFIRMACAO':
         return const PendingConfirmationCallout();
+
+      case 'SEM_ALUNO':
+        return const NoStudentCallout();
 
       case 'NAO_VAI':
       default:
