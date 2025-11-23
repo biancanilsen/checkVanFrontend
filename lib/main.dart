@@ -4,6 +4,8 @@ import 'firebase_options.dart';
 
 import 'package:check_van_frontend/services/notification_service.dart';
 import 'package:check_van_frontend/services/navigation_service.dart';
+import 'package:check_van_frontend/services/session_manager.dart'; // Importe SessionManager
+import 'package:check_van_frontend/utils/user_session.dart'; // Importe UserSession
 
 import 'package:check_van_frontend/features/pages/route/active_route_page.dart';
 import 'package:check_van_frontend/features/pages/route/route_page.dart';
@@ -60,15 +62,47 @@ Future<void> main() async {
   );
 }
 
-
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isLoading = true;
+  bool _isLogged = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final token = await UserSession.getToken();
+    final user = await UserSession.getUser();
+
+    if (token != null && user != null) {
+      print("🚀 App Iniciado: Usuário logado detectado. Iniciando SessionManager...");
+      SessionManager().startSession();
+
+      setState(() {
+        _isLogged = true;
+      });
+    } else {
+      SessionManager().stopSession();
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
-
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -79,9 +113,12 @@ class MyApp extends StatelessWidget {
       ],
       title: 'Check Van',
       theme: AppTheme.theme,
-      initialRoute: '/',
+      home: _isLoading
+          ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+          : (_isLogged ? const HomePage() : const LoginPage()),
+
       routes: {
-        '/': (_) => LoginPage(),
+        '/login': (_) => const LoginPage(),
         '/signup': (_) => const SignUpPage(),
         '/home': (_) => const HomePage(),
         '/my_profile': (context) => const Scaffold(

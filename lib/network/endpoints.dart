@@ -9,6 +9,7 @@ class Endpoints {
   static const String updateUser = '$baseUrl/user/update';
   static const String forgotPassword = '$baseUrl/user/recoverPassword';
   static const String uploadUserImage = '$baseUrl/user/upload-image';
+  static const String refreshToken = '$baseUrl/user/refresh-token';
 
   // student
   static const String registration = '$baseUrl/student/registration';

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../model/user_model.dart';
 import '../network/endpoints.dart';
+import '../services/session_manager.dart';
 import '../utils/user_session.dart';
 
 class LoginProvider extends ChangeNotifier {
@@ -40,6 +41,7 @@ class LoginProvider extends ChangeNotifier {
           final user = UserModel.fromJson(userJson);
 
           await UserSession.saveUser(user);
+          SessionManager().startSession();
 
           error = null;
           return true;

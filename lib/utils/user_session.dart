@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../model/user_model.dart';
+import '../services/session_manager.dart';
 
 class UserSession {
   static const _tokenKey = 'auth_token';
@@ -31,6 +32,7 @@ class UserSession {
   }
 
   static Future<void> signOutUser() async {
+    SessionManager().stopSession();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_userKey);
