@@ -1,11 +1,12 @@
+import 'package:check_van_frontend/features/widgets/home/homeDriver/scheduled_routes_section.dart';
+import 'package:check_van_frontend/features/widgets/home/homeDriver/section_title.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../provider/tripProvider.dart';
-import '../../../utils/user_session.dart';
-import '../route/nextRoute/next_route_card.dart';
-import '../route/scheduledRoutes/scheduled_routes_list.dart';
-import 'homeDriver/driver_home_header.dart';
+import '../../../../provider/tripProvider.dart';
+import '../../../../utils/user_session.dart';
+import 'driver_home_header.dart';
+import 'next_route_section.dart';
 
 class HomeDriverContent extends StatefulWidget {
   const HomeDriverContent({super.key});
@@ -41,7 +42,6 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
 
   Future<void> _navigateToProfile() async {
     await Navigator.pushNamed(context, '/my_profile');
-
     _loadUserName();
   }
 
@@ -60,59 +60,22 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
               imageProfile: _profileImageUrl,
               onProfileTap: _navigateToProfile,
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                'Próxima Rota',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
 
-            _buildNextRoute(tripProvider),
+            const SectionTitle(title: 'Próxima Rota'),
 
-            const Padding(
+            NextRouteSection(provider: tripProvider),
+
+            const SectionTitle(
+              title: 'Rotas programadas',
               padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-              child: Text(
-                'Rotas programadas',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
             ),
 
-            _buildScheduledRoutes(tripProvider),
+            ScheduledRoutesSection(provider: tripProvider),
 
             const SizedBox(height: 20),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildNextRoute(TripProvider provider) {
-    if (provider.isLoading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 40.0),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    if (provider.error != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Center(child: Text('Erro: ${provider.error}')),
-      );
-    }
-
-    return NextRouteCard(
-      nextTrip: provider.nextTrip,
-    );
-  }
-
-  Widget _buildScheduledRoutes(TripProvider provider) {
-    if (provider.isLoading || provider.error != null) {
-      return const SizedBox.shrink();
-    }
-
-    return ScheduledRoutesList(
-      scheduledTrips: provider.scheduledTrips,
     );
   }
 }

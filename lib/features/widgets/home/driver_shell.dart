@@ -3,7 +3,7 @@ import '../../pages/team/teams_page.dart';
 import '../../pages/van/van_page.dart';
 import '../../widgets/home/homeDriver/driver_main_bottom_nav_bar.dart';
 import '../menu/menu.dart';
-import 'home_driver_content.dart';
+import 'homeDriver/home_driver_content.dart';
 import '../../pages/student/students_page.dart';
 import '../../pages/school/school_page.dart';
 
