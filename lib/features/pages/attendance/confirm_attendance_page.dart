@@ -42,6 +42,9 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
     super.initState();
     initializeDateFormatting('pt_BR');
 
+    _selectedTransportOption = null;
+    _isOptionInitialized = false;
+
     DateTime now = DateTime.now();
     if (now.weekday == DateTime.saturday) {
       _selectedDay = now.add(const Duration(days: 2));

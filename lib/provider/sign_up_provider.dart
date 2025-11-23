@@ -19,6 +19,7 @@ class SignUpProvider extends ChangeNotifier {
     required String password,
     required String birthDate,
     String? driverLicense,
+    String? phoneCountry,
   }) async {
     isLoading = true;
     notifyListeners();
@@ -26,6 +27,7 @@ class SignUpProvider extends ChangeNotifier {
     final body = {
       'name': name,
       'phone': phone,
+      'phone_country': phoneCountry,
       'email': email,
       'password': password,
       'role': driverLicense != null ? 'driver' : 'guardian',
@@ -48,6 +50,7 @@ class SignUpProvider extends ChangeNotifier {
           id: userId,
           name: name,
           phone: phone,
+          phoneCountry: phoneCountry,
           email: email,
           role: driverLicense != null ? 'driver' : 'guardian',
           driverLicense: driverLicense,

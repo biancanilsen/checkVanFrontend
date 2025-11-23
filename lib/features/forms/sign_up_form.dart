@@ -34,6 +34,8 @@ class _SignUpFormState extends State<SignUpForm> {
   bool _obscurePassword = true;
 
   String _selectedDDI = '+55';
+  // 1. Variável para armazenar a sigla do país
+  String _selectedCountryCode = 'BR';
 
   @override
   void dispose() {
@@ -74,6 +76,7 @@ class _SignUpFormState extends State<SignUpForm> {
     final signUpSuccess = await signUpProvider.signUp(
       name: _nameController.text,
       phone: finalPhone,
+      phoneCountry: _selectedCountryCode, // 3. Enviando a sigla para o provider
       email: _emailController.text,
       password: _passwordController.text,
       birthDate: _birthDate != null ? DateFormat('yyyy-MM-dd').format(_birthDate!) : '',
@@ -154,6 +157,10 @@ class _SignUpFormState extends State<SignUpForm> {
               isRequired: true,
               onCountryChanged: (ddi) {
                 _selectedDDI = ddi;
+              },
+              // 2. Capturando a mudança do país
+              onCountryIsoChanged: (isoCode) {
+                _selectedCountryCode = isoCode;
               },
             ),
 

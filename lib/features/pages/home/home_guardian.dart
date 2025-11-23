@@ -26,7 +26,11 @@ class _HomeGuardianState extends State<HomeGuardian> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Chama o resumo de presença
       context.read<StudentProvider>().getPresenceSummary();
+      // ADICIONADO: Chama o status da próxima viagem ao iniciar a tela
+      context.read<StudentProvider>().fetchNextTripStatus();
+
       _loadUserAndGreeting();
     });
   }
@@ -34,6 +38,10 @@ class _HomeGuardianState extends State<HomeGuardian> {
   Future<void> _navigateToProfile() async {
     await Navigator.pushNamed(context, '/my_profile');
 
+    // Ao voltar do perfil, recarrega os dados para garantir atualização
+    if (!mounted) return;
+    context.read<StudentProvider>().getPresenceSummary();
+    context.read<StudentProvider>().fetchNextTripStatus(); // Atualiza status
     _loadUserAndGreeting();
   }
 
@@ -44,14 +52,11 @@ class _HomeGuardianState extends State<HomeGuardian> {
     final greeting =
     hour < 12 ? 'Bom dia,' : hour < 18 ? 'Boa tarde,' : 'Boa noite,';
 
-    // TODO: Adicione 'image_profile' ao seu UserModel e UserSession.getUser()
-    // final imageUrl = user?.image_profile;
-
     if (!mounted) return;
     setState(() {
       _greeting = greeting;
       _userName = name;
-      // TODO _profileImageUrl = imageUrl; // Salve a URL da imagem
+      // _profileImageUrl = user?.image_profile;
     });
   }
 
@@ -75,6 +80,7 @@ class _HomeGuardianState extends State<HomeGuardian> {
 
             const SizedBox(height: 20),
 
+            // O widget agora é apenas consumidor, não faz fetch
             const NextTripStatus(),
 
             const SizedBox(height: 24),
@@ -82,8 +88,9 @@ class _HomeGuardianState extends State<HomeGuardian> {
             Text(
               'Confirmação de presença',
               style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppPalette.neutral900,
+                  fontWeight: FontWeight.w600,
+                  color: AppPalette.neutral900,
+                  fontSize: 18
               ),
             ),
             const SizedBox(height: 12),

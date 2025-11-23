@@ -6,33 +6,18 @@ import '../../../../../provider/student_provider.dart';
 import './pending_confirmation_callout.dart';
 import './track_route_callout.dart';
 
-class NextTripStatus extends StatefulWidget {
+class NextTripStatus extends StatelessWidget {
   const NextTripStatus({super.key});
-
-  @override
-  State<NextTripStatus> createState() => _NextTripStatusState();
-}
-
-class _NextTripStatusState extends State<NextTripStatus> {
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchStatus();
-    });
-  }
-
-  Future<void> _fetchStatus() async {
-    await context.read<StudentProvider>().fetchNextTripStatus();
-  }
 
   void _onTrackRoutePressed() {
     print('Navegando para a tela de acompanhamento...');
+    // Aqui você pode adicionar a lógica de navegação real, ex:
+    // Navigator.pushNamed(context, '/track_route');
   }
 
   @override
   Widget build(BuildContext context) {
+    // Usa watch para reconstruir o widget quando o estado mudar
     final provider = context.watch<StudentProvider>();
     final isLoading = provider.isStatusLoading;
     final status = provider.tripStatus;
@@ -61,6 +46,7 @@ class _NextTripStatusState extends State<NextTripStatus> {
 
       case 'NAO_VAI':
       default:
+      // Retorna um SizedBox vazio se não houver status relevante
         return const SizedBox.shrink();
     }
   }
