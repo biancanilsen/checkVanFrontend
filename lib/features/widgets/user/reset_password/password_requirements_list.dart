@@ -9,10 +9,7 @@ class PasswordRequirementsList extends StatelessWidget {
     required this.password,
   });
 
-  // Regras baseadas no NIST SP 800-63B
-  // 1. Mínimo recomendado hoje é 10 ou 12 caracteres.
-  // 2. Passphrases (frases) são mais seguras que senhas curtas e complexas.
-  bool get _hasMinLength => password.length >= 10;
+  bool get _hasMinLength => password.length >= 12;
   bool get _isStrongLength => password.length >= 15;
 
   @override
@@ -38,7 +35,6 @@ class PasswordRequirementsList extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Barra de Progresso Visual
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
@@ -50,14 +46,12 @@ class PasswordRequirementsList extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Requisito Obrigatório
           _buildRequirement(
-            "Mínimo de 10 caracteres",
+            "Mínimo de 12 caracteres",
             _hasMinLength,
             isMandatory: true,
           ),
 
-          // Incentivo (Opcional)
           _buildRequirement(
             "Ótimo: 15+ caracteres (frase-senha)",
             _isStrongLength,

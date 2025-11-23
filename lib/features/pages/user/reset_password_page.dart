@@ -105,7 +105,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
               const SizedBox(height: 24),
 
-              // Passa apenas a senha atual para o widget calcular a força
               PasswordRequirementsList(
                 password: _passwordController.text,
               ),
