@@ -61,6 +61,16 @@ dev_dependencies:
   json_serializable: ^6.7.1
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/check_van_capa.png"
+  min_sdk_android: 21
+  # Opcional: Se quiser ícones adaptativos (Android modernos)
+  # adaptive_icon_background: "#FFFFFF" # Cor de fundo
+  # adaptive_icon_foreground: "assets/check_van.png"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -85,6 +95,7 @@ flutter:
     - assets/profile.png
     - assets/rota.png
     - assets/children_login.png
+    - assets/check_van_capa.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
