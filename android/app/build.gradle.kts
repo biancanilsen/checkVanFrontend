@@ -8,6 +8,16 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { stream ->
+        localProperties.load(stream)
+    }
+}
+
+val googleMapsApiKey = localProperties.getProperty("google.maps.api.key") ?: ""
+
 android {
     namespace = "com.example.check_van_frontend"
     compileSdk = flutter.compileSdkVersion
