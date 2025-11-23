@@ -78,20 +78,29 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
 
   void _updateMask() {
     if (_selectedCountry != null) {
-      _maskFormatter.updateMask(mask: _selectedCountry!.mask);
+      // Atualiza a definição da máscara
+      var newMask = _selectedCountry!.mask;
+      _maskFormatter.updateMask(mask: newMask);
 
-      // CORREÇÃO PRINCIPAL:
-      // Se o controller já tem texto (ex: veio do banco de dados na tela de perfil),
-      // nós formatamos esse texto com a máscara do país selecionado.
+      // CORREÇÃO: Se já existe texto, precisamos reaplicar a máscara
+      // E atualizar o estado interno do formatador para que o getUnmaskedText funcione
       if (widget.controller.text.isNotEmpty) {
-        // 1. Remove tudo que não for número para ter o dado limpo
+        // 1. Limpa o texto atual (remove formatação antiga)
         final unmasked = widget.controller.text.replaceAll(RegExp(r'[^0-9]'), '');
 
-        // 2. Aplica a máscara
-        final formatted = _maskFormatter.maskText(unmasked);
+        // 2. Cria um valor antigo (vazio) e um novo (apenas números) para simular a digitação
+        final oldValue = TextEditingValue.empty;
+        final newValue = TextEditingValue(
+          text: unmasked,
+          selection: TextSelection.collapsed(offset: unmasked.length),
+        );
 
-        // 3. Atualiza o controller visualmente
-        widget.controller.text = formatted;
+        // 3. O formatador processa e retorna o valor formatado corretamente
+        // Isso atualiza o estado interno do unmaskedText!
+        final result = _maskFormatter.formatEditUpdate(oldValue, newValue);
+
+        // 4. Atualiza o controller com o resultado formatado
+        widget.controller.value = result;
       }
     }
   }
@@ -102,8 +111,11 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
     }
 
     if (value != null && value.isNotEmpty && _selectedCountry != null) {
-      // Pega o texto sem a máscara para validar o tamanho
+      // Agora isso vai funcionar porque o formatEditUpdate atualizou o estado interno
       final unmaskedText = _maskFormatter.getUnmaskedText();
+
+      // Debug para confirmar
+      // print('Mascara: ${widget.controller.text} | Unmasked: $unmaskedText | Min: ${_selectedCountry!.minLength}');
 
       if (unmaskedText.length < _selectedCountry!.minLength) {
         return 'Número incompleto';
@@ -179,7 +191,6 @@ class _PhoneInputWithCountryState extends State<PhoneInputWithCountry> {
                           _updateMask();
                         });
                         widget.onCountryChanged(newValue.dialCode);
-                        // Notifica mudança de Sigla (ex: BR)
                         if (widget.onCountryIsoChanged != null) {
                           widget.onCountryIsoChanged!(newValue.code);
                         }
