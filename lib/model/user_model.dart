@@ -8,8 +8,9 @@ class UserModel {
   final String email;
   final String role;
   final String? driverLicense;
-  final DateTime birthDate;
+  final DateTime? birthDate;
   final bool isTempPassword;
+  final String? imageProfile;
 
   UserModel({
     required this.id,
@@ -19,8 +20,9 @@ class UserModel {
     required this.email,
     required this.role,
     this.driverLicense,
-    required this.birthDate,
+    this.birthDate,
     this.isTempPassword = false,
+    this.imageProfile,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -32,8 +34,11 @@ class UserModel {
       email: json['email'] as String,
       role: json['role'] as String,
       driverLicense: json['driver_license'] as String?,
-      birthDate: DateTime.parse(json['birth_date'] as String),
+      birthDate: json['birth_date'] != null
+          ? DateTime.parse(json['birth_date'] as String)
+          : null,
       isTempPassword: json['is_temp_password'] ?? false,
+      imageProfile: json['image_profile'] as String?,
     );
   }
 
@@ -45,8 +50,9 @@ class UserModel {
       'email': email,
       'role': role,
       'driver_license': driverLicense,
-      'birth_date': birthDate.toIso8601String(),
+      'birth_date': birthDate?.toIso8601String(),
       'is_temp_password': isTempPassword,
+      'image_profile': imageProfile,
     };
   }
 

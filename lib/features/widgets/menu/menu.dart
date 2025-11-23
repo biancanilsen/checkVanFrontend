@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import '../../../model/user_model.dart'; // Import do seu model
 import '../../../utils/user_session.dart';
 
 class DriverMenu extends StatelessWidget {
-  // 1. Aceite o callback
   final Function(String routeName) onItemTapped;
 
   const DriverMenu({
     super.key,
-    required this.onItemTapped, // 2. Torne-o obrigatório
+    required this.onItemTapped,
   });
 
   void _logout(BuildContext context) async {
@@ -25,7 +25,7 @@ class DriverMenu extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. Botão de Fechar (Topo, Direita) ---
+            // --- 1. Botão de Fechar ---
             Padding(
               padding: const EdgeInsets.only(top: 16.0, right: 16.0),
               child: Align(
@@ -37,46 +37,58 @@ class DriverMenu extends StatelessWidget {
               ),
             ),
 
-            // --- 2. Cabeçalho do Perfil ---
-            GestureDetector(
-              // 3. Use o callback aqui
-              onTap: () => onItemTapped('/my_profile'),
-              child: Container(
-                padding: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey[200]!, width: 1),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 28,
-                      backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=12'),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Text(
-                        'Meu perfil',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
+            // --- 2. Cabeçalho do Perfil (COM FUTURE BUILDER) ---
+            FutureBuilder<UserModel?>(
+              future: UserSession.getUser(), // Busca os dados salvos
+              builder: (context, snapshot) {
+                final user = snapshot.data;
+                final imageProfile = user?.imageProfile;
+                final userName = user?.name ?? 'Meu perfil';
+
+                return GestureDetector(
+                  onTap: () => onItemTapped('/my_profile'),
+                  child: Container(
+                    padding: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey[200]!, width: 1),
                       ),
                     ),
-                  ],
-                ),
-              ),
+                    child: Row(
+                      children: [
+                        // Lógica da Imagem
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: Colors.grey.shade200,
+                          backgroundImage: (imageProfile != null && imageProfile.isNotEmpty)
+                              ? NetworkImage(imageProfile)
+                              : const AssetImage('assets/profile.png') as ImageProvider,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            userName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
 
-            // --- 3. Itens do Menu (Meio, com Rolagem) ---
+            // --- 3. Itens do Menu ---
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  // 4. Passe o callback para o widget auxiliar
                   _buildMenuItem(context, 'Meus alunos', Icons.arrow_forward_ios, '/students'),
                   _buildMenuItem(context, 'Minhas escolas', Icons.arrow_forward_ios, '/schools'),
                   _buildMenuItem(context, 'Minhas vans', Icons.arrow_forward_ios, '/vans'),
@@ -84,6 +96,7 @@ class DriverMenu extends StatelessWidget {
               ),
             ),
 
+            // --- 4. Logout ---
             Padding(
               padding: const EdgeInsets.only(bottom: 20.0),
               child: ListTile(
@@ -105,7 +118,6 @@ class DriverMenu extends StatelessWidget {
     );
   }
 
-  // 5. Modifique o _buildMenuItem para usar o callback
   Widget _buildMenuItem(BuildContext context, String title, IconData trailingIcon, String routeName) {
     return Column(
       children: [
@@ -120,7 +132,6 @@ class DriverMenu extends StatelessWidget {
             ),
           ),
           trailing: Icon(trailingIcon, size: 18, color: Colors.grey),
-          // Use o callback aqui
           onTap: () => onItemTapped(routeName),
         ),
       ],

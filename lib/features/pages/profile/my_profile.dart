@@ -39,6 +39,8 @@ class _MyProfileState extends State<MyProfile> {
   String? _profileImageUrl;
 
   String _selectedDDI = '+55';
+  // --- NOVA VARIÁVEL PARA RESOLVER O ERRO 1 ---
+  String _selectedCountryCode = 'BR';
 
   XFile? _imageFile;
   final ImagePicker _picker = ImagePicker();
@@ -59,7 +61,12 @@ class _MyProfileState extends State<MyProfile> {
       _userId = user.id;
       _userRole = user.role;
       _birthDate = user.birthDate;
-      // _profileImageUrl = user.image_profile;
+      _profileImageUrl = user.imageProfile; // Lê a imagem do perfil
+
+      // Recupera o código do país salvo (ou usa BR como fallback)
+      if (user.phoneCountry != null) {
+        _selectedCountryCode = user.phoneCountry!;
+      }
 
       setState(() {
         _isDriver = _userRole == "driver";
@@ -67,16 +74,21 @@ class _MyProfileState extends State<MyProfile> {
         _emailController.text = user.email ?? '';
         _licenseController.text = user.driverLicense ?? '';
 
-        // 2. TRATAMENTO DO TELEFONE AO CARREGAR
-        // O banco retorna: +5547999999999
-        // Precisamos separar para exibir corretamente
+        // TRATAMENTO DO TELEFONE
         String rawPhone = user.phone ?? '';
-        if (rawPhone.startsWith('+55')) {
-          _selectedDDI = '+55';
-          // Remove o +55 para exibir só o número no input (ex: 47999999999)
-          _phoneController.text = rawPhone.substring(3);
+        if (rawPhone.startsWith('+')) {
+          // A lógica ideal seria ter o DDI salvo separado, mas aqui tentamos inferir
+          // O componente PhoneInputWithCountry vai tentar achar o DDI
+          // Se o DDI for +55, removemos os 3 primeiros chars
+          if (rawPhone.startsWith('+55')) {
+            _selectedDDI = '+55';
+            _phoneController.text = rawPhone.substring(3);
+          } else {
+            // Se for outro país, o componente vai tentar achar pelo DDI inicial
+            // Mas como não sabemos qual é, deixamos o texto inteiro ou tentamos limpar
+            _phoneController.text = rawPhone;
+          }
         } else {
-          // Caso seja outro formato ou vazio
           _phoneController.text = rawPhone;
         }
 
@@ -111,7 +123,7 @@ class _MyProfileState extends State<MyProfile> {
     FocusScope.of(context).requestFocus(FocusNode());
     final picked = await showDatePicker(
       context: context,
-      initialDate: _birthDate ?? DateTime.now(),
+      initialDate: _birthDate ?? DateTime(2000),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       locale: const Locale('pt', 'BR'),
@@ -151,31 +163,46 @@ class _MyProfileState extends State<MyProfile> {
 
     setState(() => _isLoading = true);
 
+    // 1. TRATAMENTO DO TELEFONE
     String cleanNumber = _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
     String finalPhone = '$_selectedDDI$cleanNumber';
 
-    final success = await UserService.updateProfile(
+    // 2. ATUALIZA DADOS TEXTUAIS
+    // CORREÇÃO ERRO 1: Usamos _selectedCountryCode que é atualizado pelo callback
+    bool success = await UserService.updateProfile(
       name: _nameController.text,
       phone: finalPhone,
+      phoneCountry: _selectedCountryCode,
       email: _emailController.text,
       password: _senhaController.text,
       license: _licenseController.text,
-      birthDate: _birthDate!,
-      // imageFile: _imageFile,
+      birthDate: _birthDate,
     );
+
+    // 3. ATUALIZA IMAGEM (SE HOUVER NOVA)
+    String? newImageUrl;
+    if (_imageFile != null) {
+      newImageUrl = await UserService.uploadProfileImage(_imageFile!);
+    }
 
     setState(() => _isLoading = false);
 
     if (success) {
+      // CORREÇÃO ERRO 2: Se _birthDate for nulo, o UserModel pode reclamar se for required.
+      // Garanta que o UserModel aceite nulo ou trate aqui.
+      // Assumindo que UserModel.birthDate é DateTime? (nullable)
+
       await UserSession.saveUser(UserModel(
         id: _userId,
         name: _nameController.text,
         phone: finalPhone,
+        phoneCountry: _selectedCountryCode,
         email: _emailController.text,
         driverLicense: _licenseController.text,
         role: _userRole!,
-        birthDate: _birthDate!,
-        // image_profile: _profileImageUrl,
+        birthDate: _birthDate, // Passa nulo se não tiver
+
+        imageProfile: newImageUrl ?? _profileImageUrl,
       ));
 
       await _loadUserProfile();
@@ -188,9 +215,7 @@ class _MyProfileState extends State<MyProfile> {
         label: 'Perfil atualizado!',
         type: SnackBarType.success,
       );
-
       Navigator.pop(context);
-
     } else {
       CustomSnackBar.show(
         context: context,
@@ -225,6 +250,7 @@ class _MyProfileState extends State<MyProfile> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // ... (Cabeçalho e Avatar mantidos)
               const SizedBox(height: 16),
               Text(
                 'Meus dados',
@@ -250,7 +276,7 @@ class _MyProfileState extends State<MyProfile> {
                       child: CircleAvatar(
                         radius: 24,
                         backgroundColor: AppPalette.primary900,
-                        child: Icon(Icons.edit, color: Colors.white),
+                        child: const Icon(Icons.edit, color: Colors.white),
                       ),
                     )
                         : null,
@@ -269,17 +295,25 @@ class _MyProfileState extends State<MyProfile> {
               ),
               const SizedBox(height: 16),
 
+              // --- COMPONENTE DE TELEFONE COM CALLBACKS ---
               PhoneInputWithCountry(
                 controller: _phoneController,
                 label: 'Telefone',
                 isRequired: true,
-                initialDialCode: _selectedDDI,
+                initialDialCode: _selectedDDI, // Define o inicial (ex: +55)
                 onCountryChanged: (ddi) {
+                  // Atualiza o DDI quando o usuário troca no dropdown
                   _selectedDDI = ddi;
+                },
+                // CORREÇÃO: Callback para salvar a sigla (BR, US)
+                onCountryIsoChanged: (isoCode) {
+                  _selectedCountryCode = isoCode;
                 },
               ),
 
               const SizedBox(height: 16),
+
+              // ... (Restante dos campos mantidos: Email, Data, Senha...)
               CustomTextField(
                 controller: _emailController,
                 label: 'Email',
@@ -301,8 +335,8 @@ class _MyProfileState extends State<MyProfile> {
                 suffixIcon: Icons.calendar_today,
                 validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
               ),
-              const SizedBox(height: 16),
 
+              const SizedBox(height: 16),
               CustomTextField(
                 controller: _senhaController,
                 label: 'Nova Senha',

@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import '../utils/user_session.dart';
 import '../network/endpoints.dart';
 
@@ -48,6 +50,37 @@ class UserService {
     } catch (e) {
       print('Exceção no updateProfile: $e');
       return false;
+    }
+  }
+
+  static Future<String?> uploadProfileImage(XFile imageFile) async {
+    try {
+      final token = await UserSession.getToken();
+      final url = Uri.parse(Endpoints.uploadUserImage);
+
+      final request = http.MultipartRequest('POST', url);
+      request.headers['Authorization'] = 'Bearer $token';
+
+      // Adiciona o arquivo
+      request.files.add(await http.MultipartFile.fromPath(
+        'image_profile',
+        imageFile.path,
+        contentType: MediaType('image', imageFile.path.split('.').last),
+      ));
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['imageUrl']; // Retorna a URL da nova imagem
+      } else {
+        print('Erro upload imagem: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Exceção upload imagem: $e');
+      return null;
     }
   }
 }

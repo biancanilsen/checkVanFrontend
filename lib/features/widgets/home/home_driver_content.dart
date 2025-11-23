@@ -23,7 +23,6 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
   void initState() {
     super.initState();
     _loadUserName();
-    // Busca as viagens ao iniciar a tela
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<TripProvider>().fetchNextTrips();
     });
@@ -34,8 +33,8 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
     if (mounted) {
       setState(() {
         _userName = user?.name;
+        _profileImageUrl = user?.imageProfile;
         _isLoadingUser = false;
-        // TODO _profileImageUrl = imageUrl; // Salve a URL da imagem
       });
     }
   }
@@ -48,7 +47,6 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
 
   @override
   Widget build(BuildContext context) {
-    // Escuta o TripProvider para atualizações na UI
     final tripProvider = context.watch<TripProvider>();
 
     return SafeArea(
@@ -70,8 +68,6 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
               ),
             ),
 
-            // --- CONTEÚDO DINÂMICO ---
-            // Constrói o card "Próxima Rota" com base no estado do provider
             _buildNextRoute(tripProvider),
 
             const Padding(
@@ -82,8 +78,6 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
               ),
             ),
 
-            // --- CONTEÚDO DINÂMICO ---
-            // Constrói a lista "Rotas programadas" com base no estado do provider
             _buildScheduledRoutes(tripProvider),
 
             const SizedBox(height: 20),
@@ -93,38 +87,30 @@ class _HomeDriverContentState extends State<HomeDriverContent> {
     );
   }
 
-  /// Helper para construir o card da próxima rota
   Widget _buildNextRoute(TripProvider provider) {
     if (provider.isLoading) {
-      // Mostra um loading no lugar do card
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 40.0),
         child: Center(child: CircularProgressIndicator()),
       );
     }
     if (provider.error != null) {
-      // Mostra uma mensagem de erro no lugar do card
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Center(child: Text('Erro: ${provider.error}')),
       );
     }
 
-    // Passa a próxima viagem (pode ser null se não houver)
     return NextRouteCard(
       nextTrip: provider.nextTrip,
     );
   }
 
-  /// Helper para construir a lista de rotas programadas
   Widget _buildScheduledRoutes(TripProvider provider) {
-    // Se estiver carregando ou com erro, não mostra a lista
-    // (o _buildNextRoute já vai mostrar o status)
     if (provider.isLoading || provider.error != null) {
       return const SizedBox.shrink();
     }
 
-    // Passa a lista de viagens programadas (pode estar vazia)
     return ScheduledRoutesList(
       scheduledTrips: provider.scheduledTrips,
     );
