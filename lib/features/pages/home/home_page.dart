@@ -5,7 +5,7 @@ import '../../../provider/student_provider.dart';
 import '../../../utils/user_session.dart';
 import '../../widgets/home/driver_shell.dart';
 import '../../widgets/home/guardian_shell.dart';
-import '../profile/reset_password_page.dart'; // Importe a nova tela
+import '../user/reset_password_page.dart'; // Importe a nova tela
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

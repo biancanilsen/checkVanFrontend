@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/theme.dart';
 import '../../../services/user_service.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/user/reset_password/password_requirements_list.dart';
+import '../../widgets/user/reset_password/reset_password_header.dart';
 import '../../widgets/van/custom_snackbar.dart';
 import '../../../enum/snack_bar_type.dart';
 import '../../../utils/user_session.dart';
@@ -20,7 +22,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   bool _obscureConfirm = true;
   bool _isLoading = false;
 
-  // Validações
   bool get _has8Chars => _passwordController.text.length >= 8;
   bool get _hasUpper => _passwordController.text.contains(RegExp(r'[A-Z]'));
   bool get _hasLower => _passwordController.text.contains(RegExp(r'[a-z]'));
@@ -36,6 +37,33 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     super.dispose();
   }
 
+  void _submit() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      CustomSnackBar.show(context: context, label: "As senhas não conferem", type: SnackBarType.error);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final success = await UserService.updateProfile(
+      password: _passwordController.text,
+    );
+
+    setState(() => _isLoading = false);
+
+    if (success) {
+      await UserSession.getUser(); // Atualiza sessão se necessário
+      if (mounted) {
+        Navigator.pop(context);
+        CustomSnackBar.show(context: context, label: "Senha redefinida com sucesso!", type: SnackBarType.success);
+      }
+    } else {
+      if (mounted) {
+        CustomSnackBar.show(context: context, label: "Erro ao redefinir senha", type: SnackBarType.error);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,8 +72,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-            icon: const Icon(Icons.close, color: Colors.black),
-            onPressed: () => Navigator.pop(context)
+          icon: const Icon(Icons.close, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
@@ -54,24 +82,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           child: Column(
             children: [
               const SizedBox(height: 10),
-              // Ícone Cadeado
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEBF2F7),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.lock_outline_rounded,
-                  size: 40,
-                  color: AppPalette.primary800,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text("Criar Nova Senha", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppPalette.primary800)),
-              const SizedBox(height: 8),
-              const Text("Sua nova senha deve ser diferente das senhas anteriores", textAlign: TextAlign.center, style: TextStyle(color: AppPalette.neutral700, fontSize: 16)),
+
+              const ResetPasswordHeader(),
+
               const SizedBox(height: 32),
 
               CustomTextField(
@@ -97,21 +110,12 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
               const SizedBox(height: 24),
 
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("Sua senha deve conter:", style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    _buildRequirement("Mínimo de 8 caracteres", _has8Chars),
-                    _buildRequirement("Pelo menos uma letra maiúscula", _hasUpper),
-                    _buildRequirement("Pelo menos uma letra minúscula", _hasLower),
-                    _buildRequirement("Pelo menos um número", _hasNumber),
-                    _buildRequirement("Pelo menos um caractere especial (!@#\$%...)", _hasSpecial),
-                  ],
-                ),
+              PasswordRequirementsList(
+                has8Chars: _has8Chars,
+                hasUpper: _hasUpper,
+                hasLower: _hasLower,
+                hasNumber: _hasNumber,
+                hasSpecial: _hasSpecial,
               ),
 
               const SizedBox(height: 24),
@@ -122,8 +126,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 child: ElevatedButton(
                   onPressed: (_isLoading || !_isValid) ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: AppPalette.primary800,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                    backgroundColor: AppPalette.primary800,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
@@ -137,8 +141,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppPalette.primary800),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                    side: const BorderSide(color: AppPalette.primary800),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text("Cancelar", style: TextStyle(color: AppPalette.primary800, fontSize: 16)),
                 ),
@@ -149,59 +153,5 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         ),
       ),
     );
-  }
-
-  // --- CORREÇÃO AQUI ---
-  Widget _buildRequirement(String text, bool met) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6), // Aumentei um pouco o espaçamento
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start, // Alinha o ícone ao topo caso o texto quebre linha
-        children: [
-          // Ícone fixo
-          Icon(met ? Icons.check_circle : Icons.cancel, color: met ? Colors.green : Colors.grey, size: 16),
-          const SizedBox(width: 8),
-
-          // Texto Flexível (Correção do Overflow)
-          Expanded(
-            child: Text(
-                text,
-                style: TextStyle(color: met ? Colors.green : Colors.grey[700], fontSize: 13)
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _submit() async {
-    if (_passwordController.text != _confirmPasswordController.text) {
-      CustomSnackBar.show(context: context, label: "As senhas não conferem", type: SnackBarType.error);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    // Chama o serviço (que deve usar parâmetro opcional 'password')
-    final success = await UserService.updateProfile(
-      password: _passwordController.text,
-    );
-
-    setState(() => _isLoading = false);
-
-    if (success) {
-      // Atualiza a sessão local se necessário (removendo flag temporária)
-      final user = await UserSession.getUser();
-      if (user != null) {
-        // O ideal é recarregar o user do backend, mas para UX imediata basta fechar
-      }
-
-      if (mounted) {
-        Navigator.pop(context);
-        CustomSnackBar.show(context: context, label: "Senha redefinida com sucesso!", type: SnackBarType.success);
-      }
-    } else {
-      CustomSnackBar.show(context: context, label: "Erro ao redefinir senha", type: SnackBarType.error);
-    }
   }
 }
