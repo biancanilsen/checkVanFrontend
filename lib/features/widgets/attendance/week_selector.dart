@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/theme.dart';
+import 'week_selector_day_card.dart';
 
 class WeekSelector extends StatefulWidget {
   final DateTime initialSelectedDay;
   final Function(DateTime) onDaySelected;
   final Map<String, String?> presenceStatusMap;
-
   final Function(DateTime newDate)? onMonthChanged;
 
   const WeekSelector({
-    Key? key,
+    super.key,
     required this.initialSelectedDay,
     required this.onDaySelected,
     required this.presenceStatusMap,
     this.onMonthChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<WeekSelector> createState() => _WeekSelectorState();
@@ -96,8 +95,14 @@ class _WeekSelectorState extends State<WeekSelector> {
             children: _currentWeekDays.map((day) {
               final isoDate = DateFormat('yyyy-MM-dd').format(day);
               final status = widget.presenceStatusMap[isoDate];
+              final isSelected = isSameDay(day, _selectedDay);
 
-              return _buildDayCard(day, status);
+              return WeekSelectorDayCard(
+                day: day,
+                isSelected: isSelected,
+                status: status,
+                onTap: () => _onDayCardSelected(day),
+              );
             }).toList(),
           ),
         ),
@@ -106,76 +111,6 @@ class _WeekSelectorState extends State<WeekSelector> {
           onPressed: _goToNextWeek,
         ),
       ],
-    );
-  }
-
-  Widget _buildDayCard(DateTime day, String? status) {
-    final isSelected = isSameDay(day, _selectedDay);
-    final dayFormat = DateFormat.E('pt_BR').format(day);
-    final dayAbbreviation =
-        '${dayFormat[0].toUpperCase()}${dayFormat.substring(1)}';
-    final dayNumber = DateFormat.d('pt_BR').format(day);
-
-    IconData iconData;
-    Color iconColor;
-
-    switch (status) {
-      case 'BOTH':
-      case 'GOING':
-      case 'RETURNING':
-        iconData = Icons.check_circle_outline;
-        iconColor = AppPalette.green600;
-        break;
-      case 'NONE':
-        iconData = Icons.cancel_outlined;
-        iconColor = AppPalette.red700;
-        break;
-      case null:
-      default:
-        iconData = Icons.watch_later_outlined;
-        iconColor = AppPalette.orange700;
-    }
-
-    return GestureDetector(
-      onTap: () => _onDayCardSelected(day),
-      child: Container(
-        // Padding reduzido para evitar overflow
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(10),
-          border: isSelected
-              ? Border.all(color: AppPalette.green600, width: 2)
-              : Border.all(color: Colors.grey.shade300, width: 1),
-        ),
-        child: Column(
-          children: [
-            Text(
-              dayAbbreviation,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? AppPalette.green600 : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              dayNumber,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? AppPalette.green600 : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Icon(
-              iconData,
-              color: iconColor,
-              size: 22,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

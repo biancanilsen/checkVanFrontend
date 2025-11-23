@@ -4,7 +4,7 @@ import 'package:check_van_frontend/features/widgets/route/scheduledRoutes/schedu
 import 'package:flutter/material.dart';
 
 import '../../../../../model/trip_model.dart'; // Import o novo model
-import '../../home/page_indicator.dart';
+import '../../home/pageIndicator/page_indicator.dart';
 
 class ScheduledRoutesList extends StatefulWidget {
   // Recebe a lista de viagens
