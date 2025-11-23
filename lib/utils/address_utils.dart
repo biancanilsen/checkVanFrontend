@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 class AddressUtils {
-  /// Preenche os controllers de rua e número a partir de um endereço completo.
-  ///
   /// Tenta dividir a `fullAddress` em "Rua" e "Número" pela última vírgula.
   /// Se a parte após a vírgula não for um número, assume que é um endereço
   /// em formato antigo e coloca tudo no campo de rua.

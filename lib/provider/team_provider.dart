@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../model/team_model.dart'; // Importe o novo modelo
+import '../model/team_model.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 
@@ -14,7 +14,6 @@ class TeamProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // Busca turmas do /getAllByDriver
   Future<void> getTeams() async {
     _isLoading = true;
     _error = null;
@@ -53,8 +52,8 @@ class TeamProvider extends ChangeNotifier {
   Future<bool> addTeam({
     required String name,
     required int schoolId,
-    required String address, // <-- ALTERADO
-    int? vanId, // <-- ALTERADO
+    required String address,
+    int? vanId,
     String? shift,
   }) async {
     _isLoading = true;
@@ -81,7 +80,7 @@ class TeamProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 201) {
-        await getTeams(); // Recarrega a lista
+        await getTeams();
         return true;
       } else {
         final data = jsonDecode(response.body);
@@ -123,10 +122,9 @@ class TeamProvider extends ChangeNotifier {
         body: json.encode({
           'name': name,
           'school_id': schoolId,
-          'address': address, // <-- ALTERADO
-          'van_id': vanId, // <-- ALTERADO
+          'address': address,
+          'van_id': vanId,
           'shift': shift,
-          // 'code' foi removido
         }),
       );
 

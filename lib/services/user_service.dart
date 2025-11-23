@@ -61,7 +61,6 @@ class UserService {
       final request = http.MultipartRequest('POST', url);
       request.headers['Authorization'] = 'Bearer $token';
 
-      // Adiciona o arquivo
       request.files.add(await http.MultipartFile.fromPath(
         'image_profile',
         imageFile.path,

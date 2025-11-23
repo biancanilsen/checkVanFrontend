@@ -134,7 +134,7 @@ class SchoolProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        await getSchools(); // Atualiza a lista
+        await getSchools();
         return true;
       } else {
         _error = 'Falha ao atualizar a escola.';
@@ -205,10 +205,9 @@ class SchoolProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        // Sucesso. Recarrega a lista principal
         await getSchools();
         _isLoading = false;
-        notifyListeners(); // getSchools() já notifica, mas para garantir
+        notifyListeners();
         return true;
       } else {
         final data = jsonDecode(response.body);

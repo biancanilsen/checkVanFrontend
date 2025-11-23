@@ -1,14 +1,10 @@
-// Imports do Firebase
 import 'package:check_van_frontend/provider/notification_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // Você PRECISA deste arquivo (gerado pelo FlutterFire)
+import 'firebase_options.dart';
 
-// Import do seu serviço de notificação
 import 'package:check_van_frontend/services/notification_service.dart';
-// --- ADICIONE O IMPORT DA NOVA CHAVE ---
 import 'package:check_van_frontend/services/navigation_service.dart';
 
-// Imports do seu app (existentes)
 import 'package:check_van_frontend/features/pages/route/active_route_page.dart';
 import 'package:check_van_frontend/features/pages/route/route_page.dart';
 import 'package:check_van_frontend/features/pages/school/school_page.dart';

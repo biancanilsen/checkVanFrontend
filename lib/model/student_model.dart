@@ -54,16 +54,13 @@ class Student {
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
-    bool isStudentConfirmed = true; // Padrão é true
+    bool isStudentConfirmed = true;
     if (json['presences'] != null && (json['presences'] as List).isNotEmpty) {
-      // Se a lista de presenças não for vazia, pega o status do primeiro registro
       final status = json['presences'][0]['status'];
-      // O aluno está confirmado se o status for qualquer coisa diferente de 'NONE'
       isStudentConfirmed = (status != 'NONE');
     }
     int? teamIdResult;
     if (json['student_team'] != null && (json['student_team'] as List).isNotEmpty) {
-      // Pega o ID da turma do primeiro (e único) registro
       teamIdResult = json['student_team'][0]['team_id'];
     }
 

@@ -122,7 +122,7 @@ class StudentProvider extends ChangeNotifier {
       final createResponse = await http.post(
         Uri.parse(Endpoints.createStudent),
         headers: {
-          'Content-Type': 'application/json; charset=UTF-8', // MUDOU PARA JSON
+          'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({

@@ -23,19 +23,15 @@ class LauncherUtils {
     }
 
     String cleanedPhone = _cleanPhoneNumber(phoneNumber);
-    // Ligações locais não precisam de DDI obrigatório, mas ajuda
-    // O esquema 'tel:' abre o discador
     final Uri launchUri = Uri(
       scheme: 'tel',
       path: cleanedPhone,
     );
 
     try {
-      // Tenta lançar. Se canLaunch retornar false (por bug de OS), o catch pega.
       if (await canLaunchUrl(launchUri)) {
         await launchUrl(launchUri);
       } else {
-        // Tentativa forçada caso canLaunch minta (comum em algumas ROMs)
         await launchUrl(launchUri);
       }
     } catch (e) {
@@ -50,17 +46,13 @@ class LauncherUtils {
     }
 
     String cleanedPhone = _cleanPhoneNumber(phoneNumber);
-    // WhatsApp exige DDI. Se não tiver, adiciona 55 (Brasil)
     if (cleanedPhone.length <= 11) {
       cleanedPhone = '55$cleanedPhone';
     }
 
-    // URL oficial do WhatsApp
     final Uri launchUri = Uri.parse('https://wa.me/$cleanedPhone');
 
     try {
-      // LaunchMode.externalApplication é CRUCIAL para abrir o App do WhatsApp
-      // e não um navegador dentro do seu app.
       bool launched = await launchUrl(
         launchUri,
         mode: LaunchMode.externalApplication,

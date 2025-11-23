@@ -196,8 +196,7 @@ class VanProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        // Sucesso
-        await getVans(); // Recarrega a lista
+        await getVans();
         _isLoading = false;
         notifyListeners();
         return true;

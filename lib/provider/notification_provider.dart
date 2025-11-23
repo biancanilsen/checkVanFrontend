@@ -36,7 +36,6 @@ class NotificationProvider extends ChangeNotifier {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Bearer $token',
         },
-        // 2. Adicionado 'tripType' ao JSON
         body: jsonEncode({
           'teamId': teamId,
           'lat': lat,
@@ -88,7 +87,7 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
-  // 1. Notificar Proximidade (Tempo estimado)
+  // Notificar Proximidade (Tempo estimado)
   Future<bool> notifyProximity(int studentId, int minutes) async {
     return _postRequest(Endpoints.notifyProximity, {
       'studentId': studentId,
@@ -96,17 +95,17 @@ class NotificationProvider extends ChangeNotifier {
     });
   }
 
-  // 2. Notificar Embarque
+  // Notificar Embarque
   Future<bool> notifyBoarding(int studentId) async {
     return _postRequest(Endpoints.notifyBoarding, {'studentId': studentId});
   }
 
-  // 3. Notificar Chegada na Casa (Automático - Já está aqui)
+  // Notificar Chegada na Casa (Automático - Já está aqui)
   Future<bool> notifyArrivalHome(int studentId) async {
     return _postRequest(Endpoints.notifyArrivalHome, {'studentId': studentId});
   }
 
-  // 4. Notificar Chegada na Escola
+  // Notificar Chegada na Escola
   Future<bool> notifyArrivalSchool(int teamId) async {
     return _postRequest(Endpoints.notifyArrivalSchool, {'teamId': teamId});
   }

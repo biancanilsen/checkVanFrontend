@@ -1,7 +1,6 @@
 import 'school_model.dart';
 import 'student_model.dart' hide School;
 
-// Função helper para converter 'num' (int ou double) para 'double' de forma segura
 double? _parseDouble(dynamic value) {
   if (value == null) return null;
   if (value is double) return value;
@@ -10,7 +9,6 @@ double? _parseDouble(dynamic value) {
   return null;
 }
 
-// Função helper para converter 'num' (int ou double) para 'int' de forma segura
 int? _parseInt(dynamic value) {
   if (value == null) return null;
   if (value is int) return value;
@@ -27,16 +25,13 @@ class Team {
   final int schoolId;
   final int driverId;
   final int? vanId;
-  final double? startingLat; // Ajustado para nulo, pois o backend pode enviar null
-  final double? startingLon; // Ajustado para nulo, pois o backend pode enviar null
+  final double? startingLat;
+  final double? startingLon;
 
-  // --- CAMPOS ADICIONADOS ---
-  final String? address; // O backend envia 'address'
+  final String? address;
   final double? distanceTotal;
   final int? durationGoing;
   final int? durationReturn;
-  // Você pode adicionar os campos DateTime (departure_time, etc.) se precisar
-  // final DateTime? departureTimeGoing;
 
   final School school;
   final List<Student> students;
@@ -53,7 +48,6 @@ class Team {
     this.startingLon,
     required this.school,
     required this.students,
-    // --- CAMPOS ADICIONADOS ---
     this.address,
     this.distanceTotal,
     this.durationGoing,
@@ -81,7 +75,6 @@ class Team {
       school: School.fromJson(json['school']),
       students: studentList,
 
-      // --- CAMPOS ADICIONADOS ---
       address: json['address'],
       distanceTotal: _parseDouble(json['distance_total']),
       durationGoing: _parseInt(json['duration_going']),
