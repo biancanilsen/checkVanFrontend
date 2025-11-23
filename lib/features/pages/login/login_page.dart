@@ -96,10 +96,13 @@ class _LoginPageState extends State<LoginPage> {
                   alignment: Alignment.center,
                   child: TextButton(
                     onPressed: () {
-                      // MUDANÇA AQUI: Navegação para a nova página
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
+                        MaterialPageRoute(
+                          builder: (context) => ForgotPasswordPage(
+                            initialEmail: emailController.text,
+                          ),
+                        ),
                       );
                     },
                     child: Text(

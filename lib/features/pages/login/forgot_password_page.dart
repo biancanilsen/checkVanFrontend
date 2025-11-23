@@ -8,15 +8,27 @@ import '../../../enum/snack_bar_type.dart';
 import 'email_sent_page.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
-  const ForgotPasswordPage({super.key});
+  final String? initialEmail;
+
+  const ForgotPasswordPage({
+    super.key,
+    this.initialEmail,
+  });
 
   @override
   State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-  final _emailController = TextEditingController();
+  late final TextEditingController _emailController;
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController(text: widget.initialEmail);
+  }
+
 
   @override
   void dispose() {
@@ -64,9 +76,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 onPressed: () => Navigator.pop(context),
               ),
             ),
-            // --- CORREÇÃO AQUI ---
-            // 1. Center: Mantém o conteúdo no meio quando o teclado está fechado.
-            // 2. SingleChildScrollView: Permite rolar a tela quando o teclado abre.
             body: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -76,7 +85,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Ícone Circular
                       Container(
                         width: 80,
                         height: 80,
@@ -92,7 +100,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Título
                       const Text(
                         'Esqueceu a senha?',
                         style: TextStyle(
@@ -103,7 +110,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Subtítulo
                       const Text(
                         'Digite seu e-mail e enviaremos um link para redefinir sua senha',
                         textAlign: TextAlign.center,
@@ -134,7 +140,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
                       const SizedBox(height: 24),
 
-                      // Botão Enviar
                       SizedBox(
                         width: double.infinity,
                         height: 56,
@@ -158,7 +163,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           ),
                         ),
                       ),
-                      // Espaço extra para garantir que o teclado não cubra o botão imediatamente
                       const SizedBox(height: 20),
                     ],
                   ),
