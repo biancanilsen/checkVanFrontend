@@ -13,7 +13,7 @@ class AttendanceAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return PreferredSize(
-      preferredSize: Size.fromHeight(kToolbarHeight + 40),
+      preferredSize: Size.fromHeight(kToolbarHeight + 60),
       child: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -24,11 +24,11 @@ class AttendanceAppBar extends StatelessWidget implements PreferredSizeWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               CircleAvatar(
-                radius: 30,
+                radius: 20,
                 backgroundColor: Colors.grey.shade200,
                 child: ClipOval(
                   child: CircleAvatar(
-                    radius: 30,
+                    radius: 20,
                     backgroundImage: (studentImageUrl != null && studentImageUrl!.isNotEmpty)
                         ? NetworkImage(studentImageUrl!)
                         : const AssetImage('assets/profile.png') as ImageProvider,
