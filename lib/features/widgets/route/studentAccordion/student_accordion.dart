@@ -124,6 +124,7 @@ class _StudentAccordionState extends State<StudentAccordion> {
                       address: student.address,
                       trailIcon: widget.itemIcon,
                       trailIconColor: widget.itemIconColor,
+                      image_profile: student.image_profile
                     );
                   },
                 ),

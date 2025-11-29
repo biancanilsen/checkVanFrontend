@@ -8,6 +8,7 @@ class StudentTile extends StatelessWidget {
   final String name;
   final String address;
   final bool isConfirmed;
+  final String? image_profile;
 
   const StudentTile({
     super.key,
@@ -15,6 +16,7 @@ class StudentTile extends StatelessWidget {
     required this.name,
     required this.address,
     required this.isConfirmed,
+    this.image_profile,
   });
 
   @override
@@ -38,8 +40,9 @@ class StudentTile extends StatelessWidget {
                 CircleAvatar(
                   radius: 40,
                   backgroundColor: AppPalette.neutral200,
-                  backgroundImage:
-                  const AssetImage('assets/retratoCrianca.webp'),
+                  backgroundImage: (image_profile != null && image_profile!.isNotEmpty)
+                      ? NetworkImage(image_profile!)
+                      : const AssetImage('assets/profile.png') as ImageProvider,
                 ),
               ],
             ),

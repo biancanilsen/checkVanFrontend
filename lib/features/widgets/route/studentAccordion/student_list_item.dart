@@ -7,6 +7,7 @@ class StudentListItem extends StatelessWidget {
   final String address;
   final IconData? trailIcon;
   final Color? trailIconColor;
+  final String? image_profile;
 
   const StudentListItem({
     super.key,
@@ -15,6 +16,7 @@ class StudentListItem extends StatelessWidget {
     required this.address,
     this.trailIcon,
     this.trailIconColor,
+    this.image_profile,
   });
 
   @override
@@ -35,7 +37,9 @@ class StudentListItem extends StatelessWidget {
           CircleAvatar(
             radius: 24, // Um pouco menor que o anterior
             backgroundColor: AppPalette.neutral200,
-            backgroundImage: const AssetImage('assets/retratoCrianca.webp'),
+            backgroundImage: (image_profile != null && image_profile!.isNotEmpty)
+                ? NetworkImage(image_profile!)
+                : const AssetImage('assets/profile.png') as ImageProvider,
           ),
           const SizedBox(width: 16),
           Expanded(
