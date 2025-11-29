@@ -21,7 +21,7 @@ class PresenceProvider extends ChangeNotifier {
   final Set<String> _fetchedMonths = {};
 
   Future<void> getMonthlyPresence(int studentId, DateTime date) async {
-    final monthKey = DateFormat('yyyy-MM').format(date);
+    final monthKey = '${studentId}_${DateFormat('yyyy-MM').format(date)}';
 
     if (_fetchedMonths.contains(monthKey)) {
       return;
@@ -44,6 +44,8 @@ class PresenceProvider extends ChangeNotifier {
 
         final List<dynamic> data = jsonDecode(response.body);
 
+        // Preenche o mapa. Nota: Se limparmos o mapa ao trocar de aluno,
+        // isso aqui vai repopular corretamente.
         for (var item in data) {
           _monthlyPresence[item['date']] = item['status'];
         }
@@ -97,7 +99,8 @@ class PresenceProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         _monthlyPresence[formattedDate] = status;
 
-        final monthKey = DateFormat('yyyy-MM').format(date);
+        // Atualiza o cache também para garantir consistência
+        final monthKey = '${studentId}_${DateFormat('yyyy-MM').format(date)}';
         _fetchedMonths.add(monthKey);
 
         return true;
@@ -119,5 +122,11 @@ class PresenceProvider extends ChangeNotifier {
       _isConfirming = false;
       notifyListeners();
     }
+  }
+
+  void clearMonthlyPresence() {
+    _monthlyPresence = {};
+    _fetchedMonths.clear();
+    notifyListeners();
   }
 }

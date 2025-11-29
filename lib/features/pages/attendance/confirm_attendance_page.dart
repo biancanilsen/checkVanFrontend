@@ -55,9 +55,17 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PresenceProvider>(context, listen: false)
-          .getMonthlyPresence(widget.studentId, _selectedDay);
+      final provider = Provider.of<PresenceProvider>(context, listen: false);
+
+      provider.clearMonthlyPresence();
+
+      provider.getMonthlyPresence(widget.studentId, _selectedDay);
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   String _getFormattedDateString(DateTime date) {
@@ -156,17 +164,20 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
 
     String? currentOptionToShow;
 
-    final isoDate = DateFormat('yyyy-MM-dd').format(_selectedDay);
-    final statusFromBackend = presenceMap[isoDate];
+    if (presenceMap.isEmpty) {
+      currentOptionToShow = _selectedTransportOption;
+    } else {
+      final isoDate = DateFormat('yyyy-MM-dd').format(_selectedDay);
+      final statusFromBackend = presenceMap[isoDate];
+      final optionFromBackend = _mapStatusToOption(statusFromBackend);
 
-    final optionFromBackend = _mapStatusToOption(statusFromBackend);
+      currentOptionToShow = _selectedTransportOption ?? optionFromBackend;
 
-    currentOptionToShow = _selectedTransportOption ?? optionFromBackend;
-
-    if (!_isOptionInitialized && presenceMap.isNotEmpty) {
-      _selectedTransportOption = optionFromBackend;
-      currentOptionToShow = optionFromBackend;
-      _isOptionInitialized = true;
+      if (!_isOptionInitialized) {
+        _selectedTransportOption = optionFromBackend;
+        currentOptionToShow = optionFromBackend;
+        _isOptionInitialized = true;
+      }
     }
 
     return Scaffold(
@@ -190,6 +201,7 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
             const SizedBox(height: 16),
 
             WeekSelector(
+              key: ValueKey('week_selector_${widget.studentId}'),
               initialSelectedDay: _selectedDay,
               onDaySelected: (newSelectedDay) {
                 final newIsoDate = DateFormat('yyyy-MM-dd').format(newSelectedDay);
@@ -209,7 +221,12 @@ class _ConfirmAttendancePageState extends State<ConfirmAttendancePage> {
             ),
             const SizedBox(height: 24),
 
-            PresenceOptions(
+            presenceMap.isEmpty && isConfirming == false
+                ? const Padding(
+              padding: EdgeInsets.all(20.0),
+              child: CircularProgressIndicator(),
+            )
+                : PresenceOptions(
               selectedOption: currentOptionToShow,
               onChanged: (newOption) {
                 setState(() {
