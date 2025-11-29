@@ -26,9 +26,7 @@ class _HomeGuardianState extends State<HomeGuardian> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Chama o resumo de presença
       context.read<StudentProvider>().getPresenceSummary();
-      // ADICIONADO: Chama o status da próxima viagem ao iniciar a tela
       context.read<StudentProvider>().fetchNextTripStatus();
 
       _loadUserAndGreeting();
@@ -56,7 +54,7 @@ class _HomeGuardianState extends State<HomeGuardian> {
     setState(() {
       _greeting = greeting;
       _userName = name;
-      // _profileImageUrl = user?.image_profile;
+      _profileImageUrl = user?.imageProfile;
     });
   }
 
