@@ -225,7 +225,7 @@ class _MyProfileState extends State<MyProfile> {
   void _logout() async {
     await UserSession.signOutUser();
     if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     }
   }
 

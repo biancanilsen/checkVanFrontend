@@ -21,7 +21,7 @@ class PresenceStudentCard extends StatelessWidget {
   void _logout(BuildContext context) async {
     await UserSession.signOutUser();
     if (context.mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     }
   }
 
