@@ -9,22 +9,24 @@ class PendingConfirmationCallout extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    // O widget principal agora é uma Column
+    final now = DateTime.now();
+    final isWeekend = now.weekday == DateTime.saturday || now.weekday == DateTime.sunday;
+
+    final message = isWeekend
+        ? 'Confirme a presença da rota de segunda-feira!'
+        : 'Confirme a presença da rota de amanhã!';
+
     return Column(
       children: [
-        // 1. A IMAGEM
-        // Fica fora do container de aviso
         Image.asset(
-          'assets/school_bus.png', // Imagem da captura de tela
-          height: 200, // Você pode ajustar esta altura
+          'assets/school_bus.png',
+          height: 200,
           width: double.infinity,
-          // BoxFit.contain garante que a ilustração inteira apareça
           fit: BoxFit.contain,
         ),
 
-        const SizedBox(height: 16), // Espaço entre a imagem e o card
+        const SizedBox(height: 16),
 
-        // 2. O CARD DE AVISO
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -32,12 +34,12 @@ class PendingConfirmationCallout extends StatelessWidget {
             color: const Color(0xFFFFF8E1),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: AppPalette.yellow200, // Cor da borda
-              width: 1.5, // Largura da borda
+              color: AppPalette.yellow200,
+              width: 1.5,
             ),
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center, // Alinha verticalmente
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SvgPicture.asset(
                 'assets/icons/warning_icon.svg',
@@ -51,7 +53,7 @@ class PendingConfirmationCallout extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Confirme a presença da rota de amanhã!',
+                  message,
                   style: textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppPalette.neutral900,
