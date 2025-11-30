@@ -40,8 +40,10 @@ class RouteData {
   });
 
   factory RouteData.fromJson(Map<String, dynamic> json, int teamIdArg, String tripTypeArg) {
-    var studentList = (json['studentsGoing'] as List? ?? [])
-        .map((s) => Student.fromJson(s..['isConfirmed'] = true))
+    // CORREÇÃO: Lê 'students' (que contém todos) em vez de 'studentsGoing'
+    var listSource = json['students'] ?? json['studentsGoing'];
+    var studentList = (listSource as List? ?? [])
+        .map((s) => Student.fromJson(s))
         .toList();
 
     List<RouteStep> allSteps = [];

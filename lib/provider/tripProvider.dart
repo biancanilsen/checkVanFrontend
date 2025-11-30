@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../model/trip_model.dart';
+import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 import '../services/navigation_service.dart';
 
 class TripProvider extends ChangeNotifier {
+  final ApiClient _client = ApiClient();
   List<Trip> _trips = [];
   bool _isLoading = false;
   String? _error;
@@ -30,7 +32,7 @@ class TripProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(Endpoints.getNextTrips),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',

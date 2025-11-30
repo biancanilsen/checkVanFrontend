@@ -8,11 +8,13 @@ import 'package:image_picker/image_picker.dart';
 
 import '../model/student_model.dart';
 import '../model/student_presence_summary.dart';
+import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 import '../services/navigation_service.dart';
 
 class StudentProvider extends ChangeNotifier {
+  final ApiClient _client = ApiClient();
   List<Student> _students = [];
   List<StudentPresenceSummary> _presenceSummaryStudents = [];
   bool _isLoading = false;
@@ -38,7 +40,7 @@ class StudentProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(Endpoints.getPresenceSummary),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -82,7 +84,7 @@ class StudentProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(endpointUrl),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -134,7 +136,7 @@ class StudentProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final createResponse = await http.post(
+      final createResponse = await _client.post(
         Uri.parse(Endpoints.createStudent),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -239,7 +241,7 @@ class StudentProvider extends ChangeNotifier {
         }
       }
 
-      final response = await http.put(
+      final response = await _client.put(
         Uri.parse('${Endpoints.updateStudent}/$id'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -288,7 +290,7 @@ class StudentProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final response = await http.delete(
+      final response = await _client.delete(
         Uri.parse('${Endpoints.deleteStudent}/$studentId'),
         headers: {
           'Authorization': 'Bearer $token',
@@ -329,7 +331,7 @@ class StudentProvider extends ChangeNotifier {
 
       final uri = Uri.parse('${Endpoints.searchStudents}?name=${Uri.encodeComponent(name)}');
 
-      final response = await http.get(
+      final response = await _client.get(
         uri,
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -384,7 +386,7 @@ class StudentProvider extends ChangeNotifier {
 
       final studentIds = _students.map((s) => s.id).toList();
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(Endpoints.getNextTripStatusBulk),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -422,7 +424,7 @@ class StudentProvider extends ChangeNotifier {
 
       final url = Uri.parse('${Endpoints.baseUrl}/student/get/$studentId');
 
-      final response = await http.get(
+      final response = await _client.get(
         url,
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',

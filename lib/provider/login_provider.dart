@@ -4,12 +4,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../model/user_model.dart';
+import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import '../services/session_manager.dart';
 import '../utils/user_session.dart';
 import '../services/navigation_service.dart';
 
 class LoginProvider extends ChangeNotifier {
+  final ApiClient _client = ApiClient();
   bool isLoading = false;
   String? error;
 
@@ -18,7 +20,7 @@ class LoginProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final loginResponse = await http.post(
+      final loginResponse = await _client.post(
         Uri.parse(Endpoints.login),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
@@ -30,7 +32,7 @@ class LoginProvider extends ChangeNotifier {
 
         await UserSession.saveToken(token);
 
-        final profileResponse = await http.get(
+        final profileResponse = await _client.get(
           Uri.parse(Endpoints.getProfile),
           headers: {
             'Content-Type': 'application/json',

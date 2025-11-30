@@ -5,7 +5,7 @@ import '../../../provider/student_provider.dart';
 import '../../../utils/user_session.dart';
 import '../../widgets/home/driver_shell.dart';
 import '../../widgets/home/guardian_shell.dart';
-import '../user/reset_password_page.dart'; // Importe a nova tela
+import '../user/reset_password_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,7 +19,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Verifica a senha temporária logo após a tela ser montada
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkTempPassword();
     });
@@ -27,7 +26,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _checkTempPassword() async {
     final user = await UserSession.getUser();
-    // Se o campo isTempPassword for true, mostra a modal
     if (user != null && user.isTempPassword) {
       _showTempPasswordModal();
     }
@@ -36,9 +34,8 @@ class _HomePageState extends State<HomePage> {
   void _showTempPasswordModal() {
     showDialog(
       context: context,
-      barrierDismissible: false, // Impede sair clicando fora
+      barrierDismissible: false,
       builder: (context) {
-        // Intercepta o botão "Voltar" do Android
         return PopScope(
           canPop: false,
           child: AlertDialog(
@@ -51,13 +48,12 @@ class _HomePageState extends State<HomePage> {
             actionsAlignment: MainAxisAlignment.spaceEvenly,
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context), // "Mais tarde"
+                onPressed: () => Navigator.pop(context),
                 child: const Text("Mais tarde", style: TextStyle(color: AppPalette.neutral700, fontWeight: FontWeight.w500)),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context); // Fecha modal
-                  // Vai para a tela de redefinição
+                  Navigator.pop(context);
                   Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const ResetPasswordPage())
@@ -77,15 +73,33 @@ class _HomePageState extends State<HomePage> {
     return FutureBuilder(
       future: UserSession.getUser(),
       builder: (context, snapshot) {
+        // 1. Ainda carregando
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
-        } else if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+        }
+
+        // 2. Erro real na busca
+        else if (snapshot.hasError) {
           return const Scaffold(
-            body: Center(child: Text('Erro ao carregar usuário')),
+            body: Center(child: Text('Ocorreu um erro ao carregar seus dados.')),
           );
-        } else {
+        }
+
+        // 3. Usuário nulo (Logout ou sessão expirada)
+        // AQUI ESTAVA O PROBLEMA: Se for null, redireciona para login
+        else if (!snapshot.hasData || snapshot.data == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          });
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // 4. Usuário carregado com sucesso
+        else {
           final user = snapshot.data!;
           final role = user.role;
 

@@ -4,10 +4,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import '../services/navigation_service.dart';
 
 class ForgotPasswordProvider with ChangeNotifier {
+  final ApiClient _client = ApiClient();
   bool isLoading = false;
   String? error;
 
@@ -16,7 +18,7 @@ class ForgotPasswordProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(Endpoints.forgotPassword),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),

@@ -10,6 +10,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 
 import 'package:check_van_frontend/model/route_model.dart';
+import 'package:check_van_frontend/model/student_model.dart'; // Import necessário para Student
 import 'package:check_van_frontend/provider/notification_provider.dart';
 import '../../../core/theme.dart';
 import '../../../enum/snack_bar_type.dart';
@@ -35,6 +36,8 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   Timer? _etaUpdateTimer;
 
   late final RouteData _routeData;
+  List<Student> _stops = []; // Lista filtrada de alunos confirmados para a rota
+
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
 
@@ -46,6 +49,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   bool _isRouteFinished = false;
   bool _isBoarding = false;
   bool _firstNotificationSent = false;
+  bool _isInit = false; // Flag para controlar inicialização única
 
   String _schoolEtaText = "-- min";
   String? _nextStopEtaText;
@@ -71,24 +75,46 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     _createNavigationIcon().then((icon) {
       if (mounted) setState(() => _navigationIcon = icon);
     });
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (ModalRoute.of(context)!.settings.arguments is RouteData) {
-        _routeData = ModalRoute.of(context)!.settings.arguments as RouteData;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Inicialização movida para cá para garantir que _routeData esteja pronto antes do build
+    // e corrigir o LateInitializationError.
+    if (!_isInit) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is RouteData) {
+        _routeData = args;
+
+        // CORREÇÃO: Filtra alunos confirmados OU pendentes (null) para serem as paradas
+        // Regra de negócio: Se pendente, considera que vai.
+        _stops = _routeData.students.where((s) => s.isConfirmed != false).toList();
+
         if (_routeData.steps.isNotEmpty) {
           _currentInstruction = _routeData.steps.first.instruction;
         }
-        _initializeTts();
-        _setupLocationListener();
 
-        if (!_firstNotificationSent && _routeData.students.isNotEmpty) {
-          _refreshEtas(sendNotification: true);
-          _firstNotificationSent = true;
-        }
+        // Configura UI inicial (Marcadores/Polylines) sem chamar setState
+        _setupMapUI(_routeData, isInitialSetup: true);
 
-        _startEtaTimer();
+        // Agende tarefas assíncronas para após o frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _initializeTts();
+          _setupLocationListener();
+
+          if (!_firstNotificationSent && _stops.isNotEmpty) {
+            _refreshEtas(sendNotification: true);
+            _firstNotificationSent = true;
+          }
+
+          _startEtaTimer();
+        });
+
+        _isInit = true;
       }
-    });
+    }
   }
 
   @override
@@ -141,9 +167,10 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
 
     if (startPoint == null) {
-      if (_currentStopIndex > 0 && _currentStopIndex < _routeData.students.length) {
-        final prev = _routeData.students[_currentStopIndex - 1];
-        if (prev.latitude != null) startPoint = LatLng(prev.latitude!, prev.longitude!);
+      // Usa _stops para lógica de paradas
+      if (_currentStopIndex > 0 && _currentStopIndex < _stops.length) {
+        final prev = _stops[_currentStopIndex - 1];
+        if (prev.latitude != 0) startPoint = LatLng(prev.latitude, prev.longitude);
       } else {
         if (_routeData.schoolLocation.latitude.abs() > 0.0001) {
           startPoint = _routeData.schoolLocation;
@@ -156,9 +183,9 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     final provider = context.read<NotificationProvider>();
 
     List<int> remainingIds = [];
-    if (_currentStopIndex < _routeData.students.length) {
-      for (int i = _currentStopIndex; i < _routeData.students.length; i++) {
-        remainingIds.add(_routeData.students[i].id);
+    if (_currentStopIndex < _stops.length) {
+      for (int i = _currentStopIndex; i < _stops.length; i++) {
+        remainingIds.add(_stops[i].id);
       }
     }
 
@@ -243,10 +270,10 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     if (!_mapControllerCompleter.isCompleted) {
       _mapControllerCompleter.complete(controller);
     }
-    _setupMapUI(_routeData);
+    // A UI já foi configurada no didChangeDependencies, não precisa chamar _setupMapUI aqui
   }
 
-  void _setupMapUI(RouteData routeData) {
+  void _setupMapUI(RouteData routeData, {bool isInitialSetup = false}) {
     List<PointLatLng> polylineCoordinates = PolylinePoints().decodePolyline(routeData.encodedPolyline);
     List<LatLng> latLngList = polylineCoordinates.map((p) => LatLng(p.latitude, p.longitude)).toList();
     Polyline routePolyline = Polyline(
@@ -257,35 +284,48 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       points: latLngList,
     );
 
-    setState(() {
-      _markers.clear();
-      _markers.add(
+    // Prepara os marcadores
+    final Set<Marker> newMarkers = {};
+    newMarkers.add(
+        Marker(
+          markerId: MarkerId('school_${routeData.teamId}'),
+          position: routeData.schoolLocation,
+          infoWindow: InfoWindow(title: routeData.schoolName),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        )
+    );
+    // Mostra apenas os alunos confirmados/pendentes no mapa (stops)
+    for (var student in _stops) {
+      if(student.latitude != 0 && student.longitude != 0){
+        newMarkers.add(
           Marker(
-            markerId: MarkerId('school_${routeData.teamId}'),
-            position: routeData.schoolLocation,
-            infoWindow: InfoWindow(title: routeData.schoolName),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-          )
-      );
-      for (var student in routeData.students) {
-        if(student.latitude != null && student.longitude != null){
-          _markers.add(
-            Marker(
-              markerId: MarkerId('student_${student.id}'),
-              position: LatLng(student.latitude!, student.longitude!),
-              infoWindow: InfoWindow(title: student.name),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-            ),
-          );
-        }
+            markerId: MarkerId('student_${student.id}'),
+            position: LatLng(student.latitude, student.longitude),
+            infoWindow: InfoWindow(title: student.name),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+          ),
+        );
       }
-      _polylines.add(routePolyline);
-    });
+    }
 
-    if (latLngList.isNotEmpty) {
-      _mapController.animateCamera(
-        CameraUpdate.newLatLngBounds(_boundsFromLatLngList(latLngList), 60.0),
-      );
+    if (isInitialSetup) {
+      // Atualização direta sem setState para inicialização
+      _markers.clear();
+      _markers.addAll(newMarkers);
+      _polylines.add(routePolyline);
+    } else {
+      // Atualização via setState para mudanças posteriores
+      setState(() {
+        _markers.clear();
+        _markers.addAll(newMarkers);
+        _polylines.add(routePolyline);
+      });
+
+      if (latLngList.isNotEmpty) {
+        _mapController.animateCamera(
+          CameraUpdate.newLatLngBounds(_boundsFromLatLngList(latLngList), 60.0),
+        );
+      }
     }
   }
 
@@ -345,15 +385,15 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       LatLng targetLocation;
       String targetName;
 
-      bool goingToSchool = _currentStopIndex == _routeData.students.length;
+      bool goingToSchool = _currentStopIndex == _stops.length;
 
       if (goingToSchool) {
         targetLocation = _routeData.schoolLocation;
         targetName = _routeData.schoolName;
       } else {
-        final currentStop = _routeData.students[_currentStopIndex];
-        if (currentStop.latitude == null || currentStop.longitude == null) return;
-        targetLocation = LatLng(currentStop.latitude!, currentStop.longitude!);
+        final currentStop = _stops[_currentStopIndex];
+        if (currentStop.latitude == 0 || currentStop.longitude == 0) return;
+        targetLocation = LatLng(currentStop.latitude, currentStop.longitude);
         targetName = currentStop.name;
       }
 
@@ -396,7 +436,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     if (isSchool) {
       instructionText = "Chegamos na escola. Confirme para finalizar.";
     } else {
-      final currentStudent = _routeData.students[_currentStopIndex];
+      final currentStudent = _stops[_currentStopIndex];
       context.read<NotificationProvider>().notifyArrivalHome(currentStudent.id);
       instructionText = "Chegamos ao destino: $targetName";
     }
@@ -425,10 +465,10 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
 
       _refreshEtas(sendNotification: true);
 
-      if (_currentStopIndex == _routeData.students.length) {
+      if (_currentStopIndex == _stops.length) {
         _currentInstruction = "Todos a bordo! Próxima parada: ${_routeData.schoolName}";
       } else {
-        final nextStudent = _routeData.students[_currentStopIndex];
+        final nextStudent = _stops[_currentStopIndex];
         _currentInstruction = "Próxima parada: ${nextStudent.name}";
       }
       _speakInstruction(_currentInstruction);
@@ -440,7 +480,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     setState(() { _isBoarding = true; });
 
     final provider = context.read<NotificationProvider>();
-    final currentStudent = _routeData.students[_currentStopIndex];
+    final currentStudent = _stops[_currentStopIndex];
     final success = await provider.notifyBoarding(currentStudent.id);
 
     if (!mounted) return;
@@ -452,10 +492,10 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
 
         _refreshEtas(sendNotification: true);
 
-        if (_currentStopIndex == _routeData.students.length) {
+        if (_currentStopIndex == _stops.length) {
           _currentInstruction = "Todos a bordo! Próxima parada: ${_routeData.schoolName}";
         } else {
-          final nextStudent = _routeData.students[_currentStopIndex];
+          final nextStudent = _stops[_currentStopIndex];
           _currentInstruction = "Próxima parada: ${nextStudent.name}";
         }
         _speakInstruction(_currentInstruction);
@@ -525,6 +565,19 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       return const Scaffold(body: Center(child: Text("Dados da rota não encontrados.")));
     }
 
+    // Calcula um alvo seguro para a câmera inicial
+    // Prioriza o primeiro aluno da rota (confirmado/pendente), senão a escola
+    LatLng initialTarget = const LatLng(0, 0);
+
+    // Filtro para alunos que vão participar da rota (Confirmados OU Pendentes)
+    final goingList = routeDataArgs.students.where((s) => s.isConfirmed != false).toList();
+
+    if (goingList.isNotEmpty && goingList.first.latitude != 0) {
+      initialTarget = LatLng(goingList.first.latitude, goingList.first.longitude);
+    } else if (routeDataArgs.schoolLocation.latitude != 0) {
+      initialTarget = routeDataArgs.schoolLocation;
+    }
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -555,7 +608,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           GoogleMap(
             onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
-              target: LatLng(routeDataArgs.students.first.latitude ?? 0.0, routeDataArgs.students.first.longitude ?? 0.0),
+              target: initialTarget, // Alvo seguro (não quebra se lista for vazia)
               zoom: 14,
             ),
             markers: _markers,
@@ -602,20 +655,20 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
                   ),
                   child: _hasArrivedAtStop
                       ? ConfirmationCard(
-                    student: _currentStopIndex < routeDataArgs.students.length
-                        ? routeDataArgs.students[_currentStopIndex]
+                    student: _currentStopIndex < _stops.length
+                        ? _stops[_currentStopIndex]
                         : null,
                     schoolName: _routeData.schoolName,
                     isBoarding: _isBoarding,
                     onCancel: _cancelArrivalState,
-                    onConfirm: _currentStopIndex < routeDataArgs.students.length
+                    onConfirm: _currentStopIndex < _stops.length
                         ? _confirmBoarding
                         : _confirmArrivalAtSchool,
                     onMarkAbsent: _markAbsent,
                   )
                       : RouteStopList(
                     scrollController: scrollController,
-                    students: routeDataArgs.students,
+                    students: _stops, // Mostra apenas paradas válidas (incluindo pendentes)
                     currentStopIndex: _currentStopIndex,
                     schoolName: _routeData.schoolName,
                     schoolEtaText: _schoolEtaText,

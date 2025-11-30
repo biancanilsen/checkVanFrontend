@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
+import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 import '../services/navigation_service.dart';
 
 class PresenceProvider extends ChangeNotifier {
+  final ApiClient _client = ApiClient();
   bool _isConfirming = false;
   bool get isConfirming => _isConfirming;
 
@@ -31,7 +33,7 @@ class PresenceProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(Endpoints.getMonthlyPresence(studentId, date.year, date.month)),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -84,7 +86,7 @@ class PresenceProvider extends ChangeNotifier {
 
       final formattedDate = DateFormat('yyyy-MM-dd').format(date);
 
-      final response = await http.put(
+      final response = await _client.put(
         Uri.parse(Endpoints.updatePresence(studentId)),
         headers: {
           'Content-Type': 'application/json',

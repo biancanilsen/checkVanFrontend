@@ -4,11 +4,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../model/van_model.dart';
+import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 import '../services/navigation_service.dart';
 
 class VanProvider extends ChangeNotifier {
+  final ApiClient _client = ApiClient();
   List<Van> _vans = [];
   bool _isLoading = false;
   String? _error;
@@ -26,7 +28,7 @@ class VanProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(Endpoints.getAllVans),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -69,7 +71,7 @@ class VanProvider extends ChangeNotifier {
 
       final uri = Uri.parse('${Endpoints.searchVans}?term=${Uri.encodeComponent(term)}');
 
-      final response = await http.get(
+      final response = await _client.get(
         uri,
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -120,7 +122,7 @@ class VanProvider extends ChangeNotifier {
         'capacity': capacity,
       };
 
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(Endpoints.createVan),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -172,7 +174,7 @@ class VanProvider extends ChangeNotifier {
         'capacity': capacity,
       };
 
-      final response = await http.put(
+      final response = await _client.put(
         Uri.parse('${Endpoints.updateVan}/$id'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -213,7 +215,7 @@ class VanProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final response = await http.delete(
+      final response = await _client.delete(
         Uri.parse('${Endpoints.deleteVan}/$id'),
         headers: {
           'Authorization': 'Bearer $token',

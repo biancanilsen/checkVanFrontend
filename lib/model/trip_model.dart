@@ -6,6 +6,7 @@ class Trip {
   final int quantidadeAlunos;
   final String horarioInicio;
   final String comecaEm;
+  final int? sortTime;
 
   Trip({
     required this.teamId,
@@ -15,6 +16,7 @@ class Trip {
     required this.quantidadeAlunos,
     required this.horarioInicio,
     required this.comecaEm,
+    this.sortTime,
   });
 
   factory Trip.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class Trip {
       quantidadeAlunos: json['quantidade_alunos'] as int,
       horarioInicio: json['horario_inicio'] as String,
       comecaEm: json['comeca_em'] as String,
+      sortTime: json['sortTime'],
     );
   }
 }

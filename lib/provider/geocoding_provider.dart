@@ -4,11 +4,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../model/address_suggestion.dart';
+import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 import '../services/navigation_service.dart';
 
 class GeocodingProvider extends ChangeNotifier {
+  final ApiClient _client = ApiClient();
   Timer? _debounce;
 
   Future<List<AddressSuggestion>> fetchSuggestions(String query) async {
@@ -26,7 +28,7 @@ class GeocodingProvider extends ChangeNotifier {
         final token = await UserSession.getToken();
         if (token == null) throw Exception('Usuário não autenticado.');
 
-        final response = await http.get(
+        final response = await _client.get(
           Uri.parse('${Endpoints.autocompleteAddress}?input=${Uri.encodeComponent(query)}'),
           headers: {'Authorization': 'Bearer $token'},
         ).timeout(const Duration(seconds: 15)); // Timeout curto para autocomplete

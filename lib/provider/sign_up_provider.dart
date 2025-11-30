@@ -4,11 +4,13 @@ import 'dart:io';
 import 'package:check_van_frontend/model/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 import '../services/navigation_service.dart';
 
 class SignUpProvider extends ChangeNotifier {
+  final ApiClient _client = ApiClient();
   bool isLoading = false;
   String? error;
 
@@ -36,7 +38,7 @@ class SignUpProvider extends ChangeNotifier {
     };
 
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse(Endpoints.userRegistration),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),

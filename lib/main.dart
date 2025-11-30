@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:check_van_frontend/features/pages/error/server_error_page.dart';
 import 'package:check_van_frontend/provider/notification_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -5,8 +6,8 @@ import 'firebase_options.dart';
 
 import 'package:check_van_frontend/services/notification_service.dart';
 import 'package:check_van_frontend/services/navigation_service.dart';
-import 'package:check_van_frontend/services/session_manager.dart'; // Importe SessionManager
-import 'package:check_van_frontend/utils/user_session.dart'; // Importe UserSession
+import 'package:check_van_frontend/services/session_manager.dart';
+import 'package:check_van_frontend/utils/user_session.dart';
 
 import 'package:check_van_frontend/features/pages/route/active_route_page.dart';
 import 'package:check_van_frontend/features/pages/route/route_page.dart';
@@ -70,14 +71,52 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool _isLoading = true;
   bool _isLogged = false;
+  late StreamSubscription _sessionExpiredSubscription;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _setupSessionListener();
     _checkLoginStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _sessionExpiredSubscription.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      print("🚀 App retornou do background. Verificando validade do token...");
+      SessionManager().checkTokenValidity();
+    }
+  }
+
+  void _setupSessionListener() {
+    _sessionExpiredSubscription = SessionManager().onSessionExpired.listen((_) {
+      print("🛑 Sessão expirada detectada (Main). Redirecionando...");
+
+      if (!mounted) return;
+
+      if (navigatorKey.currentState == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+        });
+      } else {
+        navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+      }
+
+      setState(() {
+        _isLogged = false;
+      });
+    });
   }
 
   Future<void> _checkLoginStatus() async {
@@ -88,16 +127,20 @@ class _MyAppState extends State<MyApp> {
       print("🚀 App Iniciado: Usuário logado detectado. Iniciando SessionManager...");
       SessionManager().startSession();
 
-      setState(() {
-        _isLogged = true;
-      });
+      if (mounted) {
+        setState(() {
+          _isLogged = true;
+        });
+      }
     } else {
       SessionManager().stopSession();
     }
 
-    setState(() {
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override

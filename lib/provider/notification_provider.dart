@@ -4,11 +4,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 import '../services/navigation_service.dart';
 
 class NotificationProvider extends ChangeNotifier {
+  final ApiClient _client = ApiClient();
   List<Notification> _notifications = [];
   bool _isLoading = false;
   String? _error;
@@ -33,7 +35,7 @@ class NotificationProvider extends ChangeNotifier {
 
       final url = Uri.parse(Endpoints.updateLocation);
 
-      final response = await http.post(
+      final response = await _client.post(
         url,
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -75,7 +77,7 @@ class NotificationProvider extends ChangeNotifier {
 
       final url = Uri.parse(endpoint);
 
-      final response = await http.post(
+      final response = await _client.post(
         url,
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -128,7 +130,7 @@ class NotificationProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       final url = Uri.parse(Endpoints.calculateEta);
 
-      final response = await http.post(
+      final response = await _client.post(
         url,
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +169,7 @@ class NotificationProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       final url = Uri.parse(Endpoints.calculateRouteEtas);
 
-      final response = await http.post(
+      final response = await _client.post(
         url,
         headers: {
           'Content-Type': 'application/json',

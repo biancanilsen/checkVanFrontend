@@ -1,46 +1,40 @@
 import 'package:check_van_frontend/core/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:location/location.dart'; // Importe o pacote de localização
+import 'package:google_maps_flutter/google_maps_flutter.dart'; // Importe para LatLng
 
 import 'package:provider/provider.dart';
 import 'package:check_van_frontend/provider/route_provider.dart';
 
-import '../../../../../model/trip_model.dart'; // Import o novo model
+import '../../../../../model/trip_model.dart';
 
 class NextRouteCard extends StatelessWidget {
-  // Recebe o objeto Trip, que pode ser nulo se não houver próxima viagem
   final Trip? nextTrip;
 
   const NextRouteCard({
     super.key,
-    this.nextTrip, // <--- Parâmetro 'nextTrip'
+    this.nextTrip,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Lê o RouteProvider (para o botão de Iniciar)
     final routeProvider = context.read<RouteProvider>();
-    // Observa o RouteProvider (para o estado de loading do botão)
     final routeProviderLoading = context.watch<RouteProvider>().isLoading;
 
     const double cardHeight = 265;
     const double mapVisibilityRatio = 0.3;
 
-    // --- LÓGICA DE DADOS ---
     final bool hasTrip = nextTrip != null;
     final int? teamId = nextTrip?.teamId;
     final String rota = nextTrip?.rota ?? 'Nenhuma rota futura';
     final String alunos = nextTrip?.quantidadeAlunos.toString() ?? '0';
     final String comecaEm = nextTrip?.comecaEm ?? '--';
     final String horario = nextTrip?.horarioInicio ?? '--';
-    final IconData icon = nextTrip?.tipo == 'Ida'
-        ? Icons.wb_sunny_outlined
-        : Icons.brightness_6_outlined;
-    final Color chipBgColor = nextTrip?.tipo == 'Ida'
-        ? AppPalette.orange100
-        : AppPalette.primary50;
-    final Color chipTextColor = nextTrip?.tipo == 'Ida'
-        ? AppPalette.orange700
-        : AppPalette.primary900;
+
+    final bool isGoing = nextTrip?.tipo == 'Ida';
+    final IconData icon = isGoing ? Icons.wb_sunny_outlined : Icons.brightness_6_outlined;
+    final Color chipBgColor = isGoing ? AppPalette.orange100 : AppPalette.primary50;
+    final Color chipTextColor = isGoing ? AppPalette.orange700 : AppPalette.primary900;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -70,10 +64,10 @@ class NextRouteCard extends StatelessWidget {
               ),
               child: Column(
                 children: [
+                  // --- CABEÇALHO (Nome da Rota) ---
                   Container(
                     width: double.infinity,
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -92,6 +86,8 @@ class NextRouteCard extends StatelessWidget {
                       ],
                     ),
                   ),
+
+                  // --- INFORMAÇÕES (Alunos e Horário) ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -101,22 +97,14 @@ class NextRouteCard extends StatelessWidget {
                         children: [
                           const Text(
                             'Alunos',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w400,
-                            ),
+                            style: TextStyle(fontSize: 16, color: Colors.black87, fontWeight: FontWeight.w400),
                           ),
                           const SizedBox(height: 4),
                           Container(
                             padding: const EdgeInsets.only(bottom: 6),
                             child: Text(
                               alunos,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: const TextStyle(fontSize: 24, color: Colors.black87, fontWeight: FontWeight.w700),
                             ),
                           ),
                         ],
@@ -126,19 +114,13 @@ class NextRouteCard extends StatelessWidget {
                         children: [
                           Text(
                             hasTrip ? 'Início ($horario)' : 'Início',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w400,
-                            ),
+                            style: const TextStyle(fontSize: 16, color: Colors.black87, fontWeight: FontWeight.w400),
                           ),
                           const SizedBox(height: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color:
-                              hasTrip ? chipBgColor : Colors.grey.shade200,
+                              color: hasTrip ? chipBgColor : Colors.grey.shade200,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -146,9 +128,7 @@ class NextRouteCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
-                                color: hasTrip
-                                    ? chipTextColor
-                                    : Colors.grey.shade700,
+                                color: hasTrip ? chipTextColor : Colors.grey.shade700,
                               ),
                             ),
                           ),
@@ -156,7 +136,10 @@ class NextRouteCard extends StatelessWidget {
                       ),
                     ],
                   ),
+
                   const Spacer(),
+
+                  // --- BOTÃO DE INICIAR ROTA ---
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -164,10 +147,51 @@ class NextRouteCard extends StatelessWidget {
                       onPressed: (routeProviderLoading || !hasTrip)
                           ? null
                           : () async {
+                        // 1. Determina o tipo (Backend espera 'GOING' ou 'RETURNING')
+                        final String tripTypeParam = isGoing ? 'GOING' : 'RETURNING';
+
+                        // 2. Determina a data
+                        final DateTime tripDate = nextTrip!.sortTime != null
+                            ? DateTime.fromMillisecondsSinceEpoch(nextTrip!.sortTime!)
+                            : DateTime.now();
+
+                        // 3. Captura Localização Atual
+                        LatLng? currentLoc;
+                        try {
+                          final location = Location();
+
+                          // Verifica/Solicita permissão se necessário
+                          bool serviceEnabled = await location.serviceEnabled();
+                          if (!serviceEnabled) {
+                            serviceEnabled = await location.requestService();
+                          }
+
+                          if (serviceEnabled) {
+                            PermissionStatus permissionGranted = await location.hasPermission();
+                            if (permissionGranted == PermissionStatus.denied) {
+                              permissionGranted = await location.requestPermission();
+                            }
+
+                            if (permissionGranted == PermissionStatus.granted) {
+                              final locData = await location.getLocation();
+                              if (locData.latitude != null && locData.longitude != null) {
+                                currentLoc = LatLng(locData.latitude!, locData.longitude!);
+                              }
+                            }
+                          }
+                        } catch (e) {
+                          print("Erro ao obter localização para gerar rota: $e");
+                          // Segue sem localização (backend usará o padrão da garagem)
+                        }
+
+                        // 4. Chama o Provider
                         final success = await routeProvider.generateRoute(
                           teamId: teamId!,
-                            tripType: "GOING" // todo - remover informação mock
+                          tripType: tripTypeParam,
+                          date: tripDate,
+                          currentLocation: currentLoc, // Envia a localização
                         );
+
                         if (success && context.mounted) {
                           Navigator.pushNamed(
                             context,
@@ -177,8 +201,7 @@ class NextRouteCard extends StatelessWidget {
                         } else if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(routeProvider.error ??
-                                  'Erro ao gerar rota'),
+                              content: Text(routeProvider.error ?? 'Erro ao gerar rota'),
                               backgroundColor: AppPalette.red500,
                             ),
                           );
@@ -192,25 +215,17 @@ class NextRouteCard extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        textStyle: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       child: routeProviderLoading
                           ? const SizedBox(
                         height: 24,
                         width: 24,
-                        child: CircularProgressIndicator(
-                          color: AppPalette.white,
-                          strokeWidth: 3,
-                        ),
+                        child: CircularProgressIndicator(color: AppPalette.white, strokeWidth: 3),
                       )
                           : const Text(
                         'Iniciar rota',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
                       ),
                     ),
                   ),

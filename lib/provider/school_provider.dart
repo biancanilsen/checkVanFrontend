@@ -4,11 +4,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../model/school_model.dart';
+import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
 import '../services/navigation_service.dart';
 
 class SchoolProvider extends ChangeNotifier {
+  final ApiClient _client = ApiClient();
   List<School> _schools = [];
   bool _isLoading = false;
   String? _error;
@@ -26,7 +28,7 @@ class SchoolProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(Endpoints.getAllSchools),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -72,7 +74,7 @@ class SchoolProvider extends ChangeNotifier {
       final url = Uri.parse(Endpoints.createSchool);
       final token = await UserSession.getToken();
 
-      final response = await http.post(
+      final response = await _client.post(
         url,
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +129,7 @@ class SchoolProvider extends ChangeNotifier {
       final url = Uri.parse('${Endpoints.updateSchool}/$id');
       final token = await UserSession.getToken();
 
-      final response = await http.put(
+      final response = await _client.put(
         url,
         headers: {
           'Content-Type': 'application/json',
@@ -176,7 +178,7 @@ class SchoolProvider extends ChangeNotifier {
 
       final uri = Uri.parse('${Endpoints.searchSchools}?name=${Uri.encodeComponent(name)}');
 
-      final response = await http.get(
+      final response = await _client.get(
         uri,
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
@@ -218,7 +220,7 @@ class SchoolProvider extends ChangeNotifier {
       final token = await UserSession.getToken();
       if (token == null) throw Exception('Usuário não autenticado.');
 
-      final response = await http.delete(
+      final response = await _client.delete(
         Uri.parse('${Endpoints.deleteSchool}/$id'),
         headers: {
           'Authorization': 'Bearer $token',

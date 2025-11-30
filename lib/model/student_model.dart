@@ -1,5 +1,4 @@
 import 'package:image_picker/image_picker.dart';
-
 import 'guardian_info.dart';
 
 class School {
@@ -29,7 +28,7 @@ class Student {
   final String shiftReturn;
   final double latitude;
   final double longitude;
-  final bool? isConfirmed;
+  final bool? isConfirmed; // Nullable: True (Vai), False (Não vai), Null (Pendente)
   final String? image_profile;
   final int? teamId;
   final GuardianInfo? guardian;
@@ -54,11 +53,29 @@ class Student {
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
-    bool isStudentConfirmed = true;
-    if (json['presences'] != null && (json['presences'] as List).isNotEmpty) {
-      final status = json['presences'][0]['status'];
-      isStudentConfirmed = (status != 'NONE');
+    bool? isStudentConfirmed;
+
+    // 1. Prioridade: Lê o 'isConfirmed' calculado pelo Backend
+    if (json.containsKey('isConfirmed')) {
+      isStudentConfirmed = json['isConfirmed'];
     }
+    // 2. Fallback: Tenta deduzir pela lista de presenças
+    else if (json['presences'] != null && (json['presences'] as List).isNotEmpty) {
+      final status = json['presences'][0]['status'];
+      if (status == 'NONE') {
+        isStudentConfirmed = false;
+      } else if (status == 'BOTH') {
+        isStudentConfirmed = true;
+      } else {
+        // Se for GOING/RETURNING sem contexto de rota, assume true
+        isStudentConfirmed = true;
+      }
+    }
+    // 3. Padrão: Pendente (null)
+    else {
+      isStudentConfirmed = null;
+    }
+
     int? teamIdResult;
     if (json['student_team'] != null && (json['student_team'] as List).isNotEmpty) {
       teamIdResult = json['student_team'][0]['team_id'];
@@ -96,6 +113,5 @@ class Student {
     'school_id': schoolId,
     'shift_going': shiftGoing,
     'shift_return': shiftReturn,
-    
   };
 }
