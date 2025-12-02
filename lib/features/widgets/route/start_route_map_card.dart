@@ -26,26 +26,38 @@ class StartRouteMapCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       elevation: 4,
-      child: Column(
-        children: [
-          Image.asset(
-            'assets/rota.png',
-            height: 180,
-            width: double.infinity,
-            fit: BoxFit.cover,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onStartRoutePressed, // Usa o callback
-                style: buttonStyle,
-                child: const Text('Iniciar rota'),
+      child: SizedBox(
+        height: 250,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/rota.png',
+                fit: BoxFit.cover,
               ),
             ),
-          ),
-        ],
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.6),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onStartRoutePressed,
+                    style: buttonStyle,
+                    child: const Text('Iniciar rota'),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
