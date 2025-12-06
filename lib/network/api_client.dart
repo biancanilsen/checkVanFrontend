@@ -28,7 +28,7 @@ class ApiClient extends http.BaseClient {
     if (streamedResponse.statusCode == 401 || streamedResponse.statusCode == 403) {
       // Evita loop infinito se o erro vier do próprio endpoint de refresh
       if (!request.url.path.contains('refresh-token')) {
-        print("🛑 ApiClient: Erro ${streamedResponse.statusCode} detectado. Expirando sessão...");
+        print("🛑 ApiClient: Erro ${streamedResponse.statusCode} na rota ${request.url.path}. Expirando sessão...");
         SessionManager().expireSession();
       }
     }

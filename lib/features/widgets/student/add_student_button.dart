@@ -24,15 +24,7 @@ class AddStudentButton extends StatelessWidget {
                 fontWeight: FontWeight.w600),
           ),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (newContext) => ChangeNotifierProvider.value(
-                  value: context.read<StudentProvider>(),
-                  child: const AddStudentPage(student: null),
-                ),
-              ),
-            );
+            Navigator.pushNamed(context, '/add-student');
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppPalette.green600,

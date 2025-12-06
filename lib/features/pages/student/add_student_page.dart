@@ -70,10 +70,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
   void initState() {
     super.initState();
     _loadUserRole();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<SchoolProvider>(context, listen: false).getSchools();
-      Provider.of<TeamProvider>(context, listen: false).getTeams();
-    });
 
     if (isEditing && widget.student?.guardian != null) {
       _formatGuardianPhone();
@@ -105,13 +101,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
   Future<void> _formatGuardianPhone() async {
     final guardian = widget.student!.guardian!;
-    // Assumindo que o objeto Guardian (User) tem o campo phoneCountry
-    // Se o model student -> guardian ainda não tem, você precisará adicionar no backend/model
-
-    // Caso o guardian não tenha phoneCountry carregado no objeto student,
-    // você pode tentar inferir pelo DDI do telefone ou buscar o user completo.
-
-    // Exemplo assumindo que guardian tem phoneCountry:
     final formatted = await PhoneFormatter.format(guardian.phone, guardian.phoneCountry);
 
     if (mounted) {
@@ -123,11 +112,21 @@ class _AddStudentPageState extends State<AddStudentPage> {
 
   Future<void> _loadUserRole() async {
     final user = await UserSession.getUser();
+    final isDriver = user?.role == 'driver';
+
     if (mounted) {
       setState(() {
         _userRole = user?.role;
         _isLoadingRole = false;
       });
+    }
+
+    if (mounted) {
+      Provider.of<SchoolProvider>(context, listen: false).getSchools();
+
+      if (isDriver) {
+        Provider.of<TeamProvider>(context, listen: false).getTeams();
+      }
     }
   }
 
@@ -253,7 +252,6 @@ class _AddStudentPageState extends State<AddStudentPage> {
       }
     }
 
-    // Garante que o estado de loading seja desativado
     if (mounted) {
       setState(() {
         _isDeleting = false;
