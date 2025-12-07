@@ -63,11 +63,13 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
+  // MÉTODO CORRIGIDO: Adiciona 'heading' aos parâmetros e ao corpo JSON
   Future<bool> sendLocationUpdate({
     required int teamId,
     required double lat,
     required double lon,
     required String tripType,
+    required double heading, // <--- NOVO PARÂMETRO
   }) async {
     try {
       final token = await UserSession.getToken();
@@ -75,7 +77,6 @@ class NotificationProvider extends ChangeNotifier {
 
       final url = Uri.parse(Endpoints.updateLocation);
 
-      // Usando http.post diretamente para esta chamada de alto tráfego
       final response = await _client.post(
         url,
         headers: {
@@ -87,13 +88,13 @@ class NotificationProvider extends ChangeNotifier {
           'lat': lat,
           'lon': lon,
           'tripType': tripType,
+          'heading': heading, // <--- ENVIADO PARA O BACKEND
         }),
-      ).timeout(const Duration(seconds: 5)); // Timeout mais curto para localização
+      ).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         return true;
       } else {
-        // Falha silenciosa, não queremos quebrar o app do motorista por falha de notificação
         return false;
       }
     } on TimeoutException catch (_) {
@@ -104,6 +105,7 @@ class NotificationProvider extends ChangeNotifier {
       return false;
     }
   }
+
 
   Future<bool> notifyProximity(int studentId, int minutes) async {
     return _postRequest(Endpoints.notifyProximity, {
@@ -147,8 +149,6 @@ class NotificationProvider extends ChangeNotifier {
         return data['minutes'];
       }
     } on TimeoutException catch (_) {
-      // Silent fail for ETA calculation (fallback to local) or force error?
-      // Usually background calculations shouldn't break UI flow, but per instruction:
       NavigationService.forceErrorScreen();
     } on SocketException catch (_) {
       NavigationService.forceErrorScreen();

@@ -10,6 +10,8 @@ class VanTrackingProvider extends ChangeNotifier {
   // Coordenada mais recente da van
   LatLng? _vanPosition;
   LatLng? get vanPosition => _vanPosition;
+  double _vanHeading = 0.0;
+  double get vanHeading => _vanHeading;
 
   bool _isConnecting = false;
   bool get isConnecting => _isConnecting;
@@ -75,6 +77,8 @@ class VanTrackingProvider extends ChangeNotifier {
       final json = jsonDecode(data);
       if (json['lat'] != null && json['lon'] != null) {
         _vanPosition = LatLng(json['lat'], json['lon']);
+        _vanHeading = json['heading'] as double? ?? _vanHeading;
+
         notifyListeners();
       }
     } catch (e) {

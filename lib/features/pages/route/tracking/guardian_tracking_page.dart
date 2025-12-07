@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui' as ui;
+import 'dart:math';
 
 import '../../../../core/theme.dart';
 import '../../../../provider/van_tracking_provider.dart';
@@ -31,11 +34,14 @@ class _GuardianTrackingPageState extends State<GuardianTrackingPage> {
   BitmapDescriptor? _vanIcon;
   bool _markersSet = false;
 
+  Timer? _modalDelayTimer;
+  bool _isCheckingForNoVan = false;
+
   @override
   void initState() {
     super.initState();
 
-    _loadCustomVanIcon().then((icon) {
+    _createVanIcon().then((icon) {
       if (mounted) {
         setState(() {
           _vanIcon = icon;
@@ -45,18 +51,64 @@ class _GuardianTrackingPageState extends State<GuardianTrackingPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<VanTrackingProvider>().startTracking(widget.teamId);
+
+      // 1. INICIA O TIMER DE ATRASO APÓS 10 SEGUNDOS
+      _startNoVanCheckTimer();
     });
   }
 
-  Future<BitmapDescriptor> _loadCustomVanIcon() async {
-    return await BitmapDescriptor.fromAssetImage(
-        const ImageConfiguration(size: Size(80, 80)),
-        'assets/van.png'
-    );
+  // MÉTODO DO DRIVER ADAPTADO: Cria uma seta sólida
+  Future<BitmapDescriptor> _createVanIcon() async {
+    const size = 160.0;
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+    final iconSize = const Size(size, size);
+
+    final paint = Paint()
+      ..color = AppPalette.primary800
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(iconSize.width / 2, 0);
+    path.lineTo(iconSize.width, iconSize.height * 0.8);
+    path.lineTo(iconSize.width / 2, iconSize.height * 0.6);
+    path.lineTo(0, iconSize.height * 0.8);
+    path.close();
+
+    canvas.drawPath(path, paint);
+
+    final borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10;
+    canvas.drawPath(path, borderPaint);
+
+    final picture = pictureRecorder.endRecording();
+    final image = await picture.toImage(iconSize.width.toInt(), iconSize.height.toInt());
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+    if (byteData != null) {
+      return BitmapDescriptor.fromBytes(byteData.buffer.asUint8List());
+    }
+    return BitmapDescriptor.defaultMarker;
+  }
+
+  void _startNoVanCheckTimer() {
+    if (_isCheckingForNoVan) return;
+    _isCheckingForNoVan = true;
+
+    _modalDelayTimer = Timer(const Duration(seconds: 10), () {
+      if (!mounted || context.read<VanTrackingProvider>().vanPosition != null) {
+        return;
+      }
+
+      _showNoVanFoundAlert(context);
+    });
   }
 
   @override
   void dispose() {
+    _modalDelayTimer?.cancel();
     context.read<VanTrackingProvider>().stopTracking();
     super.dispose();
   }
@@ -81,10 +133,9 @@ class _GuardianTrackingPageState extends State<GuardianTrackingPage> {
     setState(() {});
   }
 
-  void _updateVanMarker(LatLng newPosition) {
+  void _updateVanMarker(LatLng newPosition, double heading) {
     if (!mounted || _mapController == null) return;
 
-    // Usa o ícone customizado após carregamento. Fallback para azul simples se falhar.
     final iconToUse = _vanIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure);
 
     _markers.removeWhere((m) => m.markerId.value == 'van_real_time');
@@ -94,8 +145,9 @@ class _GuardianTrackingPageState extends State<GuardianTrackingPage> {
         markerId: const MarkerId('van_real_time'),
         position: newPosition,
         icon: iconToUse,
-        infoWindow: InfoWindow(title: 'Van - ${widget.teamName}'),
-        rotation: 0.0,
+        flat: true,
+        rotation: heading,
+        anchor: const Offset(0.5, 0.5),
         zIndex: 2,
       ),
     );
@@ -119,15 +171,15 @@ class _GuardianTrackingPageState extends State<GuardianTrackingPage> {
           content: Text(
               "A van da turma ${widget.teamName} não está enviando sua localização no momento. Por favor, tente novamente em alguns minutos ou verifique se o motorista iniciou a rota."
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.pop(context);
-              },
-              child: const Text("Entendi"),
-            ),
-          ],
+          // actions: [
+          //   TextButton(
+          //     onPressed: () {
+          //       Navigator.pop(ctx);
+          //       Navigator.pop(context);
+          //     },
+          //     child: const Text("Entendi"),
+          //   ),
+          // ],
         ),
       );
     });
@@ -141,12 +193,13 @@ class _GuardianTrackingPageState extends State<GuardianTrackingPage> {
     _setMarkers();
 
     if (provider.vanPosition != null) {
-      _updateVanMarker(provider.vanPosition!);
+      _updateVanMarker(provider.vanPosition!, provider.vanHeading);
+      if (_modalDelayTimer?.isActive == true) {
+        _modalDelayTimer?.cancel();
+      }
     }
 
-    if (!provider.isConnecting && provider.vanPosition == null) {
-      _showNoVanFoundAlert(context);
-    }
+    final bool showLoader = provider.isConnecting && provider.vanPosition == null;
 
     return Scaffold(
       appBar: AppBar(
@@ -161,11 +214,10 @@ class _GuardianTrackingPageState extends State<GuardianTrackingPage> {
               zoom: 16,
             ),
             onMapCreated: _onMapCreated,
-            // A lista de markers é atualizada via setState de _updateVanMarker
             markers: _markers,
           ),
 
-          if (provider.isConnecting && provider.vanPosition == null)
+          if (showLoader)
             const Center(
               child: Card(
                 child: Padding(

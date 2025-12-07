@@ -453,6 +453,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       lat: newLocation.latitude!,
       lon: newLocation.longitude!,
       tripType: _routeData.tripType,
+      heading: newLocation.heading ?? 0.0,
     );
   }
 
