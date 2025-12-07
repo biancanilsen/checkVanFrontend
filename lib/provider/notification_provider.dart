@@ -27,49 +27,6 @@ class NotificationProvider extends ChangeNotifier {
   List<Notification> get scheduledNotifications =>
       _notifications.isEmpty ? [] : _notifications.skip(1).toList();
 
-  Future<bool> sendLocationUpdate(int teamId, double lat, double lon,
-      String tripType) async {
-    try {
-      final token = await UserSession.getToken();
-      if (token == null) throw Exception('Usuário não autenticado.');
-
-      final url = Uri.parse(Endpoints.updateLocation);
-
-      final response = await _client.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'teamId': teamId,
-          'lat': lat,
-          'lon': lon,
-          'tripType': tripType,
-        }),
-      ).timeout(const Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        return true;
-      } else {
-        final data = jsonDecode(response.body);
-        _error = data['message'] ?? 'Falha ao processar localização.';
-        return false;
-      }
-    } on TimeoutException catch (_) {
-      // Location updates are silent, maybe don't force error screen here to not interrupt driving?
-      // Or force if critical. Let's keep it consistent with request:
-      NavigationService.forceErrorScreen();
-      return false;
-    } on SocketException catch (_) {
-      NavigationService.forceErrorScreen();
-      return false;
-    } catch (e) {
-      _error = e.toString();
-      return false;
-    }
-  }
-
   Future<bool> _postRequest(String endpoint, Map<String, dynamic> body) async {
     try {
       final token = await UserSession.getToken();
@@ -102,6 +59,48 @@ class NotificationProvider extends ChangeNotifier {
     } catch (e) {
       print('Erro request: $e');
       NavigationService.forceErrorScreen();
+      return false;
+    }
+  }
+
+  Future<bool> sendLocationUpdate({
+    required int teamId,
+    required double lat,
+    required double lon,
+    required String tripType,
+  }) async {
+    try {
+      final token = await UserSession.getToken();
+      if (token == null) throw Exception('Usuário não autenticado.');
+
+      final url = Uri.parse(Endpoints.updateLocation);
+
+      // Usando http.post diretamente para esta chamada de alto tráfego
+      final response = await _client.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'teamId': teamId,
+          'lat': lat,
+          'lon': lon,
+          'tripType': tripType,
+        }),
+      ).timeout(const Duration(seconds: 5)); // Timeout mais curto para localização
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        // Falha silenciosa, não queremos quebrar o app do motorista por falha de notificação
+        return false;
+      }
+    } on TimeoutException catch (_) {
+      return false;
+    } on SocketException catch (_) {
+      return false;
+    } catch (e) {
       return false;
     }
   }

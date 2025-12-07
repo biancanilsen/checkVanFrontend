@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:check_van_frontend/features/pages/error/server_error_page.dart';
 import 'package:check_van_frontend/provider/notification_provider.dart';
+import 'package:check_van_frontend/provider/van_tracking_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -58,6 +59,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => PresenceProvider()),
         ChangeNotifierProvider(create: (_) => TripProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => VanTrackingProvider()),
       ],
       child: const MyApp(),
     ),

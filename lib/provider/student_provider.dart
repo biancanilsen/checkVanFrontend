@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../model/student_model.dart';
 import '../model/student_presence_summary.dart';
+import '../model/active_trip_details.dart'; // Modelo de Rastreamento
 import '../network/api_client.dart';
 import '../network/endpoints.dart';
 import '../utils/user_session.dart';
@@ -22,6 +23,8 @@ class StudentProvider extends ChangeNotifier {
   String? _tripStatus;
   bool _isStatusLoading = false;
 
+  ActiveTripDetails? _activeTripDetails; // Variável para armazenar dados da rota ativa
+
   String? get tripStatus => _tripStatus;
   bool get isStatusLoading => _isStatusLoading;
 
@@ -30,6 +33,10 @@ class StudentProvider extends ChangeNotifier {
   String? get error => _error;
 
   List<StudentPresenceSummary> get presenceSummaryStudents => _presenceSummaryStudents;
+
+  ActiveTripDetails? getActiveTripDetails() {
+    return _activeTripDetails;
+  }
 
   Future<void> getPresenceSummary() async {
     _isLoading = true;
@@ -368,12 +375,12 @@ class StudentProvider extends ChangeNotifier {
   Future<void> fetchNextTripStatus() async {
     _isStatusLoading = true;
     _error = null;
+    _activeTripDetails = null;
     notifyListeners();
 
     try {
       await getStudents();
 
-      // Corrigido: Se a lista estiver vazia após a busca, definimos o status específico.
       if (_students.isEmpty) {
         _tripStatus = 'SEM_ALUNO';
         _isStatusLoading = false;
@@ -398,6 +405,11 @@ class StudentProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         _tripStatus = data['status'];
+
+        if (_tripStatus == 'EM_ROTA' && data['activeTripData'] != null) {
+          _activeTripDetails = ActiveTripDetails.fromJson(data['activeTripData']);
+        }
+
       } else {
         final data = jsonDecode(response.body);
         throw Exception(data['message'] ?? 'Falha ao carregar status da viagem.');

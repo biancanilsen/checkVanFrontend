@@ -10,7 +10,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:provider/provider.dart';
 
 import 'package:check_van_frontend/model/route_model.dart';
-import 'package:check_van_frontend/model/student_model.dart'; // Import necessário para Student
+import 'package:check_van_frontend/model/student_model.dart';
 import 'package:check_van_frontend/provider/notification_provider.dart';
 import '../../../core/theme.dart';
 import '../../../enum/snack_bar_type.dart';
@@ -34,9 +34,10 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   final FlutterTts _flutterTts = FlutterTts();
   StreamSubscription<LocationData>? _locationSubscription;
   Timer? _etaUpdateTimer;
+  Timer? _locationSendTimer;
 
   late final RouteData _routeData;
-  List<Student> _stops = []; // Lista filtrada de alunos confirmados para a rota
+  List<Student> _stops = [];
 
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
@@ -49,7 +50,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   bool _isRouteFinished = false;
   bool _isBoarding = false;
   bool _firstNotificationSent = false;
-  bool _isInit = false; // Flag para controlar inicialização única
+  bool _isInit = false;
 
   String _schoolEtaText = "-- min";
   String? _nextStopEtaText;
@@ -66,6 +67,8 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   static const double _navigationZoom = 18.0;
   static const double _navigationTilt = 45.0;
   static const double _averageSpeedKmh = 25.0;
+  static const double _distanceThresholdMeters = 5.0;
+  static const Duration _sendInterval = Duration(seconds: 1);
 
   @override
   void initState() {
@@ -81,25 +84,19 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Inicialização movida para cá para garantir que _routeData esteja pronto antes do build
-    // e corrigir o LateInitializationError.
     if (!_isInit) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is RouteData) {
         _routeData = args;
 
-        // CORREÇÃO: Filtra alunos confirmados OU pendentes (null) para serem as paradas
-        // Regra de negócio: Se pendente, considera que vai.
         _stops = _routeData.students.where((s) => s.isConfirmed != false).toList();
 
         if (_routeData.steps.isNotEmpty) {
           _currentInstruction = _routeData.steps.first.instruction;
         }
 
-        // Configura UI inicial (Marcadores/Polylines) sem chamar setState
         _setupMapUI(_routeData, isInitialSetup: true);
 
-        // Agende tarefas assíncronas para após o frame
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _initializeTts();
           _setupLocationListener();
@@ -122,6 +119,7 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     _isDisposed = true;
     _etaUpdateTimer?.cancel();
     _locationSubscription?.cancel();
+    _locationSendTimer?.cancel();
     _flutterTts.stop();
     _sheetController.dispose();
     super.dispose();
@@ -167,7 +165,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
 
     if (startPoint == null) {
-      // Usa _stops para lógica de paradas
       if (_currentStopIndex > 0 && _currentStopIndex < _stops.length) {
         final prev = _stops[_currentStopIndex - 1];
         if (prev.latitude != 0) startPoint = LatLng(prev.latitude, prev.longitude);
@@ -270,7 +267,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     if (!_mapControllerCompleter.isCompleted) {
       _mapControllerCompleter.complete(controller);
     }
-    // A UI já foi configurada no didChangeDependencies, não precisa chamar _setupMapUI aqui
   }
 
   void _setupMapUI(RouteData routeData, {bool isInitialSetup = false}) {
@@ -284,7 +280,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
       points: latLngList,
     );
 
-    // Prepara os marcadores
     final Set<Marker> newMarkers = {};
     newMarkers.add(
         Marker(
@@ -294,7 +289,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         )
     );
-    // Mostra apenas os alunos confirmados/pendentes no mapa (stops)
     for (var student in _stops) {
       if(student.latitude != 0 && student.longitude != 0){
         newMarkers.add(
@@ -309,12 +303,10 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     }
 
     if (isInitialSetup) {
-      // Atualização direta sem setState para inicialização
       _markers.clear();
       _markers.addAll(newMarkers);
       _polylines.add(routePolyline);
     } else {
-      // Atualização via setState para mudanças posteriores
       setState(() {
         _markers.clear();
         _markers.addAll(newMarkers);
@@ -344,7 +336,6 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
     _locationSubscription = _location.onLocationChanged.listen((LocationData newLocation) {
       if (_isDisposed || newLocation.latitude == null || newLocation.longitude == null) return;
 
-      _lastLocation = newLocation;
       final currentPosition = LatLng(newLocation.latitude!, newLocation.longitude!);
 
       if (_navigationIcon != null) {
@@ -379,6 +370,10 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
           _isProgrammaticMovement = false;
         });
       }
+
+      _sendLocationToBackend(newLocation);
+
+      _lastLocation = newLocation;
 
       if (_hasArrivedAtStop || _isRouteFinished) return;
 
@@ -428,6 +423,37 @@ class _ActiveRoutePageState extends State<ActiveRoutePage> {
         }
       }
     });
+  }
+
+  void _sendLocationToBackend(LocationData newLocation) {
+    final provider = context.read<NotificationProvider>();
+
+    if (_locationSendTimer?.isActive == true) {
+      // Se o timer estiver ativo, espera o próximo ciclo
+      return;
+    }
+
+    // Calcula a distância desde a última localização enviada
+    // Se a van não se moveu o suficiente, não envia
+    if (_lastLocation != null &&
+        _calculateDistance(
+            _lastLocation!.latitude!, _lastLocation!.longitude!,
+            newLocation.latitude!, newLocation.longitude!) < _distanceThresholdMeters) {
+      return;
+    }
+
+    // Inicia o timer para evitar envios em alta frequência
+    _locationSendTimer = Timer(_sendInterval, () {
+      // O timer se completa e podemos enviar na próxima vez
+      _locationSendTimer = null;
+    });
+
+    provider.sendLocationUpdate(
+      teamId: _routeData.teamId,
+      lat: newLocation.latitude!,
+      lon: newLocation.longitude!,
+      tripType: _routeData.tripType,
+    );
   }
 
   void _triggerArrivalState({required bool isSchool, String? targetName}) {
